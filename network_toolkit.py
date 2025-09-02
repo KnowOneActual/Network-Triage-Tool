@@ -264,8 +264,8 @@ class NetworkTriageToolkit:
         except Exception as e:
             return f"Failed to retrieve network adapter information: {e}"
 
-    def start_lldp_capture(self, callback):
-        """Starts sniffing for LLDP packets on a background thread indefinitely."""
+    def start_lldp_capture(self, callback, timeout=60):
+        """Starts sniffing for LLDP packets on a background thread with a timeout."""
         self.stop_lldp_event.clear()
         self.lldp_found = False
 
@@ -306,17 +306,24 @@ class NetworkTriageToolkit:
         def run_sniff():
             """The sniffing function that runs in a thread."""
             try:
-                # timeout=None makes it run until stop_filter is true
                 sniff(
                     filter="ether proto 0x88cc",
                     prn=process_packet,
                     stop_filter=lambda p: self.stop_lldp_event.is_set(),
-                    timeout=None,
+                    timeout=timeout,
                 )
             except Exception as e:
+                # Only report error if the user didn't manually stop it
                 if not self.stop_lldp_event.is_set():
                     callback(f"An error occurred during packet sniffing: {e}")
+            finally:
+                # This block guarantees that we send a final status update if the scan times out or is stopped.
+                if not self.lldp_found and not self.stop_lldp_event.is_set():
+                    callback(
+                        f"Scan complete. No LLDP packets found in {timeout} seconds."
+                    )
 
+        # Check for root/admin privileges before starting the thread
         if platform.system() in ["Linux", "Darwin"] and os.geteuid() != 0:
             callback(
                 "LLDP capture requires administrator/root privileges.\nPlease run the application with 'sudo'."

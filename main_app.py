@@ -419,6 +419,7 @@ class LLDPDiscovery(ttk.Frame):
     def __init__(self, parent):
         super().__init__(parent)
         self.parent = parent
+        self.scan_timer = None
         self.create_widgets()
 
     def create_widgets(self):
@@ -450,7 +451,7 @@ class LLDPDiscovery(ttk.Frame):
         self.output_text.pack(padx=5, pady=5, fill="both", expand=True)
 
     def start_scan(self):
-        """Starts the LLDP packet capture and progress bar."""
+        """Starts the LLDP packet capture and the UI timeout."""
         self.output_text.delete("1.0", tk.END)
         self.start_button.config(state="disabled")
         self.stop_button.config(state="normal")
@@ -460,43 +461,59 @@ class LLDPDiscovery(ttk.Frame):
         def update_output(message):
             self.parent.after(0, self._update_text_widget, message)
 
-        net_tool.start_lldp_capture(update_output, timeout=self.scan_duration)
+        # This is the corrected call without the 'timeout' argument
+        net_tool.start_lldp_capture(update_output)
+
         self.update_progress_bar()
+
+        # Schedule the UI to force a timeout
+        self.scan_timer = self.parent.after(
+            self.scan_duration * 1000, self.force_timeout
+        )
+
+    def force_timeout(self):
+        """Called by the timer if the scan duration is reached."""
+        if self.start_button["state"] == "disabled":
+            net_tool.stop_lldp_capture()
+            self._update_text_widget(
+                f"Scan complete. No LLDP packets found in {self.scan_duration} seconds."
+            )
 
     def update_progress_bar(self):
         """Animates the progress bar over the scan duration."""
-        if self.progress["value"] < 100 and self.start_button["state"] == "disabled":
-            # Increment based on a 100ms interval
-            self.progress["value"] += (100 / self.scan_duration) / 10
+        if self.start_button["state"] == "disabled":
+            self.progress["value"] += 100 / (self.scan_duration * 10)
             self.parent.after(100, self.update_progress_bar)
-        else:
-            # Ensure buttons are reset if the scan times out
-            if self.stop_button["state"] == "normal":
-                self.start_button.config(state="normal")
-                self.stop_button.config(state="disabled")
 
     def _update_text_widget(self, message):
         """Helper method to safely update the text widget from the main GUI thread."""
         self.output_text.insert(tk.END, message + "\n")
         self.output_text.see(tk.END)
 
-        # If the scan is definitively over (found, timed out, or error), fix the UI state
         if any(
             keyword in message
             for keyword in [
                 "LLDP Packet Found",
                 "Scan complete",
                 "requires administrator",
+                "Error",
             ]
         ):
-            self.progress["value"] = 100  # Fill the bar to show completion
+            if self.scan_timer:
+                self.parent.after_cancel(self.scan_timer)
+                self.scan_timer = None
+            self.progress["value"] = 100
             self.start_button.config(state="normal")
             self.stop_button.config(state="disabled")
 
     def stop_scan(self):
-        """Stops the LLDP packet capture and resets the UI."""
+        """Stops the LLDP packet capture and resets the UI, canceling the timeout timer."""
+        if self.scan_timer:
+            self.parent.after_cancel(self.scan_timer)
+            self.scan_timer = None
+
         net_tool.stop_lldp_capture()
-        self.progress["value"] = 0  # Reset progress bar
+        self.progress["value"] = 0
         self.start_button.config(state="normal")
         self.stop_button.config(state="disabled")
         self.output_text.insert(tk.END, "\n--- Scan Stopped by User ---\n")
