@@ -23,6 +23,7 @@ class NetworkTriageToolkit:
         self.ping_process = None
         self.stop_ping_event = threading.Event()
         self.stop_lldp_event = threading.Event()
+        self.lldp_found = False
 
     def get_system_info(self):
         """Gathers basic system information."""
@@ -264,11 +265,13 @@ class NetworkTriageToolkit:
             return f"Failed to retrieve network adapter information: {e}"
 
     def start_lldp_capture(self, callback):
-        """Starts sniffing for LLDP packets on a background thread."""
+        """Starts sniffing for LLDP packets on a background thread indefinitely."""
         self.stop_lldp_event.clear()
+        self.lldp_found = False
 
         def process_packet(packet):
             if not self.stop_lldp_event.is_set() and packet.haslayer(LLDPDU):
+                self.lldp_found = True
                 lldp_info = packet[LLDPDU]
                 try:
                     chassis_id_tlv = next(
@@ -295,19 +298,25 @@ class NetworkTriageToolkit:
                         f"  Switch Port: {port_id}\n"
                     )
                     callback(result)
-                    self.stop_lldp_event.set()  # Stop after finding the first packet
+                    self.stop_lldp_event.set()
                 except Exception as e:
                     callback(f"Error processing LLDP packet: {e}")
                     self.stop_lldp_event.set()
 
         def run_sniff():
-            sniff(
-                filter="ether proto 0x88cc",
-                prn=process_packet,
-                stop_filter=lambda p: self.stop_lldp_event.is_set(),
-            )
+            """The sniffing function that runs in a thread."""
+            try:
+                # timeout=None makes it run until stop_filter is true
+                sniff(
+                    filter="ether proto 0x88cc",
+                    prn=process_packet,
+                    stop_filter=lambda p: self.stop_lldp_event.is_set(),
+                    timeout=None,
+                )
+            except Exception as e:
+                if not self.stop_lldp_event.is_set():
+                    callback(f"An error occurred during packet sniffing: {e}")
 
-        # Check for root/admin privileges for sniffing
         if platform.system() in ["Linux", "Darwin"] and os.geteuid() != 0:
             callback(
                 "LLDP capture requires administrator/root privileges.\nPlease run the application with 'sudo'."

@@ -413,6 +413,95 @@ class AdvancedDiagnostics(ttk.Frame):
             self.parent.after(0, update_ui)
 
 
+class LLDPDiscovery(ttk.Frame):
+    """Tab for discovering connected switch and port via LLDP."""
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.parent = parent
+        self.create_widgets()
+
+    def create_widgets(self):
+        """Create and arrange widgets for LLDP discovery."""
+        lldp_frame = ttk.LabelFrame(self, text="LLDP Discovery")
+        lldp_frame.pack(padx=10, pady=10, fill="both", expand=True)
+
+        control_frame = ttk.Frame(lldp_frame)
+        control_frame.pack(fill="x", padx=5, pady=5)
+
+        self.start_button = ttk.Button(
+            control_frame, text="Start Scan", command=self.start_scan
+        )
+        self.start_button.pack(side="left", padx=5)
+
+        self.stop_button = ttk.Button(
+            control_frame, text="Stop Scan", command=self.stop_scan, state="disabled"
+        )
+        self.stop_button.pack(side="left")
+
+        self.progress = ttk.Progressbar(
+            lldp_frame, orient="horizontal", mode="determinate"
+        )
+        self.progress.pack(fill="x", padx=5, pady=(0, 5))
+
+        self.output_text = scrolledtext.ScrolledText(
+            lldp_frame, wrap=tk.WORD, height=15
+        )
+        self.output_text.pack(padx=5, pady=5, fill="both", expand=True)
+
+    def start_scan(self):
+        """Starts the LLDP packet capture and progress bar."""
+        self.output_text.delete("1.0", tk.END)
+        self.start_button.config(state="disabled")
+        self.stop_button.config(state="normal")
+        self.progress["value"] = 0
+        self.scan_duration = 60  # seconds
+
+        def update_output(message):
+            self.parent.after(0, self._update_text_widget, message)
+
+        net_tool.start_lldp_capture(update_output, timeout=self.scan_duration)
+        self.update_progress_bar()
+
+    def update_progress_bar(self):
+        """Animates the progress bar over the scan duration."""
+        if self.progress["value"] < 100 and self.start_button["state"] == "disabled":
+            # Increment based on a 100ms interval
+            self.progress["value"] += (100 / self.scan_duration) / 10
+            self.parent.after(100, self.update_progress_bar)
+        else:
+            # Ensure buttons are reset if the scan times out
+            if self.stop_button["state"] == "normal":
+                self.start_button.config(state="normal")
+                self.stop_button.config(state="disabled")
+
+    def _update_text_widget(self, message):
+        """Helper method to safely update the text widget from the main GUI thread."""
+        self.output_text.insert(tk.END, message + "\n")
+        self.output_text.see(tk.END)
+
+        # If the scan is definitively over (found, timed out, or error), fix the UI state
+        if any(
+            keyword in message
+            for keyword in [
+                "LLDP Packet Found",
+                "Scan complete",
+                "requires administrator",
+            ]
+        ):
+            self.progress["value"] = 100  # Fill the bar to show completion
+            self.start_button.config(state="normal")
+            self.stop_button.config(state="disabled")
+
+    def stop_scan(self):
+        """Stops the LLDP packet capture and resets the UI."""
+        net_tool.stop_lldp_capture()
+        self.progress["value"] = 0  # Reset progress bar
+        self.start_button.config(state="normal")
+        self.stop_button.config(state="disabled")
+        self.output_text.insert(tk.END, "\n--- Scan Stopped by User ---\n")
+
+
 class MainApplication(tk.Tk):
     """The main application window."""
 
@@ -426,10 +515,12 @@ class MainApplication(tk.Tk):
 
         dashboard_tab = TriageDashboard(self)
         connectivity_tab = ConnectivityTools(self)
+        lldp_tab = LLDPDiscovery(self)
         advanced_tab = AdvancedDiagnostics(self)
 
         notebook.add(dashboard_tab, text="Triage Dashboard")
         notebook.add(connectivity_tab, text="Connectivity Tools")
+        notebook.add(lldp_tab, text="Physical Layer")
         notebook.add(advanced_tab, text="Advanced Diagnostics")
 
 
