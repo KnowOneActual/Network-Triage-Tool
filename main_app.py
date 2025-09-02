@@ -1,182 +1,438 @@
-# This is the main entry point for the Network Triage Tool GUI application.
-# It uses Tkinter for the UI and calls the network_toolkit for all backend logic.
-
-import tkinter as tk
-from tkinter import ttk, scrolledtext
+import queue
 import threading
+import tkinter as tk
+from tkinter import ttk, scrolledtext, messagebox
 
-# Import the backend logic
-import network_toolkit as net_tool
+# Note: We now import both classes from the toolkit
+from network_toolkit import NetworkTriageToolkit, RouterConnection
+
+# We instantiate the toolkit for client-side tools
+net_tool = NetworkTriageToolkit()
 
 
-class NetworkTriageApp(tk.Tk):
+class TriageDashboard(ttk.Frame):
+    """Dashboard for at-a-glance network info."""
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.parent = parent
+        self.info_labels = {}
+        self.create_widgets()
+        self.refresh_data()
+
+    def create_widgets(self):
+        """Create and arrange widgets on the dashboard."""
+        info_frame = ttk.LabelFrame(self, text="System & Network Information")
+        info_frame.pack(padx=10, pady=10, fill="x", expand=True)
+
+        info_points = ["OS", "Hostname", "Internal IP", "Gateway", "Public IP"]
+        for i, point in enumerate(info_points):
+            label_title = ttk.Label(
+                info_frame, text=f"{point}:", font=("Helvetica", 10, "bold")
+            )
+            label_title.grid(row=i, column=0, sticky="w", padx=5, pady=2)
+
+            label_value = ttk.Label(info_frame, text="Loading...")
+            label_value.grid(row=i, column=1, sticky="w", padx=5, pady=2)
+            self.info_labels[point] = label_value
+
+        refresh_button = ttk.Button(
+            self, text="Refresh Data", command=self.refresh_data
+        )
+        refresh_button.pack(pady=5)
+
+        adapter_button = ttk.Button(
+            self, text="Show Full Adapter Info", command=self.show_adapter_info
+        )
+        adapter_button.pack(pady=5)
+
+    def refresh_data(self):
+        """Fetches and updates the network info labels."""
+        for label in self.info_labels.values():
+            label.config(text="Loading...")
+
+        # Run data fetching in a separate thread to not freeze the GUI
+        thread = threading.Thread(target=self.task, daemon=True)
+        thread.start()
+
+    def task(self):
+        """The actual data-fetching task."""
+        system_info = net_tool.get_system_info()
+        ip_info = net_tool.get_ip_info()
+
+        # Combine the dictionaries
+        all_info = {**system_info, **ip_info}
+
+        # Update GUI from the main thread
+        for key, value in all_info.items():
+            if key in self.info_labels:
+                self.parent.after(0, self.info_labels[key].config, {"text": value})
+
+    def show_adapter_info(self):
+        """Displays full network adapter info in a new window."""
+        info_window = tk.Toplevel(self.parent)
+        info_window.title("Network Adapter Information")
+        info_window.geometry("600x400")
+
+        text_area = scrolledtext.ScrolledText(
+            info_window, wrap=tk.WORD, width=70, height=20
+        )
+        text_area.pack(padx=10, pady=10, fill="both", expand=True)
+        text_area.insert(tk.INSERT, "Fetching adapter information...")
+
+        def fetch_and_display():
+            adapter_info = net_tool.network_adapter_info()
+            text_area.delete("1.0", tk.END)
+            text_area.insert(tk.INSERT, adapter_info)
+
+        # Run in a thread so the main UI doesn't freeze
+        threading.Thread(target=fetch_and_display, daemon=True).start()
+
+
+class ConnectivityTools(ttk.Frame):
+    """Tab for interactive tools like ping, traceroute, etc."""
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.create_ping_widgets()
+
+        separator = ttk.Separator(self, orient="horizontal")
+        separator.pack(fill="x", padx=10, pady=5)
+
+        self.create_other_tools_widgets()
+
+    def create_ping_widgets(self):
+        """Create the UI elements for the ping tool."""
+        ping_frame = ttk.LabelFrame(self, text="Continuous Ping")
+        ping_frame.pack(padx=10, pady=10, fill="x")
+
+        control_frame = ttk.Frame(ping_frame)
+        control_frame.pack(fill="x", padx=5, pady=5)
+
+        host_label = ttk.Label(control_frame, text="Host/IP:")
+        host_label.pack(side="left", padx=(0, 5))
+
+        self.ping_host_entry = ttk.Entry(control_frame)
+        self.ping_host_entry.pack(side="left", fill="x", expand=True)
+        self.ping_host_entry.insert(0, "8.8.8.8")
+
+        self.start_button = ttk.Button(
+            control_frame, text="Start Ping", command=self.start_ping
+        )
+        self.start_button.pack(side="left", padx=5)
+
+        self.stop_button = ttk.Button(
+            control_frame, text="Stop Ping", command=self.stop_ping, state="disabled"
+        )
+        self.stop_button.pack(side="left")
+
+        self.ping_output_text = scrolledtext.ScrolledText(
+            ping_frame, wrap=tk.WORD, height=10
+        )
+        self.ping_output_text.pack(padx=5, pady=5, fill="both", expand=True)
+
+    def create_other_tools_widgets(self):
+        """Create UI for Traceroute, DNS Lookup, and Port Scan."""
+        tools_frame = ttk.Frame(self)
+        tools_frame.pack(padx=10, pady=10, fill="x")
+
+        # --- Traceroute ---
+        trace_frame = ttk.LabelFrame(tools_frame, text="Traceroute")
+        trace_frame.pack(fill="x", expand=True, pady=(0, 10))
+
+        trace_host_label = ttk.Label(trace_frame, text="Host/IP:")
+        trace_host_label.pack(side="left", padx=5, pady=5)
+        self.trace_host_entry = ttk.Entry(trace_frame)
+        self.trace_host_entry.pack(side="left", fill="x", expand=True, padx=5, pady=5)
+        self.trace_host_entry.insert(0, "8.8.8.8")
+        trace_button = ttk.Button(
+            trace_frame, text="Run Trace", command=self.run_traceroute
+        )
+        trace_button.pack(side="left", padx=5, pady=5)
+
+        # --- DNS Lookup ---
+        dns_frame = ttk.LabelFrame(tools_frame, text="DNS Lookup")
+        dns_frame.pack(fill="x", expand=True, pady=(0, 10))
+
+        dns_host_label = ttk.Label(dns_frame, text="Domain:")
+        dns_host_label.pack(side="left", padx=5, pady=5)
+        self.dns_host_entry = ttk.Entry(dns_frame)
+        self.dns_host_entry.pack(side="left", fill="x", expand=True, padx=5, pady=5)
+        self.dns_host_entry.insert(0, "google.com")
+        dns_button = ttk.Button(dns_frame, text="Lookup", command=self.run_dns_lookup)
+        dns_button.pack(side="left", padx=5, pady=5)
+
+        # --- Port Scan ---
+        port_frame = ttk.LabelFrame(tools_frame, text="Port Scan")
+        port_frame.pack(fill="x", expand=True)
+
+        port_host_label = ttk.Label(port_frame, text="Host/IP:")
+        port_host_label.pack(side="left", padx=5, pady=5)
+        self.port_host_entry = ttk.Entry(port_frame)
+        self.port_host_entry.pack(side="left", fill="x", expand=True, padx=5, pady=5)
+        self.port_host_entry.insert(0, "google.com")
+
+        port_label = ttk.Label(port_frame, text="Port:")
+        port_label.pack(side="left", padx=5, pady=5)
+        self.port_entry = ttk.Entry(port_frame, width=6)
+        self.port_entry.pack(side="left", padx=5, pady=5)
+        self.port_entry.insert(0, "443")
+        port_button = ttk.Button(port_frame, text="Scan", command=self.run_port_scan)
+        port_button.pack(side="left", padx=5, pady=5)
+
+        output_frame = ttk.LabelFrame(self, text="Results")
+        output_frame.pack(padx=10, pady=10, fill="both", expand=True)
+        self.other_tools_output = scrolledtext.ScrolledText(
+            output_frame, wrap=tk.WORD, height=10
+        )
+        self.other_tools_output.pack(padx=5, pady=5, fill="both", expand=True)
+
+    def start_ping(self):
+        """Starts the continuous ping thread."""
+        host = self.ping_host_entry.get()
+        if not host:
+            messagebox.showerror("Error", "Please enter a host or IP address.")
+            return
+
+        self.ping_output_text.delete("1.0", tk.END)
+        self.start_button.config(state="disabled")
+        self.stop_button.config(state="normal")
+
+        def update_text(message):
+            self.ping_output_text.insert(tk.END, message)
+            self.ping_output_text.see(tk.END)
+
+        self.ping_thread = threading.Thread(
+            target=net_tool.continuous_ping, args=(host, update_text), daemon=True
+        )
+        self.ping_thread.start()
+
+    def stop_ping(self):
+        """Stops the continuous ping."""
+        net_tool.stop_ping()
+        self.start_button.config(state="normal")
+        self.stop_button.config(state="disabled")
+        self.ping_output_text.insert(tk.END, "\n--- Ping Stopped ---\n")
+
+    def run_tool_in_thread(self, tool_function, *args):
+        """Generic runner for single-shot tools to avoid freezing the GUI."""
+        self.other_tools_output.delete("1.0", tk.END)
+        self.other_tools_output.insert(
+            tk.INSERT, f"Running {tool_function.__name__}..."
+        )
+
+        def task_wrapper():
+            result = tool_function(*args)
+            self.other_tools_output.delete("1.0", tk.END)
+            self.other_tools_output.insert(tk.INSERT, result)
+
+        threading.Thread(target=task_wrapper, daemon=True).start()
+
+    def run_traceroute(self):
+        host = self.trace_host_entry.get()
+        if not host:
+            messagebox.showerror("Error", "Please enter a host for the traceroute.")
+            return
+        self.run_tool_in_thread(net_tool.traceroute_test, host)
+
+    def run_dns_lookup(self):
+        domain = self.dns_host_entry.get()
+        if not domain:
+            messagebox.showerror("Error", "Please enter a domain to look up.")
+            return
+        self.run_tool_in_thread(net_tool.dns_resolution_test, domain)
+
+    def run_port_scan(self):
+        host = self.port_host_entry.get()
+        port = self.port_entry.get()
+        if not host or not port:
+            messagebox.showerror(
+                "Error", "Please enter both a host and a port to scan."
+            )
+            return
+        self.run_tool_in_thread(net_tool.port_connectivity_test, host, port)
+
+
+class AdvancedDiagnostics(ttk.Frame):
+    """Tab for connecting to network devices and running commands."""
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.parent = parent
+        self.router_connection = None
+        self.create_widgets()
+
+    def create_widgets(self):
+        # --- Connection Frame ---
+        conn_frame = ttk.LabelFrame(self, text="Device Connection")
+        conn_frame.pack(padx=10, pady=10, fill="x")
+
+        # Grid layout for labels and entries
+        conn_frame.columnconfigure(1, weight=1)
+
+        ttk.Label(conn_frame, text="Device IP:").grid(
+            row=0, column=0, sticky="w", padx=5, pady=2
+        )
+        self.ip_entry = ttk.Entry(conn_frame)
+        self.ip_entry.grid(row=0, column=1, sticky="ew", padx=5, pady=2)
+
+        ttk.Label(conn_frame, text="Username:").grid(
+            row=1, column=0, sticky="w", padx=5, pady=2
+        )
+        self.user_entry = ttk.Entry(conn_frame)
+        self.user_entry.grid(row=1, column=1, sticky="ew", padx=5, pady=2)
+
+        ttk.Label(conn_frame, text="Password:").grid(
+            row=2, column=0, sticky="w", padx=5, pady=2
+        )
+        self.pass_entry = ttk.Entry(conn_frame, show="*")
+        self.pass_entry.grid(row=2, column=1, sticky="ew", padx=5, pady=2)
+
+        ttk.Label(conn_frame, text="Device Type:").grid(
+            row=3, column=0, sticky="w", padx=5, pady=2
+        )
+        self.device_type_combo = ttk.Combobox(
+            conn_frame,
+            values=[
+                "cisco_ios",
+                "cisco_xr",
+                "cisco_nxos",
+                "arista_eos",
+                "juniper_junos",
+            ],
+        )
+        self.device_type_combo.grid(row=3, column=1, sticky="ew", padx=5, pady=2)
+        self.device_type_combo.set("cisco_ios")
+
+        # --- Buttons and Status ---
+        button_frame = ttk.Frame(conn_frame)
+        button_frame.grid(row=4, column=0, columnspan=2, pady=5)
+
+        self.connect_button = ttk.Button(
+            button_frame, text="Connect", command=self.connect_device
+        )
+        self.connect_button.pack(side="left", padx=5)
+        self.disconnect_button = ttk.Button(
+            button_frame,
+            text="Disconnect",
+            command=self.disconnect_device,
+            state="disabled",
+        )
+        self.disconnect_button.pack(side="left", padx=5)
+
+        self.status_label = ttk.Label(
+            button_frame, text="Status: Disconnected", foreground="red"
+        )
+        self.status_label.pack(side="left", padx=10)
+
+        # --- Command Frame ---
+        cmd_frame = ttk.LabelFrame(self, text="Run Command")
+        cmd_frame.pack(padx=10, pady=10, fill="x")
+        cmd_frame.columnconfigure(0, weight=1)
+
+        self.cmd_entry = ttk.Entry(cmd_frame)
+        self.cmd_entry.grid(row=0, column=0, sticky="ew", padx=5, pady=5)
+        self.cmd_entry.insert(0, "show ip interface brief")
+        self.send_cmd_button = ttk.Button(
+            cmd_frame, text="Send Command", command=self.send_command, state="disabled"
+        )
+        self.send_cmd_button.grid(row=0, column=1, padx=5, pady=5)
+
+        # --- Output Display ---
+        output_frame = ttk.LabelFrame(self, text="Device Output")
+        output_frame.pack(padx=10, pady=10, fill="both", expand=True)
+        self.output_text = scrolledtext.ScrolledText(
+            output_frame, wrap=tk.WORD, height=15
+        )
+        self.output_text.pack(padx=5, pady=5, fill="both", expand=True)
+
+    def connect_device(self):
+        ip = self.ip_entry.get()
+        user = self.user_entry.get()
+        password = self.pass_entry.get()
+        device_type = self.device_type_combo.get()
+
+        if not all([ip, user, password, device_type]):
+            messagebox.showerror("Error", "Please fill in all connection details.")
+            return
+
+        self.router_connection = RouterConnection(device_type, ip, user, password)
+        self.status_label.config(text="Status: Connecting...", foreground="orange")
+        self.output_text.delete("1.0", tk.END)
+        self.output_text.insert(tk.END, f"Attempting to connect to {ip}...")
+
+        threading.Thread(target=self.connection_task, daemon=True).start()
+
+    def connection_task(self):
+        result = self.router_connection.connect()
+
+        def update_ui():
+            self.output_text.insert(tk.END, f"\n{result}\n")
+            if "successful" in result:
+                self.status_label.config(text="Status: Connected", foreground="green")
+                self.connect_button.config(state="disabled")
+                self.disconnect_button.config(state="normal")
+                self.send_cmd_button.config(state="normal")
+            else:
+                self.status_label.config(text="Status: Failed", foreground="red")
+                self.router_connection = None
+
+        self.parent.after(0, update_ui)
+
+    def disconnect_device(self):
+        if self.router_connection:
+            result = self.router_connection.disconnect()
+            self.output_text.insert(tk.END, f"\n{result}\n")
+
+        self.status_label.config(text="Status: Disconnected", foreground="red")
+        self.connect_button.config(state="normal")
+        self.disconnect_button.config(state="disabled")
+        self.send_cmd_button.config(state="disabled")
+        self.router_connection = None
+
+    def send_command(self):
+        command = self.cmd_entry.get()
+        if not command:
+            messagebox.showerror("Error", "Please enter a command to send.")
+            return
+
+        self.output_text.delete("1.0", tk.END)
+        self.output_text.insert(tk.END, f"Sending command: '{command}'...")
+
+        threading.Thread(target=self.command_task, args=(command,), daemon=True).start()
+
+    def command_task(self, command):
+        if self.router_connection:
+            result = self.router_connection.send_command(command)
+
+            def update_ui():
+                self.output_text.delete("1.d", tk.END)
+                self.output_text.insert(tk.END, f"\n--- Output for '{command}' ---\n")
+                self.output_text.insert(tk.END, result)
+
+            self.parent.after(0, update_ui)
+
+
+class MainApplication(tk.Tk):
+    """The main application window."""
+
     def __init__(self):
         super().__init__()
         self.title("Network Triage Tool")
-        self.geometry("800x600")
+        self.geometry("600x750")
 
-        # Create the tab controller
-        self.tabControl = ttk.Notebook(self)
+        notebook = ttk.Notebook(self)
+        notebook.pack(pady=10, padx=10, fill="both", expand=True)
 
-        # Create tabs
-        self.tab_triage = ttk.Frame(self.tabControl)
-        self.tab_connectivity = ttk.Frame(self.tabControl)
-        self.tab_discovery = ttk.Frame(self.tabControl)
-        self.tab_advanced = ttk.Frame(self.tabControl)
+        dashboard_tab = TriageDashboard(self)
+        connectivity_tab = ConnectivityTools(self)
+        advanced_tab = AdvancedDiagnostics(self)
 
-        # Add tabs to the controller
-        self.tabControl.add(self.tab_triage, text="Triage Dashboard")
-        self.tabControl.add(self.tab_connectivity, text="Connectivity Tools")
-        self.tabControl.add(self.tab_discovery, text="Local Discovery")
-        self.tabControl.add(self.tab_advanced, text="Advanced Diagnostics")
-
-        self.tabControl.pack(expand=1, fill="both")
-
-        # Populate each tab
-        self.create_triage_tab()
-        self.create_connectivity_tab()
-        self.create_discovery_tab()
-        # self.create_advanced_tab() # Placeholder for future implementation
-
-    def create_triage_tab(self):
-        """Creates the content for the Triage Dashboard tab."""
-        frame = self.tab_triage
-
-        ttk.Label(frame, text="System Information", font=("Helvetica", 16)).pack(
-            pady=10
-        )
-
-        self.info_labels = {}
-        info_points = ["Hostname", "OS", "Internal IP", "Gateway", "External IP"]
-        for point in info_points:
-            row = ttk.Frame(frame)
-            row.pack(fill="x", padx=20, pady=2)
-            ttk.Label(row, text=f"{point}:", width=15, anchor="w").pack(side="left")
-            self.info_labels[point] = ttk.Label(row, text="loading...", anchor="w")
-            self.info_labels[point].pack(side="left")
-
-        ttk.Button(frame, text="Refresh Info", command=self.refresh_triage_info).pack(
-            pady=20
-        )
-
-        # Initial data load
-        self.refresh_triage_info()
-
-    def refresh_triage_info(self):
-        """Callback to refresh the data on the triage tab."""
-
-        def task():
-            host_info = net_tool.get_host_info()
-            ip_info = net_tool.get_ip_info()
-
-            self.info_labels["Hostname"].config(text=host_info.get("hostname", "N/A"))
-            self.info_labels["OS"].config(text=host_info.get("os", "N/A"))
-            self.info_labels["Internal IP"].config(
-                text=ip_info.get("internal_ip", "N/A")
-            )
-            self.info_labels["Gateway"].config(text=ip_info.get("gateway", "N/A"))
-            self.info_labels["External IP"].config(
-                text=ip_info.get("external_ip", "N/A")
-            )
-
-        # Run in a thread to not freeze the UI
-        threading.Thread(target=task, daemon=True).start()
-
-    def create_connectivity_tab(self):
-        """Creates the content for the Connectivity Tools tab."""
-        frame = self.tab_connectivity
-        ttk.Label(frame, text="Continuous Ping", font=("Helvetica", 16)).pack(pady=10)
-
-        # Input Frame
-        input_frame = ttk.Frame(frame)
-        input_frame.pack(pady=5)
-        ttk.Label(input_frame, text="Target Host:").pack(side="left", padx=5)
-        self.ping_host_entry = ttk.Entry(input_frame, width=20)
-        self.ping_host_entry.pack(side="left")
-        self.ping_host_entry.insert(0, "8.8.8.8")
-
-        ttk.Button(input_frame, text="Start Ping", command=self.start_ping).pack(
-            side="left", padx=5
-        )
-        # Add a Stop button later, which will need to manage the thread
-
-        # Output Text Area
-        self.ping_results_text = scrolledtext.ScrolledText(
-            frame, wrap=tk.WORD, width=90, height=25
-        )
-        self.ping_results_text.pack(pady=10, padx=10, expand=True, fill="both")
-
-    def start_ping(self):
-        """Starts the continuous ping in a new thread."""
-        host = self.ping_host_entry.get()
-        if not host:
-            return
-
-        self.ping_results_text.delete("1.0", tk.END)
-        self.ping_results_text.insert(tk.END, f"--- Starting ping to {host} ---\n")
-
-        def update_text(line):
-            self.ping_results_text.insert(tk.END, line + "\n")
-            self.ping_results_text.see(tk.END)  # Auto-scroll
-
-        # Run the ping tool in a thread so the UI doesn't freeze
-        ping_thread = threading.Thread(
-            target=net_tool.continuous_ping, args=(host, update_text), daemon=True
-        )
-        ping_thread.start()
-
-    def create_discovery_tab(self):
-        """Creates the content for the Local Discovery tab."""
-        frame = self.tab_discovery
-        ttk.Label(
-            frame, text="Connected Switch Information (LLDP)", font=("Helvetica", 16)
-        ).pack(pady=10)
-
-        ttk.Button(
-            frame, text="Scan for LLDP Information", command=self.start_lldp_scan
-        ).pack(pady=10)
-
-        self.lldp_result_text = scrolledtext.ScrolledText(
-            frame, wrap=tk.WORD, width=90, height=15
-        )
-        self.lldp_result_text.pack(pady=10, padx=10)
-        self.lldp_result_text.insert(
-            tk.END,
-            "Click the button to scan for LLDP packets for 15 seconds.\nNOTE: This may require administrator/sudo privileges to run.",
-        )
-
-    def start_lldp_scan(self):
-        """Starts the LLDP scan in a separate thread."""
-        self.lldp_result_text.delete("1.0", tk.END)
-        self.lldp_result_text.insert(
-            tk.END, "Scanning for LLDP packets... Please wait up to 15 seconds.\n"
-        )
-
-        def lldp_callback(data):
-            self.lldp_result_text.delete("1.0", tk.END)
-            if data.get("error"):
-                self.lldp_result_text.insert(tk.END, f"Error: {data['error']}\n")
-            else:
-                self.lldp_result_text.insert(
-                    tk.END, "--- LLDP Information Received ---\n"
-                )
-                self.lldp_result_text.insert(
-                    tk.END, f"Switch Name: {data.get('switch_name', 'N/A')}\n"
-                )
-                self.lldp_result_text.insert(
-                    tk.END, f"Switch Port: {data.get('port_id', 'N/A')}\n"
-                )
-                self.lldp_result_text.insert(
-                    tk.END,
-                    f"Switch Model/Description: {data.get('switch_model', 'N/A')}\n",
-                )
-
-        # Run in a thread to not freeze the UI
-        threading.Thread(
-            target=net_tool.run_lldp_scan, args=(lldp_callback,), daemon=True
-        ).start()
+        notebook.add(dashboard_tab, text="Triage Dashboard")
+        notebook.add(connectivity_tab, text="Connectivity Tools")
+        notebook.add(advanced_tab, text="Advanced Diagnostics")
 
 
 if __name__ == "__main__":
-    app = NetworkTriageApp()
+    app = MainApplication()
     app.mainloop()
