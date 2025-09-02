@@ -1,12 +1,12 @@
 import queue
 import threading
+import time
 import tkinter as tk
 from tkinter import ttk, scrolledtext, messagebox
+from tkinter import filedialog
 
-# Note: We now import both classes from the toolkit
 from network_toolkit import NetworkTriageToolkit, RouterConnection
 
-# We instantiate the toolkit for client-side tools
 net_tool = NetworkTriageToolkit()
 
 
@@ -51,7 +51,6 @@ class TriageDashboard(ttk.Frame):
         for label in self.info_labels.values():
             label.config(text="Loading...")
 
-        # Run data fetching in a separate thread to not freeze the GUI
         thread = threading.Thread(target=self.task, daemon=True)
         thread.start()
 
@@ -59,11 +58,8 @@ class TriageDashboard(ttk.Frame):
         """The actual data-fetching task."""
         system_info = net_tool.get_system_info()
         ip_info = net_tool.get_ip_info()
-
-        # Combine the dictionaries
         all_info = {**system_info, **ip_info}
 
-        # Update GUI from the main thread
         for key, value in all_info.items():
             if key in self.info_labels:
                 self.parent.after(0, self.info_labels[key].config, {"text": value})
@@ -85,7 +81,6 @@ class TriageDashboard(ttk.Frame):
             text_area.delete("1.0", tk.END)
             text_area.insert(tk.INSERT, adapter_info)
 
-        # Run in a thread so the main UI doesn't freeze
         threading.Thread(target=fetch_and_display, daemon=True).start()
 
 
@@ -95,10 +90,8 @@ class ConnectivityTools(ttk.Frame):
     def __init__(self, parent):
         super().__init__(parent)
         self.create_ping_widgets()
-
         separator = ttk.Separator(self, orient="horizontal")
         separator.pack(fill="x", padx=10, pady=5)
-
         self.create_other_tools_widgets()
 
     def create_ping_widgets(self):
@@ -136,7 +129,6 @@ class ConnectivityTools(ttk.Frame):
         tools_frame = ttk.Frame(self)
         tools_frame.pack(padx=10, pady=10, fill="x")
 
-        # --- Traceroute ---
         trace_frame = ttk.LabelFrame(tools_frame, text="Traceroute")
         trace_frame.pack(fill="x", expand=True, pady=(0, 10))
 
@@ -150,7 +142,6 @@ class ConnectivityTools(ttk.Frame):
         )
         trace_button.pack(side="left", padx=5, pady=5)
 
-        # --- DNS Lookup ---
         dns_frame = ttk.LabelFrame(tools_frame, text="DNS Lookup")
         dns_frame.pack(fill="x", expand=True, pady=(0, 10))
 
@@ -162,7 +153,6 @@ class ConnectivityTools(ttk.Frame):
         dns_button = ttk.Button(dns_frame, text="Lookup", command=self.run_dns_lookup)
         dns_button.pack(side="left", padx=5, pady=5)
 
-        # --- Port Scan ---
         port_frame = ttk.LabelFrame(tools_frame, text="Port Scan")
         port_frame.pack(fill="x", expand=True)
 
@@ -263,11 +253,8 @@ class AdvancedDiagnostics(ttk.Frame):
         self.create_widgets()
 
     def create_widgets(self):
-        # --- Connection Frame ---
         conn_frame = ttk.LabelFrame(self, text="Device Connection")
         conn_frame.pack(padx=10, pady=10, fill="x")
-
-        # Grid layout for labels and entries
         conn_frame.columnconfigure(1, weight=1)
 
         ttk.Label(conn_frame, text="Device IP:").grid(
@@ -304,7 +291,6 @@ class AdvancedDiagnostics(ttk.Frame):
         self.device_type_combo.grid(row=3, column=1, sticky="ew", padx=5, pady=2)
         self.device_type_combo.set("cisco_ios")
 
-        # --- Buttons and Status ---
         button_frame = ttk.Frame(conn_frame)
         button_frame.grid(row=4, column=0, columnspan=2, pady=5)
 
@@ -325,7 +311,6 @@ class AdvancedDiagnostics(ttk.Frame):
         )
         self.status_label.pack(side="left", padx=10)
 
-        # --- Command Frame ---
         cmd_frame = ttk.LabelFrame(self, text="Run Command")
         cmd_frame.pack(padx=10, pady=10, fill="x")
         cmd_frame.columnconfigure(0, weight=1)
@@ -338,7 +323,6 @@ class AdvancedDiagnostics(ttk.Frame):
         )
         self.send_cmd_button.grid(row=0, column=1, padx=5, pady=5)
 
-        # --- Output Display ---
         output_frame = ttk.LabelFrame(self, text="Device Output")
         output_frame.pack(padx=10, pady=10, fill="both", expand=True)
         self.output_text = scrolledtext.ScrolledText(
@@ -419,7 +403,6 @@ class LLDPDiscovery(ttk.Frame):
     def __init__(self, parent):
         super().__init__(parent)
         self.parent = parent
-        self.scan_timer = None
         self.create_widgets()
 
     def create_widgets(self):
@@ -441,7 +424,7 @@ class LLDPDiscovery(ttk.Frame):
         self.stop_button.pack(side="left")
 
         self.progress = ttk.Progressbar(
-            lldp_frame, orient="horizontal", mode="determinate"
+            lldp_frame, orient="horizontal", mode="indeterminate"
         )
         self.progress.pack(fill="x", padx=5, pady=(0, 5))
 
@@ -451,45 +434,24 @@ class LLDPDiscovery(ttk.Frame):
         self.output_text.pack(padx=5, pady=5, fill="both", expand=True)
 
     def start_scan(self):
-        """Starts the LLDP packet capture and the UI timeout."""
+        """Starts the LLDP packet capture."""
         self.output_text.delete("1.0", tk.END)
         self.start_button.config(state="disabled")
         self.stop_button.config(state="normal")
-        self.progress["value"] = 0
-        self.scan_duration = 60  # seconds
+        self.progress.start(10)  # Start the indeterminate animation
 
         def update_output(message):
             self.parent.after(0, self._update_text_widget, message)
 
-        # This is the corrected call without the 'timeout' argument
-        net_tool.start_lldp_capture(update_output)
-
-        self.update_progress_bar()
-
-        # Schedule the UI to force a timeout
-        self.scan_timer = self.parent.after(
-            self.scan_duration * 1000, self.force_timeout
-        )
-
-    def force_timeout(self):
-        """Called by the timer if the scan duration is reached."""
-        if self.start_button["state"] == "disabled":
-            net_tool.stop_lldp_capture()
-            self._update_text_widget(
-                f"Scan complete. No LLDP packets found in {self.scan_duration} seconds."
-            )
-
-    def update_progress_bar(self):
-        """Animates the progress bar over the scan duration."""
-        if self.start_button["state"] == "disabled":
-            self.progress["value"] += 100 / (self.scan_duration * 10)
-            self.parent.after(100, self.update_progress_bar)
+        net_tool.start_lldp_capture(update_output, timeout=60)
+        self.output_text.insert(tk.END, "Scanning for 60 seconds...\n")
 
     def _update_text_widget(self, message):
-        """Helper method to safely update the text widget from the main GUI thread."""
+        """Helper method to safely update the text widget and UI state."""
         self.output_text.insert(tk.END, message + "\n")
         self.output_text.see(tk.END)
 
+        # When the scan is definitively over, stop the animation and reset buttons
         if any(
             keyword in message
             for keyword in [
@@ -499,21 +461,14 @@ class LLDPDiscovery(ttk.Frame):
                 "Error",
             ]
         ):
-            if self.scan_timer:
-                self.parent.after_cancel(self.scan_timer)
-                self.scan_timer = None
-            self.progress["value"] = 100
+            self.progress.stop()
             self.start_button.config(state="normal")
             self.stop_button.config(state="disabled")
 
     def stop_scan(self):
-        """Stops the LLDP packet capture and resets the UI, canceling the timeout timer."""
-        if self.scan_timer:
-            self.parent.after_cancel(self.scan_timer)
-            self.scan_timer = None
-
+        """Stops the LLDP packet capture and resets the UI."""
         net_tool.stop_lldp_capture()
-        self.progress["value"] = 0
+        self.progress.stop()
         self.start_button.config(state="normal")
         self.stop_button.config(state="disabled")
         self.output_text.insert(tk.END, "\n--- Scan Stopped by User ---\n")
@@ -530,15 +485,70 @@ class MainApplication(tk.Tk):
         notebook = ttk.Notebook(self)
         notebook.pack(pady=10, padx=10, fill="both", expand=True)
 
-        dashboard_tab = TriageDashboard(self)
-        connectivity_tab = ConnectivityTools(self)
-        lldp_tab = LLDPDiscovery(self)
-        advanced_tab = AdvancedDiagnostics(self)
+        self.dashboard_tab = TriageDashboard(self)
+        self.connectivity_tab = ConnectivityTools(self)
+        self.lldp_tab = LLDPDiscovery(self)
+        self.advanced_tab = AdvancedDiagnostics(self)
 
-        notebook.add(dashboard_tab, text="Triage Dashboard")
-        notebook.add(connectivity_tab, text="Connectivity Tools")
-        notebook.add(lldp_tab, text="Physical Layer")
-        notebook.add(advanced_tab, text="Advanced Diagnostics")
+        notebook.add(self.dashboard_tab, text="Triage Dashboard")
+        notebook.add(self.connectivity_tab, text="Connectivity Tools")
+        notebook.add(self.lldp_tab, text="Physical Layer")
+        notebook.add(self.advanced_tab, text="Advanced Diagnostics")
+
+        report_button = ttk.Button(self, text="Save Report", command=self.save_report)
+        report_button.pack(pady=10)
+
+    def save_report(self):
+        """Gathers data from all tabs and saves it to a text file."""
+        report_content = []
+
+        report_content.append("=" * 50)
+        report_content.append("NETWORK TRIAGE REPORT")
+        report_content.append(f"Generated on: {time.strftime('%Y-%m-%d %H:%M:%S')}")
+        report_content.append("=" * 50 + "\n")
+
+        report_content.append("--- System & Network Information ---")
+        for key, label in self.dashboard_tab.info_labels.items():
+            report_content.append(f"{key}: {label.cget('text')}")
+        report_content.append("\n")
+
+        report_content.append("--- Connectivity Tools Output ---")
+        report_content.append("Ping Output:")
+        report_content.append(
+            self.connectivity_tab.ping_output_text.get("1.0", tk.END).strip()
+        )
+        report_content.append("\nOther Tools Output:")
+        report_content.append(
+            self.connectivity_tab.other_tools_output.get("1.0", tk.END).strip()
+        )
+        report_content.append("\n")
+
+        report_content.append("--- Physical Layer (LLDP) Output ---")
+        report_content.append(self.lldp_tab.output_text.get("1.0", tk.END).strip())
+        report_content.append("\n")
+
+        report_content.append("--- Advanced Diagnostics Output ---")
+        report_content.append(
+            self.advanced_tab.output_text.get("1.sem", tk.END).strip()
+        )
+        report_content.append("\n")
+
+        file_path = filedialog.asksaveasfilename(
+            defaultextension=".txt",
+            filetypes=[("Text files", "*.txt"), ("All files", "*.*")],
+            title="Save Network Report",
+            initialfile=f"network_report_{time.strftime('%Y%m%d_%H%M%S')}.txt",
+        )
+
+        if file_path:
+            try:
+                with open(file_path, "w", encoding="utf-8") as f:
+                    f.write("\n".join(report_content))
+                messagebox.showinfo(
+                    "Success", f"Report saved successfully to:\n{file_path}"
+                )
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to save report: {e}")
 
 
 if __name__ == "__main__":
