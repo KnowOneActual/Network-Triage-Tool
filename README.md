@@ -76,8 +76,6 @@ cd Network-Triage-Tool
 2. **Install the required Python packages:** 
 pip install -r requirements.txt 
  
-*(Note: We will create a requirements.txt file in a later step. For now, the dependencies are netmiko, scapy, psutil, and requests.)*
-
 
 ### Running the Application
 
@@ -94,7 +92,7 @@ The ultimate goal is to package this application into a single, standalone execu
 
 
 * [ ] Complete the UI for all planned features in main_app.py.
-* [ ] Create a requirements.txt file.
+* [ *] Create a requirements.txt file.
 * [ ] Add a feature to export all collected data into a single text file.
 * [ ] Create PyInstaller build scripts.
 * [ ] Test executables on all target platforms.
