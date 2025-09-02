@@ -528,9 +528,7 @@ class MainApplication(tk.Tk):
         report_content.append("\n")
 
         report_content.append("--- Advanced Diagnostics Output ---")
-        report_content.append(
-            self.advanced_tab.output_text.get("1.sem", tk.END).strip()
-        )
+        report_content.append(self.advanced_tab.output_text.get("1.0", tk.END).strip())
         report_content.append("\n")
 
         file_path = filedialog.asksaveasfilename(
