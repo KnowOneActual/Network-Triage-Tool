@@ -1,6 +1,7 @@
 import os
 import platform
 import socket
+import struct
 import subprocess
 import threading
 import time
@@ -211,47 +212,67 @@ class NetworkTriageToolkit:
             if packet.haslayer(LLDPDU):
                 packet_found[0] = True
                 try:
-                    chassis_id = None
-                    port_id = None
-                    ttl = "N/A"
+                    chassis_id_val = None
+                    port_id_val = None
+                    port_id_subtype = "N/A"
+                    port_description_val = None
 
-                    # Manually iterate through TLVs for maximum compatibility
-                    if hasattr(packet[LLDPDU], "tlv"):
-                        current_tlv = packet[LLDPDU].tlv
-                        while isinstance(current_tlv, LLDPDU):
-                            if current_tlv.type == 1:  # Chassis ID
-                                chassis_id = getattr(current_tlv, "id", None)
-                            elif current_tlv.type == 2:  # Port ID
-                                port_id = getattr(current_tlv, "id", None)
-                            elif current_tlv.type == 3:  # TTL
-                                ttl = getattr(current_tlv, "ttl", "N/A")
+                    # Manual TLV parsing from raw bytes for maximum compatibility
+                    raw_payload = bytes(packet[LLDPDU].payload)
+                    i = 0
+                    while i < len(raw_payload):
+                        if i + 2 > len(raw_payload):
+                            break
 
-                            if not hasattr(current_tlv, "payload") or not isinstance(
-                                current_tlv.payload, LLDPDU
-                            ):
-                                break
-                            current_tlv = current_tlv.payload
+                        tlv_header = struct.unpack("!H", raw_payload[i : i + 2])[0]
+                        tlv_type = tlv_header >> 9
+                        tlv_len = tlv_header & 0x1FF
 
-                    if not chassis_id or not port_id:
+                        if i + 2 + tlv_len > len(raw_payload):
+                            break
+
+                        value_bytes = raw_payload[i + 2 : i + 2 + tlv_len]
+
+                        if tlv_type == 1:  # Chassis ID
+                            chassis_id_val = value_bytes[1:]
+                        elif tlv_type == 2:  # Port ID
+                            port_id_subtype = value_bytes[0]
+                            port_id_val = value_bytes[1:]
+                        elif tlv_type == 4:  # Port Description
+                            port_description_val = value_bytes
+                        elif tlv_type == 0:  # End of LLDPDU
+                            break
+
+                        i += 2 + tlv_len
+
+                    if not chassis_id_val or not port_id_val:
                         raise ValueError(
-                            "Essential LLDP fields (Chassis/Port ID) not found in TLVs."
+                            "Essential LLDP fields not found via manual parsing."
                         )
 
-                    chassis_id_str = (
-                        chassis_id.decode()
-                        if isinstance(chassis_id, bytes)
-                        else str(chassis_id)
-                    )
-                    port_id_str = (
-                        port_id.decode() if isinstance(port_id, bytes) else str(port_id)
-                    )
+                    # --- Smart Decoding based on Subtype ---
+                    chassis_id_str = chassis_id_val.decode("utf-8", "ignore")
+
+                    port_id_str = ""
+                    if port_id_subtype == 3:  # MAC Address
+                        port_id_str = ":".join(f"{b:02x}" for b in port_id_val)
+                    elif port_id_subtype == 5:  # Interface Name
+                        port_id_str = port_id_val.decode("utf-8", "ignore")
+                    else:  # Other/Unknown
+                        port_id_str = (
+                            f"Raw: {port_id_val.hex()} (Subtype: {port_id_subtype})"
+                        )
 
                     result = (
                         f"--- LLDP Packet Found ---\n"
                         f"Switch ID: {chassis_id_str}\n"
                         f"Port ID: {port_id_str}\n"
-                        f"Time-To-Live: {ttl} seconds"
                     )
+
+                    if port_description_val:
+                        desc_str = port_description_val.decode("utf-8", "ignore")
+                        result += f"Port Description: {desc_str}\n"
+
                 except Exception as e:
                     result = f"Error parsing LLDP packet: {e}"
 
