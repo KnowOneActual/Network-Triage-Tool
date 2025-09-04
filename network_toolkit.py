@@ -8,9 +8,9 @@ import time
 import requests
 import psutil
 from netmiko import ConnectHandler
-from scapy.all import sniff
+from scapy.all import sniff, inet_ntoa
 from scapy.contrib.lldp import LLDPDU
-from scapy.contrib.cdp import CDPMsg
+from scapy.contrib.cdp import CDPMsg, CDPAddrRecord
 
 
 class NetworkTriageToolkit:
@@ -216,8 +216,10 @@ class NetworkTriageToolkit:
                     port_id_val = None
                     port_id_subtype = "N/A"
                     port_description_val = None
+                    system_name_val = None
+                    mgmt_address_val = None
 
-                    # Manual TLV parsing from raw bytes for maximum compatibility
+                    # Manual TLV parsing from raw bytes
                     raw_payload = bytes(packet[LLDPDU].payload)
                     i = 0
                     while i < len(raw_payload):
@@ -240,6 +242,14 @@ class NetworkTriageToolkit:
                             port_id_val = value_bytes[1:]
                         elif tlv_type == 4:  # Port Description
                             port_description_val = value_bytes
+                        elif tlv_type == 5:  # System Name
+                            system_name_val = value_bytes
+                        elif tlv_type == 8:  # Management Address
+                            # Mgmt Addr TLV has its own structure
+                            if len(value_bytes) > 1:
+                                addr_subtype = value_bytes[1]
+                                if addr_subtype == 1:  # IPv4
+                                    mgmt_address_val = inet_ntoa(value_bytes[2:6])
                         elif tlv_type == 0:  # End of LLDPDU
                             break
 
@@ -250,28 +260,20 @@ class NetworkTriageToolkit:
                             "Essential LLDP fields not found via manual parsing."
                         )
 
-                    # --- Smart Decoding based on Subtype ---
+                    # --- Smart Decoding ---
                     chassis_id_str = chassis_id_val.decode("utf-8", "ignore")
 
-                    port_id_str = ""
-                    if port_id_subtype == 3:  # MAC Address
-                        port_id_str = ":".join(f"{b:02x}" for b in port_id_val)
-                    elif port_id_subtype == 5:  # Interface Name
-                        port_id_str = port_id_val.decode("utf-8", "ignore")
-                    else:  # Other/Unknown
-                        port_id_str = (
-                            f"Raw: {port_id_val.hex()} (Subtype: {port_id_subtype})"
-                        )
+                    result = f"--- LLDP Packet Found ---\n"
+                    if system_name_val:
+                        result += f"System Name: {system_name_val.decode('utf-8', 'ignore')}\n"
 
-                    result = (
-                        f"--- LLDP Packet Found ---\n"
-                        f"Switch ID: {chassis_id_str}\n"
-                        f"Port ID: {port_id_str}\n"
-                    )
+                    result += f"Switch ID: {chassis_id_str}\n"
+
+                    if mgmt_address_val:
+                        result += f"Management Address: {mgmt_address_val}\n"
 
                     if port_description_val:
-                        desc_str = port_description_val.decode("utf-8", "ignore")
-                        result += f"Port Description: {desc_str}\n"
+                        result += f"Port Description: {port_description_val.decode('utf-8', 'ignore')}\n"
 
                 except Exception as e:
                     result = f"Error parsing LLDP packet: {e}"
@@ -285,9 +287,14 @@ class NetworkTriageToolkit:
                     device_id = packet[CDPMsg].device_id.decode()
                     port_id = packet[CDPMsg].port_id.decode()
                     platform = packet[CDPMsg].platform.decode()
+                    mgmt_address = "N/A"
+                    if packet.haslayer(CDPAddrRecord):
+                        mgmt_address = packet[CDPAddrRecord].addr
+
                     result = (
                         f"--- CDP Packet Found ---\n"
                         f"Device ID: {device_id}\n"
+                        f"Management Address: {mgmt_address}\n"
                         f"Port ID: {port_id}\n"
                         f"Platform: {platform}"
                     )
