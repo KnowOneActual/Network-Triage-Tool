@@ -36,15 +36,27 @@ class TriageDashboard(ttk.Frame):
             label_value.grid(row=i, column=1, sticky="w", padx=5, pady=2)
             self.info_labels[point] = label_value
 
-        refresh_button = ttk.Button(
-            self, text="Refresh Data", command=self.refresh_data
+        notes_frame = ttk.LabelFrame(self, text="User Notes")
+        notes_frame.pack(padx=10, pady=10, fill="both", expand=True)
+
+        self.notes_text = scrolledtext.ScrolledText(notes_frame, wrap=tk.WORD, height=5)
+        self.notes_text.pack(padx=5, pady=5, fill="both", expand=True)
+        self.notes_text.insert(
+            tk.END, "Enter any relevant details about the issue here..."
         )
-        refresh_button.pack(pady=5)
+
+        button_frame = ttk.Frame(self)
+        button_frame.pack(pady=5)
+
+        refresh_button = ttk.Button(
+            button_frame, text="Refresh Data", command=self.refresh_data
+        )
+        refresh_button.pack(side="left", padx=10)
 
         adapter_button = ttk.Button(
-            self, text="Show Full Adapter Info", command=self.show_adapter_info
+            button_frame, text="Show Full Adapter Info", command=self.show_adapter_info
         )
-        adapter_button.pack(pady=5)
+        adapter_button.pack(side="left", padx=10)
 
     def refresh_data(self):
         """Fetches and updates the network info labels."""
@@ -390,7 +402,7 @@ class AdvancedDiagnostics(ttk.Frame):
             result = self.router_connection.send_command(command)
 
             def update_ui():
-                self.output_text.delete("1.d", tk.END)
+                self.output_text.delete("1.0", tk.END)
                 self.output_text.insert(tk.END, f"\n--- Output for '{command}' ---\n")
                 self.output_text.insert(tk.END, result)
 
@@ -510,6 +522,10 @@ class MainApplication(tk.Tk):
         report_content.append("--- System & Network Information ---")
         for key, label in self.dashboard_tab.info_labels.items():
             report_content.append(f"{key}: {label.cget('text')}")
+        report_content.append("\n")
+
+        report_content.append("--- User Notes ---")
+        report_content.append(self.dashboard_tab.notes_text.get("1.0", tk.END).strip())
         report_content.append("\n")
 
         report_content.append("--- Connectivity Tools Output ---")
