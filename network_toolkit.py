@@ -1,235 +1,167 @@
 import os
 import platform
 import socket
+import struct
 import subprocess
 import threading
 import time
-
-import psutil
 import requests
+import psutil
 from netmiko import ConnectHandler
 from scapy.all import sniff
 from scapy.contrib.lldp import LLDPDU
+from scapy.contrib.cdp import CDPMsg
 
 
 class NetworkTriageToolkit:
-    """
-    A collection of network diagnostic tools.
-    Designed to be used by a GUI application. Functions return data
-    rather than printing to the console.
-    """
+    """A collection of network troubleshooting functions."""
 
     def __init__(self):
-        self.ping_process = None
         self.stop_ping_event = threading.Event()
-        self.stop_lldp_event = threading.Event()
-        self.lldp_found = False
+        self.discovery_thread = None
+        self.stop_discovery = False
 
     def get_system_info(self):
         """Gathers basic system information."""
         try:
-            info = {
+            return {
                 "OS": f"{platform.system()} {platform.release()}",
                 "Hostname": socket.gethostname(),
             }
-            return info
         except Exception as e:
-            return {"Error": f"Could not get system info: {e}"}
+            return {"OS": f"Error: {e}", "Hostname": f"Error: {e}"}
 
     def get_ip_info(self):
-        """Gathers IP address, gateway, and public IP information."""
+        """Fetches local IP, public IP, and gateway information."""
         info = {
             "Internal IP": "N/A",
             "Gateway": "N/A",
             "Public IP": "N/A",
         }
+        # Get Internal IP
         try:
-            # Get internal IP by connecting to an external server
-            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
-                s.connect(("8.8.8.8", 80))
-                info["Internal IP"] = s.getsockname()[0]
-        except Exception as e:
-            info["Internal IP"] = f"Error: {e}"
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.connect(("8.8.8.8", 80))
+            info["Internal IP"] = s.getsockname()[0]
+            s.close()
+        except Exception:
+            info["Internal IP"] = "Error fetching IP"
 
         # Get Gateway
         try:
-            if platform.system() == "Windows":
-                process = subprocess.Popen(
-                    ["ipconfig"],
-                    stdout=subprocess.PIPE,
-                    text=True,
-                    creationflags=subprocess.CREATE_NO_WINDOW,
-                )
-                output, _ = process.communicate()
-                for line in output.split("\n"):
-                    if "Default Gateway" in line:
-                        parts = line.split(":")
-                        if len(parts) > 1:
-                            gateway = parts[1].strip()
-                            if gateway and "::" not in gateway:  # Filter out IPv6
-                                info["Gateway"] = gateway
-                                break
-            else:  # Linux and macOS
-                process = subprocess.Popen(
-                    ["netstat", "-nr"], stdout=subprocess.PIPE, text=True
-                )
-                output, _ = process.communicate()
-                for line in output.split("\n"):
-                    if "default" in line or "0.0.0.0" in line:
-                        parts = line.split()
-                        if len(parts) > 1:
-                            info["Gateway"] = parts[1]
-                            break
-        except Exception as e:
-            info["Gateway"] = f"Error: {e}"
+            gws = psutil.net_if_addrs()
+            # This is a more general way to find the gateway
+            for _, addrs in gws.items():
+                for addr in addrs:
+                    if addr.family == socket.AF_INET:
+                        # A bit of a guess, but often works. A more robust solution might be platform-specific.
+                        ip_parts = info["Internal IP"].split(".")
+                        if ip_parts[0:3] == addr.address.split(".")[0:3]:
+                            info["Gateway"] = (
+                                ".".join(ip_parts[0:3]) + ".1"
+                            )  # Common convention
+        except Exception:
+            info["Gateway"] = "Could not determine"
 
         # Get Public IP
         try:
-            response = requests.get("https://api.ipify.org?format=json", timeout=5)
-            response.raise_for_status()
-            info["Public IP"] = response.json()["ip"]
-        except requests.exceptions.RequestException as e:
-            info["Public IP"] = f"Error: {e}"
+            response = requests.get("https://ipinfo.io/json", timeout=5)
+            data = response.json()
+            info["Public IP"] = data.get("ip", "N/A")
+        except Exception:
+            info["Public IP"] = "Error fetching public IP"
 
         return info
 
-    def ping_host(self, host, count=4):
-        """
-        Pings a host a specified number of times.
-        Returns the output as a string.
-        """
-        try:
-            param = "-n" if platform.system().lower() == "windows" else "-c"
-            command = ["ping", param, str(count), host]
-            result = subprocess.run(
-                command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
-            )
-            if result.stdout:
-                return result.stdout
-            else:
-                return result.stderr
-        except Exception as e:
-            return f"An error occurred: {e}"
-
     def continuous_ping(self, host, callback):
-        """
-        Pings a host continuously and uses a callback to send back updates.
-        Stops when the stop_ping_event is set.
-        """
+        """Pings a host continuously and sends output to a callback."""
         self.stop_ping_event.clear()
+        param = "-n" if platform.system().lower() == "windows" else "-c"
+        command = ["ping", host]
 
-        while not self.stop_ping_event.is_set():
-            command = (
-                ["ping", "-c", "1", host]
-                if platform.system().lower() != "windows"
-                else ["ping", "-n", "1", host]
+        try:
+            process = subprocess.Popen(
+                command,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1,
+                universal_newlines=True,
             )
-            try:
-                # Hide the console window on Windows
-                startupinfo = None
-                if platform.system() == "Windows":
-                    startupinfo = subprocess.STARTUPINFO()
-                    startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-
-                process = subprocess.Popen(
-                    command,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    text=True,
-                    startupinfo=startupinfo,
-                )
-                stdout, stderr = process.communicate(timeout=5)
-
-                if process.returncode == 0:
-                    callback(stdout)
-                else:
-                    callback(
-                        stderr
-                        if stderr
-                        else f"Ping failed with return code: {process.returncode}\n"
-                    )
-
-            except subprocess.TimeoutExpired:
-                callback(f"Request timed out to {host}\n")
-            except Exception as e:
-                callback(f"An error occurred: {e}\n")
-                break
-
-            if platform.system().lower() != "windows":
-                time.sleep(1)
+            for line in iter(process.stdout.readline, ""):
+                if self.stop_ping_event.is_set():
+                    process.terminate()
+                    break
+                callback(line)
+            process.stdout.close()
+        except FileNotFoundError:
+            callback("Ping command not found. Is it in your system's PATH?")
+        except Exception as e:
+            callback(f"An error occurred: {e}\n")
 
     def stop_ping(self):
-        """Sets the event to stop the continuous ping."""
+        """Signals the continuous ping to stop."""
         self.stop_ping_event.set()
+
+    def traceroute_test(self, host):
+        """Performs a traceroute to a specific host."""
+        if platform.system() != "Windows" and os.geteuid() != 0:
+            return "Traceroute on this OS requires administrator privileges. Please run the application with 'sudo'."
+
+        try:
+            if platform.system() == "Windows":
+                command = ["tracert", "-d", host]
+            else:  # Linux/macOS
+                command = ["traceroute", "-I", host]  # -I uses ICMP, more reliable
+
+            process = subprocess.Popen(
+                command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
+            )
+            output, _ = process.communicate(timeout=45)
+
+            if (
+                process.returncode != 0 and "administrat" in output
+            ):  # a more specific check
+                return f"Traceroute failed due to permissions. Please run with 'sudo'."
+            return f"--- Traceroute to {host} ---\n{output}"
+
+        except subprocess.TimeoutExpired:
+            return f"Traceroute to {host} timed out. The host may be unreachable or a firewall is blocking the request."
+        except FileNotFoundError:
+            return "Traceroute command not found. Ensure it is installed and in your system's PATH."
+        except Exception as e:
+            return f"An unexpected error occurred during traceroute: {e}"
 
     def dns_resolution_test(self, domain):
         """Tests DNS resolution for a specific domain."""
         try:
             ip = socket.gethostbyname(domain)
-            return f"Successfully resolved {domain} to: {ip}"
-        except socket.gaierror as e:
-            return f"DNS resolution failed for {domain}: {e}"
+            return f"DNS resolution for {domain}: {ip}"
+        except socket.gaierror:
+            return f"DNS resolution failed for {domain}. Check your DNS settings."
         except Exception as e:
-            return f"An unexpected error occurred: {e}"
-
-    def traceroute_test(self, host):
-        """Performs a traceroute to a specific host."""
-        if platform.system() in ["Linux", "Darwin"] and os.geteuid() != 0:
-            return "Traceroute requires administrator privileges on macOS/Linux.\nPlease run the application with 'sudo'."
-
-        try:
-            # Command for Windows
-            if platform.system() == "Windows":
-                command = ["tracert", "-d", host]
-            # Command for macOS/Linux - try ICMP packets first
-            else:
-                command = ["traceroute", "-I", "-n", host]  # -I for ICMP, -n for no DNS
-
-            result = subprocess.run(command, capture_output=True, text=True, timeout=60)
-
-            # If the command failed, combine stdout and stderr for the error message
-            if result.returncode != 0:
-                # Fallback for Linux if ICMP trace fails (might be blocked)
-                if platform.system() == "Linux" and "-I" in command:
-                    command = ["traceroute", "-n", host]  # Default UDP
-                    result = subprocess.run(
-                        command, capture_output=True, text=True, timeout=60
-                    )
-                    if result.returncode != 0:
-                        return f"Traceroute failed (exit code {result.returncode}):\n{result.stderr}\n{result.stdout}"
-                else:
-                    return f"Traceroute failed (exit code {result.returncode}):\n{result.stderr}\n{result.stdout}"
-
-            # If successful, return the standard output
-            return result.stdout
-
-        except subprocess.TimeoutExpired:
-            return f"Traceroute to {host} timed out after 60 seconds."
-        except FileNotFoundError:
-            return "Traceroute command not found. Is it installed and in your PATH?"
-        except Exception as e:
-            return f"An unexpected error occurred during traceroute: {e}"
+            return f"An error occurred during DNS resolution: {e}"
 
     def port_connectivity_test(self, host, port):
         """Tests if a specific port is open on a given host."""
         try:
-            port = int(port)
+            port_num = int(port)
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
                 sock.settimeout(2)
-                result = sock.connect_ex((host, port))
+                result = sock.connect_ex((host, port_num))
                 if result == 0:
-                    return f"Port {port} on {host} is OPEN."
+                    return f"Port {port_num} on {host} is OPEN."
                 else:
-                    return f"Port {port} on {host} is CLOSED or unreachable."
+                    return f"Port {port_num} on {host} is CLOSED or filtered."
         except ValueError:
-            return "Invalid port. Please enter a number."
+            return "Invalid port number. Please enter an integer."
         except socket.gaierror:
-            return f"Host '{host}' not found or could not be resolved."
+            return f"Hostname '{host}' could not be resolved."
         except Exception as e:
-            return f"An error occurred during port test: {e}"
+            return f"An error occurred: {e}"
 
     def network_adapter_info(self):
-        """Gathers network adapter information using ipconfig/ifconfig."""
+        """Gathers detailed network adapter information."""
         try:
             if platform.system() == "Windows":
                 command = ["ipconfig", "/all"]
@@ -237,113 +169,153 @@ class NetworkTriageToolkit:
                 command = ["ifconfig"]
 
             result = subprocess.run(
-                command,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                check=True,
+                command, capture_output=True, text=True, check=True, timeout=10
             )
             return result.stdout
         except FileNotFoundError:
-            if platform.system() == "Linux":
-                try:
-                    command = ["ip", "addr"]
-                    result = subprocess.run(
-                        command,
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE,
-                        text=True,
-                        check=True,
-                    )
-                    return result.stdout
-                except FileNotFoundError:
-                    return "Neither 'ifconfig' nor 'ip' command found."
-                except Exception as e:
-                    return f"Failed to get adapter info with 'ip addr': {e}"
-            return "'ifconfig' command not found."
+            return "Could not find 'ipconfig' or 'ifconfig'. Please ensure it's in your system PATH."
         except Exception as e:
-            return f"Failed to retrieve network adapter information: {e}"
+            return f"Failed to get adapter info: {e}"
 
-    def start_lldp_capture(self, callback, timeout=60):
-        """Starts sniffing for LLDP packets on a background thread with a timeout."""
-        self.stop_lldp_event.clear()
-        self.lldp_found = False
+    def start_discovery_capture(self, callback, timeout=60):
+        """Starts a thread to capture LLDP or CDP packets."""
+        if self.discovery_thread and self.discovery_thread.is_alive():
+            callback("A scan is already in progress.")
+            return
 
-        def process_packet(packet):
-            if not self.stop_lldp_event.is_set() and packet.haslayer(LLDPDU):
-                self.lldp_found = True
-                lldp_info = packet[LLDPDU]
-                try:
-                    chassis_id_tlv = next(
-                        (tlv for tlv in lldp_info.tlvs if tlv.type == 1), None
-                    )
-                    port_id_tlv = next(
-                        (tlv for tlv in lldp_info.tlvs if tlv.type == 2), None
-                    )
+        self.stop_discovery = False
+        self.discovery_thread = threading.Thread(
+            target=self._run_discovery_capture, args=(callback, timeout), daemon=True
+        )
+        self.discovery_thread.start()
 
-                    chassis_id = (
-                        chassis_id_tlv.id.decode("utf-8", "ignore")
-                        if chassis_id_tlv
-                        else "N/A"
-                    )
-                    port_id = (
-                        port_id_tlv.id.decode("utf-8", "ignore")
-                        if port_id_tlv
-                        else "N/A"
-                    )
+    def stop_discovery_capture(self):
+        """Signals the packet capture thread to stop."""
+        self.stop_discovery = True
 
-                    result = (
-                        f"LLDP Packet Found:\n"
-                        f"  Switch Name: {chassis_id}\n"
-                        f"  Switch Port: {port_id}\n"
-                    )
-                    callback(result)
-                    self.stop_lldp_event.set()
-                except Exception as e:
-                    callback(f"Error processing LLDP packet: {e}")
-                    self.stop_lldp_event.set()
-
-        def run_sniff():
-            """The sniffing function that runs in a thread."""
-            try:
-                sniff(
-                    filter="ether proto 0x88cc",
-                    prn=process_packet,
-                    stop_filter=lambda p: self.stop_lldp_event.is_set(),
-                    timeout=timeout,
-                )
-            except Exception as e:
-                # Only report error if the user didn't manually stop it
-                if not self.stop_lldp_event.is_set():
-                    callback(f"An error occurred during packet sniffing: {e}")
-            finally:
-                # This block guarantees that we send a final status update if the scan times out or is stopped.
-                if not self.lldp_found and not self.stop_lldp_event.is_set():
-                    callback(
-                        f"Scan complete. No LLDP packets found in {timeout} seconds."
-                    )
-
-        # Check for root/admin privileges before starting the thread
-        if platform.system() in ["Linux", "Darwin"] and os.geteuid() != 0:
+    def _run_discovery_capture(self, callback, timeout):
+        """The actual packet sniffing logic."""
+        if platform.system() != "Windows" and os.geteuid() != 0:
             callback(
-                "LLDP capture requires administrator/root privileges.\nPlease run the application with 'sudo'."
+                "Packet capture requires administrator privileges. Please run with 'sudo'."
             )
             return
 
-        try:
-            thread = threading.Thread(target=run_sniff, daemon=True)
-            thread.start()
-            callback("LLDP capture started... Listening for packets...")
-        except Exception as e:
-            callback(f"Error starting LLDP capture: {e}")
+        packet_found = [False]  # Use list for mutability in callback
 
-    def stop_lldp_capture(self):
-        """Stops the LLDP packet capture."""
-        self.stop_lldp_event.set()
+        def _packet_callback(packet):
+            """This function is called for every captured packet."""
+            if self.stop_discovery or packet_found[0]:
+                return True
+
+            result = ""
+            if packet.haslayer(LLDPDU):
+                packet_found[0] = True
+                try:
+                    chassis_id_val = None
+                    port_id_val = None
+                    port_id_subtype = "N/A"
+                    port_description_val = None
+
+                    # Manual TLV parsing from raw bytes for maximum compatibility
+                    raw_payload = bytes(packet[LLDPDU].payload)
+                    i = 0
+                    while i < len(raw_payload):
+                        if i + 2 > len(raw_payload):
+                            break
+
+                        tlv_header = struct.unpack("!H", raw_payload[i : i + 2])[0]
+                        tlv_type = tlv_header >> 9
+                        tlv_len = tlv_header & 0x1FF
+
+                        if i + 2 + tlv_len > len(raw_payload):
+                            break
+
+                        value_bytes = raw_payload[i + 2 : i + 2 + tlv_len]
+
+                        if tlv_type == 1:  # Chassis ID
+                            chassis_id_val = value_bytes[1:]
+                        elif tlv_type == 2:  # Port ID
+                            port_id_subtype = value_bytes[0]
+                            port_id_val = value_bytes[1:]
+                        elif tlv_type == 4:  # Port Description
+                            port_description_val = value_bytes
+                        elif tlv_type == 0:  # End of LLDPDU
+                            break
+
+                        i += 2 + tlv_len
+
+                    if not chassis_id_val or not port_id_val:
+                        raise ValueError(
+                            "Essential LLDP fields not found via manual parsing."
+                        )
+
+                    # --- Smart Decoding based on Subtype ---
+                    chassis_id_str = chassis_id_val.decode("utf-8", "ignore")
+
+                    port_id_str = ""
+                    if port_id_subtype == 3:  # MAC Address
+                        port_id_str = ":".join(f"{b:02x}" for b in port_id_val)
+                    elif port_id_subtype == 5:  # Interface Name
+                        port_id_str = port_id_val.decode("utf-8", "ignore")
+                    else:  # Other/Unknown
+                        port_id_str = (
+                            f"Raw: {port_id_val.hex()} (Subtype: {port_id_subtype})"
+                        )
+
+                    result = (
+                        f"--- LLDP Packet Found ---\n"
+                        f"Switch ID: {chassis_id_str}\n"
+                        f"Port ID: {port_id_str}\n"
+                    )
+
+                    if port_description_val:
+                        desc_str = port_description_val.decode("utf-8", "ignore")
+                        result += f"Port Description: {desc_str}\n"
+
+                except Exception as e:
+                    result = f"Error parsing LLDP packet: {e}"
+
+                callback(result)
+                return True
+
+            if packet.haslayer(CDPMsg):
+                packet_found[0] = True
+                try:
+                    device_id = packet[CDPMsg].device_id.decode()
+                    port_id = packet[CDPMsg].port_id.decode()
+                    platform = packet[CDPMsg].platform.decode()
+                    result = (
+                        f"--- CDP Packet Found ---\n"
+                        f"Device ID: {device_id}\n"
+                        f"Port ID: {port_id}\n"
+                        f"Platform: {platform}"
+                    )
+                except Exception as e:
+                    result = f"Error parsing CDP packet: {e}"
+
+                callback(result)
+                return True
+
+            return False
+
+        try:
+            sniff(
+                filter="ether proto 0x88cc or ether dst 01:00:0c:cc:cc:cc",
+                stop_filter=_packet_callback,
+                timeout=timeout,
+            )
+        except Exception as e:
+            callback(f"An error occurred during packet capture: {e}")
+        finally:
+            if not packet_found[0] and not self.stop_discovery:
+                callback(
+                    f"\nScan complete. No LLDP or CDP packets found in {timeout} seconds."
+                )
 
 
 class RouterConnection:
-    """Handles connection and command execution on a network device."""
+    """Handles connection and commands for a network device."""
 
     def __init__(self, device_type, ip, username, password):
         self.device_info = {
@@ -355,10 +327,10 @@ class RouterConnection:
         self.connection = None
 
     def connect(self):
-        """Establishes the connection to the device."""
+        """Establishes a connection to the device."""
         try:
             self.connection = ConnectHandler(**self.device_info)
-            return "Connection successful!"
+            return "Connection successful."
         except Exception as e:
             self.connection = None
             return f"Connection failed: {e}"
@@ -373,10 +345,10 @@ class RouterConnection:
 
     def send_command(self, command):
         """Sends a command to the connected device."""
-        if not self.connection:
-            return "Error: Not connected to any device."
-        try:
-            output = self.connection.send_command(command)
-            return output
-        except Exception as e:
-            return f"Error sending command: {e}"
+        if self.connection:
+            try:
+                output = self.connection.send_command(command)
+                return output
+            except Exception as e:
+                return f"Error sending command: {e}"
+        return "Not connected."

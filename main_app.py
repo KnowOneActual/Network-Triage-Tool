@@ -409,8 +409,8 @@ class AdvancedDiagnostics(ttk.Frame):
             self.parent.after(0, update_ui)
 
 
-class LLDPDiscovery(ttk.Frame):
-    """Tab for discovering connected switch and port via LLDP."""
+class PhysicalLayerDiscovery(ttk.Frame):
+    """Tab for discovering connected switch and port via LLDP/CDP."""
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -418,8 +418,8 @@ class LLDPDiscovery(ttk.Frame):
         self.create_widgets()
 
     def create_widgets(self):
-        """Create and arrange widgets for LLDP discovery."""
-        lldp_frame = ttk.LabelFrame(self, text="LLDP Discovery")
+        """Create and arrange widgets for LLDP/CDP discovery."""
+        lldp_frame = ttk.LabelFrame(self, text="LLDP / CDP Discovery")
         lldp_frame.pack(padx=10, pady=10, fill="both", expand=True)
 
         control_frame = ttk.Frame(lldp_frame)
@@ -446,40 +446,36 @@ class LLDPDiscovery(ttk.Frame):
         self.output_text.pack(padx=5, pady=5, fill="both", expand=True)
 
     def start_scan(self):
-        """Starts the LLDP packet capture."""
+        """Starts the LLDP/CDP packet capture."""
         self.output_text.delete("1.0", tk.END)
         self.start_button.config(state="disabled")
         self.stop_button.config(state="normal")
-        self.progress.start(10)  # Start the indeterminate animation
+        self.progress.start(10)
 
         def update_output(message):
             self.parent.after(0, self._update_text_widget, message)
 
-        net_tool.start_lldp_capture(update_output, timeout=60)
-        self.output_text.insert(tk.END, "Scanning for 60 seconds...\n")
+        net_tool.start_discovery_capture(update_output, timeout=60)
+        self.output_text.insert(
+            tk.END, "Scanning for LLDP/CDP packets for 60 seconds...\n"
+        )
 
     def _update_text_widget(self, message):
         """Helper method to safely update the text widget and UI state."""
         self.output_text.insert(tk.END, message + "\n")
         self.output_text.see(tk.END)
 
-        # When the scan is definitively over, stop the animation and reset buttons
         if any(
             keyword in message
-            for keyword in [
-                "LLDP Packet Found",
-                "Scan complete",
-                "requires administrator",
-                "Error",
-            ]
+            for keyword in ["Found", "Scan complete", "requires administrator", "Error"]
         ):
             self.progress.stop()
             self.start_button.config(state="normal")
             self.stop_button.config(state="disabled")
 
     def stop_scan(self):
-        """Stops the LLDP packet capture and resets the UI."""
-        net_tool.stop_lldp_capture()
+        """Stops the packet capture and resets the UI."""
+        net_tool.stop_discovery_capture()
         self.progress.stop()
         self.start_button.config(state="normal")
         self.stop_button.config(state="disabled")
@@ -499,7 +495,7 @@ class MainApplication(tk.Tk):
 
         self.dashboard_tab = TriageDashboard(self)
         self.connectivity_tab = ConnectivityTools(self)
-        self.lldp_tab = LLDPDiscovery(self)
+        self.lldp_tab = PhysicalLayerDiscovery(self)  # Renamed instance
         self.advanced_tab = AdvancedDiagnostics(self)
 
         notebook.add(self.dashboard_tab, text="Triage Dashboard")
@@ -539,7 +535,7 @@ class MainApplication(tk.Tk):
         )
         report_content.append("\n")
 
-        report_content.append("--- Physical Layer (LLDP) Output ---")
+        report_content.append("--- Physical Layer (LLDP / CDP) Output ---")
         report_content.append(self.lldp_tab.output_text.get("1.0", tk.END).strip())
         report_content.append("\n")
 
