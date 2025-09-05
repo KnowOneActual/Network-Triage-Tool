@@ -13,6 +13,7 @@ from scapy.contrib.lldp import LLDPDU
 from scapy.contrib.cdp import CDPMsg, CDPAddrRecord
 
 
+
 class NetworkTriageToolkit:
     """A collection of network troubleshooting functions."""
 
