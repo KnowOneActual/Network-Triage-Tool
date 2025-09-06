@@ -156,14 +156,7 @@ class NetworkTriageToolkit:
 
             elif system == "Windows":
                 # Windows implementation...
-                process = subprocess.run(
-                    ["netsh", "wlan", "show", "interfaces"],
-                    capture_output=True,
-                    text=True,
-                    check=True,
-                    creationflags=0x08000000,
-                )
-                # ... parsing logic ...
+                pass
 
             elif system == "Linux":
                 # Linux implementation...
