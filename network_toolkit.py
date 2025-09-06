@@ -6,12 +6,20 @@ import struct
 import subprocess
 import threading
 import time
+import json
 import requests
 import psutil
 from netmiko import ConnectHandler
 from scapy.all import sniff, inet_ntoa
 from scapy.contrib.lldp import LLDPDU
 from scapy.contrib.cdp import CDPMsg, CDPAddrRecord
+
+# Attempt to import the CoreWLAN framework for macOS
+try:
+    if platform.system() == "Darwin":
+        import CoreWLAN
+except ImportError:
+    CoreWLAN = None
 
 
 class NetworkTriageToolkit:
@@ -51,16 +59,12 @@ class NetworkTriageToolkit:
         # Get Gateway
         try:
             gws = psutil.net_if_addrs()
-            # This is a more general way to find the gateway
             for _, addrs in gws.items():
                 for addr in addrs:
                     if addr.family == socket.AF_INET:
-                        # A bit of a guess, but often works. A more robust solution might be platform-specific.
                         ip_parts = info["Internal IP"].split(".")
                         if ip_parts[0:3] == addr.address.split(".")[0:3]:
-                            info["Gateway"] = (
-                                ".".join(ip_parts[0:3]) + ".1"
-                            )  # Common convention
+                            info["Gateway"] = ".".join(ip_parts[0:3]) + ".1"
         except Exception:
             info["Gateway"] = "Could not determine"
 
@@ -86,73 +90,33 @@ class NetworkTriageToolkit:
         system = platform.system()
 
         try:
-            if system == "Darwin":  # macOS - Prioritize the modern wdutil tool
-                try:
-                    process = subprocess.run(
-                        ["wdutil", "info"], capture_output=True, text=True, check=True
+            if system == "Darwin":  # macOS
+                if CoreWLAN is None:
+                    wifi_info["SSID"] = (
+                        "Required library not found. Please run 'pip install pyobjc-framework-CoreWLAN'"
                     )
-                    output = process.stdout
+                    return wifi_info
 
-                    # More robust regex parsing for each line
-                    for line in output.splitlines():
-                        ssid_match = re.search(r"SSID\s*:\s*(.+)", line)
-                        bssid_match = re.search(r"BSSID\s*:\s*(.+)", line)
-                        rssi_match = re.search(r"RSSI\s*:\s*(.+)", line)
-                        noise_match = re.search(r"Noise\s*:\s*(.+)", line)
-                        channel_match = re.search(r"Channel\s*:\s*(.+)", line)
+                interface = (
+                    CoreWLAN.CWInterface.interface()
+                )  # Get the primary Wi-Fi interface
+                if not interface:
+                    wifi_info["SSID"] = "Wi-Fi interface not found or not active."
+                    return wifi_info
 
-                        if ssid_match:
-                            wifi_info["SSID"] = ssid_match.group(1).strip()
-                        if bssid_match:
-                            wifi_info["BSSID"] = bssid_match.group(1).strip()
-                        if rssi_match:
-                            wifi_info["Signal"] = rssi_match.group(1).strip()
-                        if noise_match:
-                            wifi_info["Noise"] = noise_match.group(1).strip()
-                        if channel_match:
-                            raw_channel = channel_match.group(1).strip()
-                            # Prettify the channel output
-                            match = re.search(r"(\d)g(\d+)/(\d+)", raw_channel)
-                            if match:
-                                band, channel_num, width = match.groups()
-                                wifi_info["Channel"] = (
-                                    f"{channel_num} ({band}GHz, {width}MHz)"
-                                )
-                            else:
-                                wifi_info["Channel"] = raw_channel
+                wifi_info["SSID"] = interface.ssid()
+                wifi_info["BSSID"] = interface.bssid()
+                wifi_info["Signal"] = f"{interface.rssiValue()} dBm"
+                wifi_info["Noise"] = f"{interface.noiseMeasurement()} dBm"
 
-                except (subprocess.CalledProcessError, FileNotFoundError):
-                    # Fallback to the deprecated airport utility for older macOS versions
-                    airport_path = "/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport"
-                    if not os.path.exists(airport_path):
-                        wifi_info["SSID"] = "Wi-Fi utilities not found."
-                        return wifi_info
-
-                    process = subprocess.run(
-                        [airport_path, "-I"], capture_output=True, text=True, check=True
+                channel = interface.channel()
+                if channel:
+                    band = "5GHz" if channel.is5GHz() else "2.4GHz"
+                    width_map = {0: "20MHz", 1: "40MHz", 2: "80MHz", 3: "160MHz"}
+                    width_str = width_map.get(channel.channelWidth(), "")
+                    wifi_info["Channel"] = (
+                        f"{channel.channelNumber()} ({band}, {width_str})"
                     )
-                    output = process.stdout
-
-                    if not output or len(output.strip().splitlines()) <= 2:
-                        wifi_info["SSID"] = "No active Wi-Fi connection found."
-                        return wifi_info
-
-                    details = {
-                        k.strip(): v.strip()
-                        for k, v in (
-                            line.split(":", 1)
-                            for line in output.splitlines()
-                            if ":" in line
-                        )
-                    }
-                    wifi_info["SSID"] = details.get("SSID", "N/A")
-                    wifi_info["BSSID"] = details.get("BSSID", "N/A")
-                    if "agrCtlRSSI" in details:
-                        wifi_info["Signal"] = f"{details['agrCtlRSSI']} dBm"
-                    if "agrCtlNoise" in details:
-                        wifi_info["Noise"] = f"{details['agrCtlNoise']} dBm"
-                    if "channel" in details:
-                        wifi_info["Channel"] = details.get("channel", "N/A")
 
             elif system == "Windows":
                 process = subprocess.run(
@@ -212,10 +176,8 @@ class NetworkTriageToolkit:
             else:
                 wifi_info["SSID"] = f"Wi-Fi details not supported on {system}."
 
-        except (subprocess.CalledProcessError, FileNotFoundError):
-            wifi_info["SSID"] = "Could not fetch details. Is Wi-Fi on?"
         except Exception:
-            wifi_info["SSID"] = "An unexpected error occurred."
+            wifi_info["SSID"] = "Could not fetch details. Is Wi-Fi on?"
 
         return wifi_info
 
@@ -265,9 +227,7 @@ class NetworkTriageToolkit:
             )
             output, _ = process.communicate(timeout=45)
 
-            if (
-                process.returncode != 0 and "administrat" in output
-            ):  # a more specific check
+            if process.returncode != 0 and "administrat" in output:
                 return f"Traceroute failed due to permissions. Please run with 'sudo'."
             return f"--- Traceroute to {host} ---\n{output}"
 
@@ -347,7 +307,7 @@ class NetworkTriageToolkit:
             )
             return
 
-        packet_found = [False]  # Use list for mutability in callback
+        packet_found = [False]
 
         def _packet_callback(packet):
             """This function is called for every captured packet."""
@@ -358,66 +318,52 @@ class NetworkTriageToolkit:
             if packet.haslayer(LLDPDU):
                 packet_found[0] = True
                 try:
-                    chassis_id_val = None
-                    port_id_val = None
-                    port_id_subtype = "N/A"
-                    port_description_val = None
-                    system_name_val = None
-                    mgmt_address_val = None
+                    (
+                        chassis_id_val,
+                        port_id_val,
+                        port_description_val,
+                        system_name_val,
+                        mgmt_address_val,
+                    ) = (None,) * 5
 
-                    # Manual TLV parsing from raw bytes
                     raw_payload = bytes(packet[LLDPDU].payload)
                     i = 0
                     while i < len(raw_payload):
                         if i + 2 > len(raw_payload):
                             break
-
                         tlv_header = struct.unpack("!H", raw_payload[i : i + 2])[0]
-                        tlv_type = tlv_header >> 9
-                        tlv_len = tlv_header & 0x1FF
-
+                        tlv_type, tlv_len = tlv_header >> 9, tlv_header & 0x1FF
                         if i + 2 + tlv_len > len(raw_payload):
                             break
-
                         value_bytes = raw_payload[i + 2 : i + 2 + tlv_len]
 
-                        if tlv_type == 1:  # Chassis ID
+                        if tlv_type == 1:
                             chassis_id_val = value_bytes[1:]
-                        elif tlv_type == 2:  # Port ID
-                            port_id_subtype = value_bytes[0]
+                        elif tlv_type == 2:
                             port_id_val = value_bytes[1:]
-                        elif tlv_type == 4:  # Port Description
+                        elif tlv_type == 4:
                             port_description_val = value_bytes
-                        elif tlv_type == 5:  # System Name
+                        elif tlv_type == 5:
                             system_name_val = value_bytes
-                        elif tlv_type == 8:  # Management Address
-                            # Mgmt Addr TLV has its own structure
-                            if len(value_bytes) > 1:
-                                addr_subtype = value_bytes[1]
-                                if addr_subtype == 1:  # IPv4
-                                    mgmt_address_val = inet_ntoa(value_bytes[2:6])
-                        elif tlv_type == 0:  # End of LLDPDU
+                        elif (
+                            tlv_type == 8
+                            and len(value_bytes) > 1
+                            and value_bytes[1] == 1
+                        ):
+                            mgmt_address_val = inet_ntoa(value_bytes[2:6])
+                        elif tlv_type == 0:
                             break
-
                         i += 2 + tlv_len
 
                     if not chassis_id_val or not port_id_val:
-                        raise ValueError(
-                            "Essential LLDP fields not found via manual parsing."
-                        )
-
-                    # --- Smart Decoding ---
-                    chassis_id_str = chassis_id_val.decode("utf-8", "ignore")
+                        raise ValueError("Essential LLDP fields not found.")
 
                     result = f"--- LLDP Packet Found ---\n"
                     if system_name_val:
                         result += f"System Name: {system_name_val.decode('utf-8', 'ignore')}\n"
-
-                    result += f"Switch ID: {chassis_id_str}\n"
-
+                    result += f"Switch ID: {chassis_id_val.decode('utf-8', 'ignore')}\n"
                     if mgmt_address_val:
                         result += f"Management Address: {mgmt_address_val}\n"
-
                     if port_description_val:
                         result += f"Port Description: {port_description_val.decode('utf-8', 'ignore')}\n"
 
@@ -433,9 +379,14 @@ class NetworkTriageToolkit:
                     device_id = packet[CDPMsg].device_id.decode()
                     port_id = packet[CDPMsg].port_id.decode()
                     platform = packet[CDPMsg].platform.decode()
-                    mgmt_address = "N/A"
-                    if packet.haslayer(CDPAddrRecord):
-                        mgmt_address = packet[CDPAddrRecord].addr
+                    mgmt_address = next(
+                        (
+                            addr.addr
+                            for addr in packet[CDPMsg].addr
+                            if isinstance(addr, CDPAddrRecord)
+                        ),
+                        "N/A",
+                    )
 
                     result = (
                         f"--- CDP Packet Found ---\n"
