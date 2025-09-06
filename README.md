@@ -41,56 +41,57 @@ The Network Triage Tool provides a simple, tab-based interface to quickly gather
 
 
 
-1. **Clone the repository:** \
+1. **Clone the repository:** 
 
 ```bash
-git clone [https://github.com/knowoneactual/Network-Triage-Tool.git](https://github.com/knowoneactual/Network-Triage-Tool.git) \
-cd Network-Triage-Tool \
+git clone [https://github.com/knowoneactual/Network-Triage-Tool.git](https://github.com/knowoneactual/Network-Triage-Tool.git) 
+cd Network-Triage-Tool 
 
 ```
 
 2. **Create and activate a virtual environment:**
-    * **macOS / Linux:** \
+    * **macOS / Linux:** 
 
 ```bash
-python3 -m venv .venv \
-source .venv/bin/activate \
+python3 -m venv .venv 
+source .venv/bin/activate 
 
 ```
 
-    * **Windows:** \
+    * **Windows:** 
 
 ```bash
-python -m venv .venv \
-.\.venv\Scripts\activate \
+python -m venv .venv 
+.\.venv\Scripts\activate 
 
 ```
 
-3. **Install the required libraries:** \
+3. **Install the required libraries:** 
 
 ```bash 
-pip install -r requirements.txt \
- \
-*Note: On some systems, you may need to install libpcap or Npcap for the LLDP/CDP scanning feature to work.*
+pip install -r requirements.txt 
 
 ```
+ 
+*Note: On some systems, you may need to install libpcap or Npcap for the LLDP/CDP scanning feature to work.*
+
 
 ## Usage
 
 
 
 1. Make sure your virtual environment is activated.
-2. Run the main application file: \
+2. Run the main application file: 
 
 ```bash
-python3 main_app.py \
+python3 main_app.py 
 
 ```
 
-3. On macOS and Linux, some features (like Traceroute and LLDP/CDP scanning) require administrator privileges to run correctly. You may need to run the application with sudo: \
+3. On macOS and Linux, some features (like Traceroute and LLDP/CDP scanning) require administrator privileges to run correctly. You may need to run the application with sudo: 
 
 ```bash
-sudo ./.venv/bin/python3 main_app.py \
+sudo ./.venv/bin/python3 main_app.py 
 
 ```
 
