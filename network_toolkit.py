@@ -86,35 +86,73 @@ class NetworkTriageToolkit:
         system = platform.system()
 
         try:
-            if system == "Darwin":  # macOS
-                airport_path = "/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport"
-                if not os.path.exists(airport_path):
-                    wifi_info["SSID"] = "Airport utility not found."
-                    return wifi_info
-
-                process = subprocess.run(
-                    [airport_path, "-I"], capture_output=True, text=True, check=True
-                )
-                output = process.stdout
-
-                # Convert the output into a dictionary for robust parsing
-                details = {
-                    k.strip(): v.strip()
-                    for k, v in (
-                        line.split(":", 1)
-                        for line in output.splitlines()
-                        if ":" in line
+            if system == "Darwin":  # macOS - Prioritize the modern wdutil tool
+                try:
+                    process = subprocess.run(
+                        ["wdutil", "info"], capture_output=True, text=True, check=True
                     )
-                }
+                    output = process.stdout
 
-                wifi_info["SSID"] = details.get("SSID", "N/A")
-                wifi_info["BSSID"] = details.get("BSSID", "N/A")
-                if "agrCtlRSSI" in details:
-                    wifi_info["Signal"] = f"{details['agrCtlRSSI']} dBm"
-                if "agrCtlNoise" in details:
-                    wifi_info["Noise"] = f"{details['agrCtlNoise']} dBm"
-                if "channel" in details:
-                    wifi_info["Channel"] = details.get("channel", "N/A")
+                    # More robust regex parsing for each line
+                    for line in output.splitlines():
+                        ssid_match = re.search(r"SSID\s*:\s*(.+)", line)
+                        bssid_match = re.search(r"BSSID\s*:\s*(.+)", line)
+                        rssi_match = re.search(r"RSSI\s*:\s*(.+)", line)
+                        noise_match = re.search(r"Noise\s*:\s*(.+)", line)
+                        channel_match = re.search(r"Channel\s*:\s*(.+)", line)
+
+                        if ssid_match:
+                            wifi_info["SSID"] = ssid_match.group(1).strip()
+                        if bssid_match:
+                            wifi_info["BSSID"] = bssid_match.group(1).strip()
+                        if rssi_match:
+                            wifi_info["Signal"] = rssi_match.group(1).strip()
+                        if noise_match:
+                            wifi_info["Noise"] = noise_match.group(1).strip()
+                        if channel_match:
+                            raw_channel = channel_match.group(1).strip()
+                            # Prettify the channel output
+                            match = re.search(r"(\d)g(\d+)/(\d+)", raw_channel)
+                            if match:
+                                band, channel_num, width = match.groups()
+                                wifi_info["Channel"] = (
+                                    f"{channel_num} ({band}GHz, {width}MHz)"
+                                )
+                            else:
+                                wifi_info["Channel"] = raw_channel
+
+                except (subprocess.CalledProcessError, FileNotFoundError):
+                    # Fallback to the deprecated airport utility for older macOS versions
+                    airport_path = "/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport"
+                    if not os.path.exists(airport_path):
+                        wifi_info["SSID"] = "Wi-Fi utilities not found."
+                        return wifi_info
+
+                    process = subprocess.run(
+                        [airport_path, "-I"], capture_output=True, text=True, check=True
+                    )
+                    output = process.stdout
+
+                    if not output or len(output.strip().splitlines()) <= 2:
+                        wifi_info["SSID"] = "No active Wi-Fi connection found."
+                        return wifi_info
+
+                    details = {
+                        k.strip(): v.strip()
+                        for k, v in (
+                            line.split(":", 1)
+                            for line in output.splitlines()
+                            if ":" in line
+                        )
+                    }
+                    wifi_info["SSID"] = details.get("SSID", "N/A")
+                    wifi_info["BSSID"] = details.get("BSSID", "N/A")
+                    if "agrCtlRSSI" in details:
+                        wifi_info["Signal"] = f"{details['agrCtlRSSI']} dBm"
+                    if "agrCtlNoise" in details:
+                        wifi_info["Noise"] = f"{details['agrCtlNoise']} dBm"
+                    if "channel" in details:
+                        wifi_info["Channel"] = details.get("channel", "N/A")
 
             elif system == "Windows":
                 process = subprocess.run(
@@ -165,7 +203,6 @@ class NetworkTriageToolkit:
                             wifi_info["BSSID"] = bssid_match.group(1)
                         freq_match = re.search(r"freq: (\d+)", process.stdout)
                         if freq_match:
-                            # Basic frequency to channel conversion
                             freq = int(freq_match.group(1))
                             if 2401 <= freq <= 2484:
                                 wifi_info["Channel"] = str(int((freq - 2407) / 5))
