@@ -7,6 +7,7 @@ import threading
 import time
 import requests
 import psutil
+import re
 from netmiko import ConnectHandler
 from scapy.all import sniff, inet_ntoa
 from scapy.contrib.lldp import LLDPDU
@@ -49,17 +50,10 @@ class NetworkTriageToolkit:
 
         # Get Gateway
         try:
-            gws = psutil.net_if_addrs()
-            # This is a more general way to find the gateway
-            for _, addrs in gws.items():
-                for addr in addrs:
-                    if addr.family == socket.AF_INET:
-                        # A bit of a guess, but often works. A more robust solution might be platform-specific.
-                        ip_parts = info["Internal IP"].split(".")
-                        if ip_parts[0:3] == addr.address.split(".")[0:3]:
-                            info["Gateway"] = (
-                                ".".join(ip_parts[0:3]) + ".1"
-                            )  # Common convention
+            gws = psutil.net_if_gateways()
+            default_gateway = gws.get("default", {}).get(psutil.AF_INET)
+            if default_gateway:
+                info["Gateway"] = default_gateway[0]
         except Exception:
             info["Gateway"] = "Could not determine"
 
@@ -74,35 +68,118 @@ class NetworkTriageToolkit:
         return info
 
     def get_connection_details(self):
-        """Gets details about the active Ethernet or Wi-Fi connection."""
-        try:
-            stats = psutil.net_if_stats()
-            addrs = psutil.net_if_addrs()
+        """Gets details about the active network connection, with special handling for macOS."""
+        # macOS specific implementation
+        if platform.system() == "Darwin":
+            try:
+                # Find the default interface using netstat
+                command = "netstat -rn -f inet"
+                result = subprocess.check_output(command, shell=True, text=True)
+                interface = None
+                for line in result.splitlines():
+                    if line.startswith("default"):
+                        parts = line.split()
+                        if len(parts) >= 4:
+                            gateway, iface = parts[1], parts[3]
+                            if all(c in "0123456789." for c in gateway):
+                                interface = iface
+                                break
 
-            for interface, stat in stats.items():
-                if stat.isup and (
-                    interface.lower().startswith("eth")
-                    or interface.lower().startswith("en")
-                    or interface.lower().startswith("wlan")
-                    or interface.lower().startswith("wi-fi")
-                ):
-                    ip_info = addrs.get(interface)
-                    if ip_info:
-                        for addr in ip_info:
+                if not interface:
+                    return {"Status": "Could not determine default network interface."}
+
+                # Check if it's a Wi-Fi or Ethernet connection
+                info = {"Interface": interface}
+                try:
+                    command = f"networksetup -getairportnetwork {interface}"
+                    result = subprocess.check_output(
+                        command, shell=True, text=True, stderr=subprocess.DEVNULL
+                    )
+                    info["Connection Type"] = "Wi-Fi"
+                    ssid_match = re.search(r"Current Wi-Fi Network: (.+)", result)
+                    if ssid_match:
+                        info["SSID"] = ssid_match.group(1)
+                except subprocess.CalledProcessError:
+                    info["Connection Type"] = "Ethernet"
+
+                # Get IP and MAC address details
+                addresses = psutil.net_if_addrs().get(interface, [])
+                for addr in addresses:
+                    if addr.family == socket.AF_INET:
+                        info["IP Address"] = addr.address
+                        info["Netmask"] = addr.netmask
+                    elif addr.family == psutil.AF_LINK:
+                        info["MAC Address"] = addr.address
+
+                # Get other interface details from psutil
+                stats = psutil.net_if_stats().get(interface)
+                if stats:
+                    info["Status"] = "Up" if stats.isup else "Down"
+                    info["Speed"] = f"{stats.speed} Mbps" if stats.speed > 0 else "N/A"
+                    info["Duplex"] = str(stats.duplex)
+                    info["MTU"] = str(stats.mtu)
+
+                return info
+
+            except Exception as e:
+                return {"Error": f"macOS-specific check failed: {e}"}
+
+        # Fallback for other operating systems (Windows, Linux, etc.)
+        else:
+            try:
+                gws = psutil.net_if_gateways()
+                default_gateway_info = gws.get("default", {}).get(psutil.AF_INET)
+
+                if default_gateway_info:
+                    interface = default_gateway_info[1]
+                    stats = psutil.net_if_stats()
+                    addrs = psutil.net_if_addrs()
+
+                    stat = stats.get(interface)
+                    ip_info_list = addrs.get(interface)
+
+                    if stat and stat.isup and ip_info_list:
+                        conn_type = "Ethernet"
+                        iface_lower = interface.lower()
+                        if platform.system() == "Linux" and os.path.isdir(
+                            f"/sys/class/net/{interface}/wireless"
+                        ):
+                            conn_type = "Wi-Fi"
+                        elif (
+                            iface_lower.startswith("wlan")
+                            or "wi-fi" in iface_lower
+                            or "wireless" in iface_lower
+                        ):
+                            conn_type = "Wi-Fi"
+
+                        for addr in ip_info_list:
                             if addr.family == socket.AF_INET:
+                                mac_address = "N/A"
+                                for ad in ip_info_list:
+                                    if ad.family == psutil.AF_LINK:
+                                        mac_address = ad.address
                                 return {
+                                    "Connection Type": conn_type,
                                     "Interface": interface,
-                                    "Status": "Up" if stat.isup else "Down",
-                                    "Speed": f"{stat.speed} Mbps",
+                                    "Status": "Up",
+                                    "Speed": (
+                                        f"{stat.speed} Mbps"
+                                        if stat.speed > 0
+                                        else "N/A"
+                                    ),
                                     "Duplex": str(stat.duplex),
                                     "MTU": str(stat.mtu),
                                     "IP Address": addr.address,
                                     "Netmask": addr.netmask,
-                                    "MAC Address": addr.address,
+                                    "MAC Address": mac_address,
                                 }
-            return {"Status": "No active Ethernet or Wi-Fi connection found."}
-        except Exception as e:
-            return {"Error": f"Could not retrieve connection details: {e}"}
+
+                return {
+                    "Status": "No active network connection with a default gateway found."
+                }
+
+            except Exception as e:
+                return {"Error": f"Could not retrieve connection details: {e}"}
 
     def continuous_ping(self, host, callback):
         """Pings a host continuously and sends output to a callback."""

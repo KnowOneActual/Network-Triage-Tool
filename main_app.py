@@ -1,21 +1,9 @@
-import os
-import platform
 import queue
-import re
-import socket
-import struct
-import subprocess
 import threading
 import time
 import tkinter as tk
-from tkinter import ttk, scrolledtext, messagebox, filedialog
-
-import requests
-import psutil
-from netmiko import ConnectHandler
-from scapy.all import sniff, inet_ntoa
-from scapy.contrib.lldp import LLDPDU
-from scapy.contrib.cdp import CDPMsg, CDPAddrRecord
+from tkinter import ttk, scrolledtext, messagebox
+from tkinter import filedialog
 
 from network_toolkit import NetworkTriageToolkit, RouterConnection
 
@@ -29,7 +17,6 @@ class TriageDashboard(ttk.Frame):
         super().__init__(parent)
         self.parent = parent
         self.info_labels = {}
-        self.wifi_labels = {}
         self.create_widgets()
         self.refresh_data()
 
@@ -49,64 +36,68 @@ class TriageDashboard(ttk.Frame):
             label_value.grid(row=i, column=1, sticky="w", padx=5, pady=2)
             self.info_labels[point] = label_value
 
-        # --- New Wi-Fi Details Section ---
-        wifi_frame = ttk.LabelFrame(self, text="Wi-Fi Details")
-        wifi_frame.pack(padx=10, pady=10, fill="x", expand=True)
-
-        wifi_points = ["SSID", "BSSID", "Signal", "Noise", "Channel"]
-        for i, point in enumerate(wifi_points):
-            label_title = ttk.Label(
-                wifi_frame, text=f"{point}:", font=("Helvetica", 10, "bold")
-            )
-            label_title.grid(row=i, column=0, sticky="w", padx=5, pady=2)
-            label_value = ttk.Label(wifi_frame, text="Loading...")
-            label_value.grid(row=i, column=1, sticky="w", padx=5, pady=2)
-            self.wifi_labels[point] = label_value
-
-        # --- User Notes Section ---
         notes_frame = ttk.LabelFrame(self, text="User Notes")
         notes_frame.pack(padx=10, pady=10, fill="both", expand=True)
+
         self.notes_text = scrolledtext.ScrolledText(notes_frame, wrap=tk.WORD, height=5)
         self.notes_text.pack(padx=5, pady=5, fill="both", expand=True)
+        self.notes_text.insert(
+            tk.END, "Enter any relevant details about the issue here..."
+        )
 
-        # --- Buttons ---
         button_frame = ttk.Frame(self)
         button_frame.pack(pady=5)
+
         refresh_button = ttk.Button(
             button_frame, text="Refresh Data", command=self.refresh_data
         )
-        refresh_button.pack(side="left", padx=5)
+        refresh_button.pack(side="left", padx=10)
+
         adapter_button = ttk.Button(
             button_frame, text="Show Full Adapter Info", command=self.show_adapter_info
         )
-        adapter_button.pack(side="left", padx=5)
+        adapter_button.pack(side="left", padx=10)
 
     def refresh_data(self):
-        """Fetches and updates all data on the dashboard."""
+        """Fetches and updates the network info labels."""
         for label in self.info_labels.values():
             label.config(text="Loading...")
-        for label in self.wifi_labels.values():
-            label.config(text="Loading...")
 
-        threading.Thread(target=self.task, daemon=True).start()
+        thread = threading.Thread(target=self.task, daemon=True)
+        thread.start()
 
     def task(self):
-        """The actual data-fetching task."""
-        system_info = net_tool.get_system_info()
-        ip_info = net_tool.get_ip_info()
-        wifi_info = net_tool.get_wifi_details()
+        """The actual data-fetching task with error handling."""
+        all_info = {}
+        try:
+            # Fetch existing system and IP info
+            system_info = net_tool.get_system_info()
+            all_info.update(system_info)
 
-        all_info = {**system_info, **ip_info}
+            ip_info = net_tool.get_ip_info()
+            all_info.update(ip_info)
 
-        # Update system and IP info
-        for key, value in all_info.items():
-            if key in self.info_labels:
-                self.parent.after(0, self.info_labels[key].config, {"text": value})
+        except Exception as e:
+            # If any of the above functions fail, this will print the error
+            print(f"ERROR fetching data: {e}")
+            # Display a generic error in the UI
+            all_info["OS"] = "Error fetching data."
+            all_info["Hostname"] = "Check console for details."
 
-        # Update Wi-Fi info
-        for key, value in wifi_info.items():
-            if key in self.wifi_labels:
-                self.parent.after(0, self.wifi_labels[key].config, {"text": value})
+        finally:
+            # This part will run even if an error occurred,
+            # ensuring the UI gets updated.
+            def update_gui():
+                for key, value in all_info.items():
+                    if key in self.info_labels:
+                        self.info_labels[key].config(text=value)
+
+                # Mark any remaining fields that weren't updated
+                for key, label in self.info_labels.items():
+                    if label.cget("text") == "Loading...":
+                        label.config(text="N/A")
+
+            self.parent.after(0, update_gui)
 
     def show_adapter_info(self):
         """Displays full network adapter info in a new window."""
@@ -126,6 +117,62 @@ class TriageDashboard(ttk.Frame):
             text_area.insert(tk.INSERT, adapter_info)
 
         threading.Thread(target=fetch_and_display, daemon=True).start()
+
+
+class ConnectionDetails(ttk.Frame):
+    """Tab to show detailed Ethernet/Wi-Fi connection info."""
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.parent = parent
+        self.detail_labels = {}
+        self.create_widgets()
+        self.refresh_details()
+
+    def create_widgets(self):
+        """Create and arrange widgets on the tab."""
+        detail_frame = ttk.LabelFrame(self, text="Connection Details")
+        detail_frame.pack(padx=10, pady=10, fill="x", expand=True)
+
+        detail_points = [
+            "Connection Type",
+            "Interface",
+            "Status",
+            "Speed",
+            "Duplex",
+            "MTU",
+            "IP Address",
+            "Netmask",
+            "MAC Address",
+        ]
+        for i, point in enumerate(detail_points):
+            label_title = ttk.Label(
+                detail_frame, text=f"{point}:", font=("Helvetica", 10, "bold")
+            )
+            label_title.grid(row=i, column=0, sticky="w", padx=5, pady=2)
+
+            label_value = ttk.Label(detail_frame, text="Loading...")
+            label_value.grid(row=i, column=1, sticky="w", padx=5, pady=2)
+            self.detail_labels[point] = label_value
+
+        refresh_button = ttk.Button(
+            self, text="Refresh Details", command=self.refresh_details
+        )
+        refresh_button.pack(pady=10)
+
+    def refresh_details(self):
+        """Fetches and updates the connection detail labels."""
+        for label in self.detail_labels.values():
+            label.config(text="Loading...")
+
+        threading.Thread(target=self.task, daemon=True).start()
+
+    def task(self):
+        """The actual data-fetching task."""
+        details = net_tool.get_connection_details()
+        for key, value in details.items():
+            if key in self.detail_labels:
+                self.parent.after(0, self.detail_labels[key].config, {"text": value})
 
 
 class ConnectivityTools(ttk.Frame):
@@ -434,14 +481,14 @@ class AdvancedDiagnostics(ttk.Frame):
             result = self.router_connection.send_command(command)
 
             def update_ui():
-                self.output_text.delete("1.d", tk.END)
+                self.output_text.delete("1.0", tk.END)
                 self.output_text.insert(tk.END, f"\n--- Output for '{command}' ---\n")
                 self.output_text.insert(tk.END, result)
 
             self.parent.after(0, update_ui)
 
 
-class LLDPDiscovery(ttk.Frame):
+class PhysicalLayerDiscovery(ttk.Frame):
     """Tab for discovering connected switch and port via LLDP/CDP."""
 
     def __init__(self, parent):
@@ -482,15 +529,15 @@ class LLDPDiscovery(ttk.Frame):
         self.output_text.delete("1.0", tk.END)
         self.start_button.config(state="disabled")
         self.stop_button.config(state="normal")
-        self.progress.start()
+        self.progress.start(10)
 
         def update_output(message):
             self.parent.after(0, self._update_text_widget, message)
 
+        net_tool.start_discovery_capture(update_output, timeout=60)
         self.output_text.insert(
             tk.END, "Scanning for LLDP/CDP packets for 60 seconds...\n"
         )
-        net_tool.start_discovery_capture(update_output)
 
     def _update_text_widget(self, message):
         """Helper method to safely update the text widget and UI state."""
@@ -506,7 +553,7 @@ class LLDPDiscovery(ttk.Frame):
             self.stop_button.config(state="disabled")
 
     def stop_scan(self):
-        """Stops the LLDP/CDP packet capture."""
+        """Stops the packet capture and resets the UI."""
         net_tool.stop_discovery_capture()
         self.progress.stop()
         self.start_button.config(state="normal")
@@ -520,17 +567,19 @@ class MainApplication(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Network Triage Tool")
-        self.geometry("600x800")  # Increased height for Wi-Fi info
+        self.geometry("600x750")
 
         notebook = ttk.Notebook(self)
         notebook.pack(pady=10, padx=10, fill="both", expand=True)
 
         self.dashboard_tab = TriageDashboard(self)
+        self.connection_tab = ConnectionDetails(self)
         self.connectivity_tab = ConnectivityTools(self)
-        self.lldp_tab = LLDPDiscovery(self)
+        self.lldp_tab = PhysicalLayerDiscovery(self)
         self.advanced_tab = AdvancedDiagnostics(self)
 
         notebook.add(self.dashboard_tab, text="Triage Dashboard")
+        notebook.add(self.connection_tab, text="Connection Details")
         notebook.add(self.connectivity_tab, text="Connectivity Tools")
         notebook.add(self.lldp_tab, text="Physical Layer")
         notebook.add(self.advanced_tab, text="Advanced Diagnostics")
@@ -552,8 +601,8 @@ class MainApplication(tk.Tk):
             report_content.append(f"{key}: {label.cget('text')}")
         report_content.append("\n")
 
-        report_content.append("--- Wi-Fi Details ---")
-        for key, label in self.dashboard_tab.wifi_labels.items():
+        report_content.append("--- Connection Details ---")
+        for key, label in self.connection_tab.detail_labels.items():
             report_content.append(f"{key}: {label.cget('text')}")
         report_content.append("\n")
 
@@ -572,7 +621,7 @@ class MainApplication(tk.Tk):
         )
         report_content.append("\n")
 
-        report_content.append("--- Physical Layer (LLDP/CDP) Output ---")
+        report_content.append("--- Physical Layer (LLDP / CDP) Output ---")
         report_content.append(self.lldp_tab.output_text.get("1.0", tk.END).strip())
         report_content.append("\n")
 
