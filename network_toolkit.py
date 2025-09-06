@@ -1,5 +1,6 @@
 import os
 import platform
+import re
 import socket
 import struct
 import subprocess
@@ -11,7 +12,6 @@ from netmiko import ConnectHandler
 from scapy.all import sniff, inet_ntoa
 from scapy.contrib.lldp import LLDPDU
 from scapy.contrib.cdp import CDPMsg, CDPAddrRecord
-
 
 
 class NetworkTriageToolkit:
@@ -73,6 +73,114 @@ class NetworkTriageToolkit:
             info["Public IP"] = "Error fetching public IP"
 
         return info
+
+    def get_wifi_details(self):
+        """Gathers detailed Wi-Fi connection information."""
+        wifi_info = {
+            "SSID": "N/A",
+            "BSSID": "N/A",
+            "Signal": "N/A",
+            "Noise": "N/A",
+            "Channel": "N/A",
+        }
+        system = platform.system()
+
+        try:
+            if system == "Darwin":  # macOS
+                airport_path = "/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport"
+                if not os.path.exists(airport_path):
+                    wifi_info["SSID"] = "Airport utility not found."
+                    return wifi_info
+
+                process = subprocess.run(
+                    [airport_path, "-I"], capture_output=True, text=True, check=True
+                )
+                output = process.stdout
+
+                # Convert the output into a dictionary for robust parsing
+                details = {
+                    k.strip(): v.strip()
+                    for k, v in (
+                        line.split(":", 1)
+                        for line in output.splitlines()
+                        if ":" in line
+                    )
+                }
+
+                wifi_info["SSID"] = details.get("SSID", "N/A")
+                wifi_info["BSSID"] = details.get("BSSID", "N/A")
+                if "agrCtlRSSI" in details:
+                    wifi_info["Signal"] = f"{details['agrCtlRSSI']} dBm"
+                if "agrCtlNoise" in details:
+                    wifi_info["Noise"] = f"{details['agrCtlNoise']} dBm"
+                if "channel" in details:
+                    wifi_info["Channel"] = details.get("channel", "N/A")
+
+            elif system == "Windows":
+                process = subprocess.run(
+                    ["netsh", "wlan", "show", "interfaces"],
+                    capture_output=True,
+                    text=True,
+                    check=True,
+                    creationflags=0x08000000,
+                )
+                output = process.stdout
+
+                ssid_match = re.search(r"SSID\s*: (.+)", output)
+                bssid_match = re.search(r"BSSID\s*: (.+)", output)
+                signal_match = re.search(r"Signal\s*: (.+)", output)
+                channel_match = re.search(r"Channel\s*: (.+)", output)
+
+                if ssid_match:
+                    wifi_info["SSID"] = ssid_match.group(1).strip()
+                if bssid_match:
+                    wifi_info["BSSID"] = bssid_match.group(1).strip()
+                if signal_match:
+                    wifi_info["Signal"] = signal_match.group(1).strip()
+                if channel_match:
+                    wifi_info["Channel"] = channel_match.group(1).strip()
+
+            elif system == "Linux":
+                process = subprocess.run(["iwgetid"], capture_output=True, text=True)
+                if process.returncode == 0:
+                    interface = process.stdout.split(" ", 1)[0].strip()
+                    ssid_match = re.search(r'ESSID:"([^"]+)"', process.stdout)
+                    if ssid_match:
+                        wifi_info["SSID"] = ssid_match.group(1)
+
+                    with open("/proc/net/wireless", "r") as f:
+                        for line in f:
+                            if interface in line:
+                                parts = line.split()
+                                wifi_info["Signal"] = f"{parts[3].strip('.')} dBm"
+
+                    process = subprocess.run(
+                        ["iw", "dev", interface, "link"], capture_output=True, text=True
+                    )
+                    if process.returncode == 0:
+                        bssid_match = re.search(
+                            r"Connected to ([0-9a-fA-F:]+)", process.stdout
+                        )
+                        if bssid_match:
+                            wifi_info["BSSID"] = bssid_match.group(1)
+                        freq_match = re.search(r"freq: (\d+)", process.stdout)
+                        if freq_match:
+                            # Basic frequency to channel conversion
+                            freq = int(freq_match.group(1))
+                            if 2401 <= freq <= 2484:
+                                wifi_info["Channel"] = str(int((freq - 2407) / 5))
+                            elif 5150 <= freq <= 5850:
+                                wifi_info["Channel"] = str(int((freq - 5000) / 5))
+
+            else:
+                wifi_info["SSID"] = f"Wi-Fi details not supported on {system}."
+
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            wifi_info["SSID"] = "Could not fetch details. Is Wi-Fi on?"
+        except Exception:
+            wifi_info["SSID"] = "An unexpected error occurred."
+
+        return wifi_info
 
     def continuous_ping(self, host, callback):
         """Pings a host continuously and sends output to a callback."""
