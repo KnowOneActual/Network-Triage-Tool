@@ -43,9 +43,9 @@ class NetworkTriageToolkit:
     def get_ip_info(self):
         """Fetches local IP, public IP, and gateway information."""
         info = {
-            "Internal IP": "N/A",
-            "Gateway": "N/A",
-            "Public IP": "N/A",
+            "Internal IP": "N-A",
+            "Gateway": "N-A",
+            "Public IP": "N-A",
         }
         # Get Internal IP
         try:
@@ -63,11 +63,7 @@ class NetworkTriageToolkit:
                 for addr in addrs:
                     if addr.family == socket.AF_INET:
                         ip_parts = info["Internal IP"].split(".")
-                        if (
-                            ip_parts
-                            and len(ip_parts) == 4
-                            and ip_parts[0:3] == addr.address.split(".")[0:3]
-                        ):
+                        if ip_parts[0:3] == addr.address.split(".")[0:3]:
                             info["Gateway"] = ".".join(ip_parts[0:3]) + ".1"
         except Exception:
             info["Gateway"] = "Could not determine"
@@ -76,120 +72,52 @@ class NetworkTriageToolkit:
         try:
             response = requests.get("https://ipinfo.io/json", timeout=5)
             data = response.json()
-            info["Public IP"] = data.get("ip", "N/A")
+            info["Public IP"] = data.get("ip", "N-A")
         except Exception:
             info["Public IP"] = "Error fetching public IP"
 
         return info
 
     def get_wifi_details(self):
-        """Gathers detailed Wi-Fi connection information using a multi-layered fallback approach for macOS."""
+        """Gathers detailed Wi-Fi connection information."""
         wifi_info = {
-            "SSID": "N/A",
-            "BSSID": "N/A",
-            "Signal": "N/A",
-            "Noise": "N/A",
-            "Channel": "N/A",
+            "SSID": "N-A",
+            "BSSID": "N-A",
+            "Signal": "N-A",
+            "Noise": "N-A",
+            "Channel": "N-A",
         }
         system = platform.system()
 
         try:
-            if system == "Darwin":
-                # --- Attempt 1: CoreWLAN (Modern, Preferred) ---
-                if CoreWLAN:
-                    interface_names = CoreWLAN.CWInterface.interfaceNames()
-                    if interface_names:
-                        for name in interface_names:
-                            interface = CoreWLAN.CWInterface.interfaceWithName_(name)
-                            if interface and interface.ssid():
-                                wifi_info["SSID"] = interface.ssid()
-                                wifi_info["BSSID"] = interface.bssid()
-                                wifi_info["Signal"] = f"{interface.rssiValue()} dBm"
-                                wifi_info["Noise"] = (
-                                    f"{interface.noiseMeasurement()} dBm"
-                                )
-                                channel = interface.channel()
-                                if channel:
-                                    band = "5GHz" if channel.is5GHz() else "2.4GHz"
-                                    width_map = {
-                                        0: "20MHz",
-                                        1: "40MHz",
-                                        2: "80MHz",
-                                        3: "160MHz",
-                                    }
-                                    width_str = width_map.get(
-                                        channel.channelWidth(), ""
-                                    )
-                                    wifi_info["Channel"] = (
-                                        f"{channel.channelNumber()} ({band}, {width_str})"
-                                    )
-                                return wifi_info  # Success!
-
-                # --- Attempt 2: Command-line fallbacks if CoreWLAN fails or reports no connection ---
-                try:
-                    # Find Wi-Fi port dynamically
-                    ports_process = subprocess.run(
-                        ["networksetup", "-listallhardwareports"],
-                        capture_output=True,
-                        text=True,
-                        check=True,
+            if system == "Darwin":  # macOS
+                if CoreWLAN is None:
+                    wifi_info["SSID"] = (
+                        "Required library not found. Run: pip install pyobjc-framework-CoreWLAN"
                     )
-                    wifi_port_match = re.search(
-                        r"Hardware Port: Wi-Fi\nDevice: (en\d+)", ports_process.stdout
+                    return wifi_info
+
+                interface = (
+                    CoreWLAN.CWInterface.interface()
+                )  # Get the primary Wi-Fi interface
+                if not interface or not interface.ssid():
+                    wifi_info["SSID"] = "No active Wi-Fi connection found."
+                    return wifi_info
+
+                wifi_info["SSID"] = interface.ssid()
+                wifi_info["BSSID"] = interface.bssid()
+                wifi_info["Signal"] = f"{interface.rssiValue()} dBm"
+                wifi_info["Noise"] = f"{interface.noiseMeasurement()} dBm"
+
+                channel = interface.channel()
+                if channel:
+                    band = "5GHz" if channel.is5GHz() else "2.4GHz"
+                    width_map = {0: "20MHz", 1: "40MHz", 2: "80MHz", 3: "160MHz"}
+                    width_str = width_map.get(channel.channelWidth(), "")
+                    wifi_info["Channel"] = (
+                        f"{channel.channelNumber()} ({band}, {width_str})"
                     )
-                    if wifi_port_match:
-                        wifi_port = wifi_port_match.group(1)
 
-                        # Use networksetup for SSID
-                        ssid_process = subprocess.run(
-                            ["networksetup", "-getairportnetwork", wifi_port],
-                            capture_output=True,
-                            text=True,
-                            check=True,
-                        )
-                        ssid_match = re.search(
-                            r"Current Wi-Fi Network:\s*(.+)", ssid_process.stdout
-                        )
-                        if ssid_match:
-                            wifi_info["SSID"] = ssid_match.group(1).strip()
-
-                    # Use airport for other details as a last resort
-                    airport_path = "/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport"
-                    if os.path.exists(airport_path):
-                        airport_process = subprocess.run(
-                            [airport_path, "-I"],
-                            capture_output=True,
-                            text=True,
-                            check=True,
-                        )
-                        details = {
-                            k.strip(): v.strip()
-                            for k, v in (
-                                line.split(":", 1)
-                                for line in airport_process.stdout.splitlines()
-                                if ":" in line
-                            )
-                        }
-                        if wifi_info["BSSID"] == "N/A":
-                            wifi_info["BSSID"] = details.get("BSSID", "N/A")
-                        if wifi_info["Signal"] == "N/A":
-                            wifi_info["Signal"] = f"{details.get('agrCtlRSSI')} dBm"
-                        if wifi_info["Noise"] == "N/A":
-                            wifi_info["Noise"] = f"{details.get('agrCtlNoise')} dBm"
-                        if wifi_info["Channel"] == "N/A":
-                            wifi_info["Channel"] = details.get("channel", "N/A")
-
-                except (subprocess.CalledProcessError, FileNotFoundError):
-                    pass  # Fallback failed, will use the final check
-
-                if (
-                    wifi_info["SSID"] == "N/A"
-                    or wifi_info["SSID"]
-                    == "You are not associated with an AirPort network."
-                ):
-                    wifi_info["SSID"] = "SSID Not Reported by macOS"
-
-            # ... (Windows and Linux implementations remain the same)
             elif system == "Windows":
                 process = subprocess.run(
                     ["netsh", "wlan", "show", "interfaces"],
@@ -231,7 +159,7 @@ class NetworkTriageToolkit:
                     process = subprocess.run(
                         ["iw", "dev", interface, "link"], capture_output=True, text=True
                     )
-                    if process.returncode == "0":
+                    if process.returncode == 0:
                         bssid_match = re.search(
                             r"Connected to ([0-9a-fA-F:]+)", process.stdout
                         )
@@ -244,11 +172,12 @@ class NetworkTriageToolkit:
                                 wifi_info["Channel"] = str(int((freq - 2407) / 5))
                             elif 5150 <= freq <= 5850:
                                 wifi_info["Channel"] = str(int((freq - 5000) / 5))
+
             else:
                 wifi_info["SSID"] = f"Wi-Fi details not supported on {system}."
 
-        except Exception as e:
-            wifi_info["SSID"] = f"An unexpected error occurred: {e}"
+        except Exception:
+            wifi_info["SSID"] = "Could not fetch details. Is Wi-Fi on?"
 
         return wifi_info
 
@@ -456,7 +385,7 @@ class NetworkTriageToolkit:
                             for addr in packet[CDPMsg].addr
                             if isinstance(addr, CDPAddrRecord)
                         ),
-                        "N/A",
+                        "N-A",
                     )
 
                     result = (
