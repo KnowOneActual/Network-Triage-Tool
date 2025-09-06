@@ -88,21 +88,71 @@ class NetworkTriageToolkit:
                 if not interface:
                     return {"Status": "Could not determine default network interface."}
 
-                # Check if it's a Wi-Fi or Ethernet connection
                 info = {"Interface": interface}
+
+                # Use the reliable method from check_network.py to determine the type
                 try:
-                    command = f"networksetup -getairportnetwork {interface}"
-                    result = subprocess.check_output(
-                        command, shell=True, text=True, stderr=subprocess.DEVNULL
+                    networksetup_cmd = f"networksetup -getairportnetwork {interface}"
+                    networksetup_result = subprocess.check_output(
+                        networksetup_cmd,
+                        shell=True,
+                        text=True,
+                        stderr=subprocess.DEVNULL,
                     )
                     info["Connection Type"] = "Wi-Fi"
-                    ssid_match = re.search(r"Current Wi-Fi Network: (.+)", result)
-                    if ssid_match:
-                        info["SSID"] = ssid_match.group(1)
                 except subprocess.CalledProcessError:
                     info["Connection Type"] = "Ethernet"
 
-                # Get IP and MAC address details
+                # If it's a Wi-Fi connection, get the detailed metrics using system_profiler
+                if info.get("Connection Type") == "Wi-Fi":
+                    try:
+                        profiler_cmd = "system_profiler SPAirPortDataType"
+                        profiler_result = subprocess.check_output(
+                            profiler_cmd, shell=True, text=True
+                        )
+
+                        # Use regex to parse the output for current network info
+                        network_info_block = re.search(
+                            r"Current Network Information:(.*)",
+                            profiler_result,
+                            re.DOTALL,
+                        )
+                        if network_info_block:
+                            block_text = network_info_block.group(1)
+
+                            ssid = re.search(r"^\s*(.+):$", block_text, re.MULTILINE)
+                            bssid = re.search(r"BSSID: (.+)", block_text)
+                            channel = re.search(r"Channel: (.+)", block_text)
+                            signal_noise = re.search(
+                                r"Signal / Noise: (.+)", block_text
+                            )
+
+                            if ssid:
+                                info["SSID"] = ssid.group(1).strip()
+                            if bssid:
+                                info["BSSID"] = bssid.group(1).strip()
+                            if channel:
+                                info["Channel"] = channel.group(1).strip()
+                            if signal_noise:
+                                parts = signal_noise.group(1).strip().split(" / ")
+                                info["Signal"] = parts[0]
+                                if len(parts) > 1:
+                                    info["Noise"] = parts[1]
+
+                    except (subprocess.CalledProcessError, AttributeError):
+                        pass  # Ignore if we can't get details, we still know it's Wi-Fi
+
+                # Get DNS Servers on macOS
+                try:
+                    dns_cmd = "scutil --dns | grep 'nameserver\\[[0-9]*\\]' | awk '{print $3}'"
+                    dns_result = subprocess.check_output(dns_cmd, shell=True, text=True)
+                    # Filter out duplicates while preserving order
+                    dns_servers = list(dict.fromkeys(dns_result.strip().split("\n")))
+                    info["DNS Servers"] = ", ".join(dns_servers)
+                except Exception:
+                    info["DNS Servers"] = "N/A"
+
+                # Get IP and MAC address details from psutil
                 addresses = psutil.net_if_addrs().get(interface, [])
                 for addr in addresses:
                     if addr.family == socket.AF_INET:
@@ -111,12 +161,10 @@ class NetworkTriageToolkit:
                     elif addr.family == psutil.AF_LINK:
                         info["MAC Address"] = addr.address
 
-                # Get other interface details from psutil
                 stats = psutil.net_if_stats().get(interface)
                 if stats:
                     info["Status"] = "Up" if stats.isup else "Down"
                     info["Speed"] = f"{stats.speed} Mbps" if stats.speed > 0 else "N/A"
-                    info["Duplex"] = str(stats.duplex)
                     info["MTU"] = str(stats.mtu)
 
                 return info
@@ -127,56 +175,13 @@ class NetworkTriageToolkit:
         # Fallback for other operating systems (Windows, Linux, etc.)
         else:
             try:
+                # This part can be enhanced in the future for other OS's
                 gws = psutil.net_if_gateways()
                 default_gateway_info = gws.get("default", {}).get(psutil.AF_INET)
+                if not default_gateway_info:
+                    return {"Status": "No active network connection found."}
 
-                if default_gateway_info:
-                    interface = default_gateway_info[1]
-                    stats = psutil.net_if_stats()
-                    addrs = psutil.net_if_addrs()
-
-                    stat = stats.get(interface)
-                    ip_info_list = addrs.get(interface)
-
-                    if stat and stat.isup and ip_info_list:
-                        conn_type = "Ethernet"
-                        iface_lower = interface.lower()
-                        if platform.system() == "Linux" and os.path.isdir(
-                            f"/sys/class/net/{interface}/wireless"
-                        ):
-                            conn_type = "Wi-Fi"
-                        elif (
-                            iface_lower.startswith("wlan")
-                            or "wi-fi" in iface_lower
-                            or "wireless" in iface_lower
-                        ):
-                            conn_type = "Wi-Fi"
-
-                        for addr in ip_info_list:
-                            if addr.family == socket.AF_INET:
-                                mac_address = "N/A"
-                                for ad in ip_info_list:
-                                    if ad.family == psutil.AF_LINK:
-                                        mac_address = ad.address
-                                return {
-                                    "Connection Type": conn_type,
-                                    "Interface": interface,
-                                    "Status": "Up",
-                                    "Speed": (
-                                        f"{stat.speed} Mbps"
-                                        if stat.speed > 0
-                                        else "N/A"
-                                    ),
-                                    "Duplex": str(stat.duplex),
-                                    "MTU": str(stat.mtu),
-                                    "IP Address": addr.address,
-                                    "Netmask": addr.netmask,
-                                    "MAC Address": mac_address,
-                                }
-
-                return {
-                    "Status": "No active network connection with a default gateway found."
-                }
+                return {"Status": "Details not yet implemented for this OS."}
 
             except Exception as e:
                 return {"Error": f"Could not retrieve connection details: {e}"}
