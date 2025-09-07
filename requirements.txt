@@ -5,3 +5,4 @@ scapy
 psutil
 requests
 pyobjc-framework-CoreWLAN
+speedtest-cli

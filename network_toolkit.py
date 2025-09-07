@@ -186,6 +186,41 @@ class NetworkTriageToolkit:
         else:
             return {"Status": "Detailed info not yet implemented for this OS."}
 
+    def run_speed_test(self):
+        """Performs a network speed test and returns the results."""
+        try:
+            import speedtest
+
+            st = speedtest.Speedtest()
+            st.get_best_server()
+            st.download()
+            st.upload(pre_allocate=False)  # Fix for newer versions
+
+            results = st.results.dict()
+
+            ping = results.get("ping", 0)
+            download_speed = results.get("download", 0) / 1_000_000
+            upload_speed = results.get("upload", 0) / 1_000_000
+            server_name = results.get("server", {}).get("name", "N/A")
+            isp = results.get("client", {}).get("isp", "N/A")
+            jitter = results.get("client", {}).get("jitter", 0)
+            packet_loss = results.get("packetLoss", 0)
+            result_url = st.results.share()  # Generate the shareable URL
+
+            return {
+                "Ping": f"{ping:.2f} ms",
+                "Jitter": f"{jitter:.2f} ms",
+                "Download": f"{download_speed:.2f} Mbps",
+                "Upload": f"{upload_speed:.2f} Mbps",
+                "Packet Loss": f"{packet_loss if packet_loss is not None else 0:.1f}%",
+                "Server": server_name,
+                "ISP": isp,
+                "Result URL": result_url,
+            }
+
+        except Exception as e:
+            return {"Error": f"Speed test failed: {e}"}
+
     def continuous_ping(self, host, callback):
         """Pings a host continuously and sends output to a callback."""
         self.stop_ping_event.clear()
