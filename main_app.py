@@ -4,6 +4,7 @@ import time
 import tkinter as tk
 from tkinter import ttk, scrolledtext, messagebox
 from tkinter import filedialog
+import webbrowser
 
 from network_toolkit import NetworkTriageToolkit, RouterConnection
 
@@ -238,7 +239,15 @@ class PerformanceTab(ttk.Frame):
         performance_frame.pack(padx=10, pady=10, fill="x")
 
         # Create labels for results
-        result_points = ["Ping", "Download", "Upload", "Server"]
+        result_points = [
+            "Ping",
+            "Jitter",
+            "Download",
+            "Upload",
+            "Packet Loss",
+            "ISP",
+            "Server",
+        ]
         for i, point in enumerate(result_points):
             label_title = ttk.Label(
                 performance_frame, text=f"{point}:", font=("Helvetica", 10, "bold")
@@ -248,10 +257,23 @@ class PerformanceTab(ttk.Frame):
             label_value.grid(row=i, column=1, sticky="w", padx=5, pady=2)
             self.result_labels[point] = label_value
 
+        # Special handling for the clickable URL
+        label_title = ttk.Label(
+            performance_frame, text="Result URL:", font=("Helvetica", 10, "bold")
+        )
+        label_title.grid(row=len(result_points), column=0, sticky="w", padx=5, pady=2)
+        self.url_label = ttk.Label(
+            performance_frame, text="N/A", foreground="#00FFFF", cursor="hand2"
+        )
+        self.url_label.grid(
+            row=len(result_points), column=1, sticky="w", padx=5, pady=2
+        )
+        self.url_label.bind("<Button-1>", self.open_url)
+
         # Status label and progress bar
         self.status_label = ttk.Label(performance_frame, text="Ready to start.")
         self.status_label.grid(
-            row=len(result_points),
+            row=len(result_points) + 1,
             column=0,
             columnspan=2,
             sticky="w",
@@ -263,7 +285,7 @@ class PerformanceTab(ttk.Frame):
             performance_frame, orient="horizontal", mode="indeterminate"
         )
         self.progress.grid(
-            row=len(result_points) + 1,
+            row=len(result_points) + 2,
             column=0,
             columnspan=2,
             sticky="ew",
@@ -277,11 +299,18 @@ class PerformanceTab(ttk.Frame):
         )
         self.start_button.pack(pady=10)
 
+    def open_url(self, event):
+        """Opens the speed test result URL in a web browser."""
+        url = self.url_label.cget("text")
+        if url and url != "N/A" and url != "Testing...":
+            webbrowser.open_new(url)
+
     def start_test(self):
         """Handles the button click to start the speed test."""
         self.start_button.config(state="disabled")
         for label in self.result_labels.values():
             label.config(text="Testing...")
+        self.url_label.config(text="Testing...")
         self.status_label.config(text="Finding the best server...")
         self.progress.start(10)
 
@@ -303,11 +332,14 @@ class PerformanceTab(ttk.Frame):
             self.status_label.config(text=results["Error"])
             for label in self.result_labels.values():
                 label.config(text="Failed")
+            self.url_label.config(text="Failed")
         else:
             self.status_label.config(text="Test complete.")
             for key, value in results.items():
                 if key in self.result_labels:
                     self.result_labels[key].config(text=value)
+                elif key == "Result URL":
+                    self.url_label.config(text=value)
 
         self.start_button.config(state="normal")
 

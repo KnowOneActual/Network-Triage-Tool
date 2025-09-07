@@ -105,24 +105,35 @@ class NetworkTriageToolkit:
 
                 info = {"Interface": interface}
 
-                # Use system_profiler to get all Wi-Fi details
+                # Use networksetup to reliably determine type and get SSID
                 try:
-                    profiler_cmd = f"system_profiler SPAirPortDataType"
-                    profiler_result = subprocess.check_output(
-                        profiler_cmd, shell=True, text=True
+                    # This command will succeed only if 'interface' is a Wi-Fi port
+                    networksetup_cmd = f"networksetup -getairportnetwork {interface}"
+                    networksetup_result = subprocess.check_output(
+                        networksetup_cmd,
+                        shell=True,
+                        text=True,
+                        stderr=subprocess.DEVNULL,
                     )
+                    info["Connection Type"] = "Wi-Fi"
 
-                    # Check if the interface is listed as a Wi-Fi card
-                    if (
-                        f"{interface}:" in profiler_result
-                        and "Card Type: Wi-Fi" in profiler_result
-                    ):
-                        info["Connection Type"] = "Wi-Fi"
-                    else:
-                        info["Connection Type"] = "Ethernet"
+                    ssid_match = re.search(
+                        r"Current Wi-Fi Network: (.+)", networksetup_result
+                    )
+                    if ssid_match:
+                        info["SSID"] = ssid_match.group(1).strip()
 
-                    if info["Connection Type"] == "Wi-Fi":
-                        # Isolate the correct network block
+                except subprocess.CalledProcessError:
+                    info["Connection Type"] = "Ethernet"
+
+                # If it's a Wi-Fi connection, get the rest of the details using system_profiler
+                if info.get("Connection Type") == "Wi-Fi":
+                    try:
+                        profiler_cmd = "system_profiler SPAirPortDataType"
+                        profiler_result = subprocess.check_output(
+                            profiler_cmd, shell=True, text=True
+                        )
+
                         network_info_block = re.search(
                             r"Current Network Information:(.*?)(\n\s*\n|$)",
                             profiler_result,
@@ -130,13 +141,6 @@ class NetworkTriageToolkit:
                         )
                         if network_info_block:
                             block_text = network_info_block.group(1)
-
-                            # The SSID is the first line in the block, ending with a colon
-                            ssid_match = re.search(
-                                r"^\s*(.+):$", block_text, re.MULTILINE
-                            )
-                            if ssid_match:
-                                info["SSID"] = ssid_match.group(1).strip()
 
                             channel = re.search(r"Channel:\s*(.+)", block_text)
                             signal_noise = re.search(
@@ -150,8 +154,8 @@ class NetworkTriageToolkit:
                                 info["Signal"] = parts[0]
                                 if len(parts) > 1:
                                     info["Noise"] = parts[1]
-                except (subprocess.CalledProcessError, AttributeError):
-                    info["Connection Type"] = "Ethernet"  # Fallback if profiler fails
+                    except (subprocess.CalledProcessError, AttributeError):
+                        pass
 
                 # Get DNS Servers on macOS
                 try:
@@ -194,20 +198,28 @@ class NetworkTriageToolkit:
             st = speedtest.Speedtest()
             st.get_best_server()
             st.download()
-            st.upload()
+            st.upload(pre_allocate=False)  # Fix for newer versions
 
             results = st.results.dict()
 
             ping = results.get("ping", 0)
-            download_speed = results.get("download", 0) / 1_000_000  # Convert to Mbps
-            upload_speed = results.get("upload", 0) / 1_000_000  # Convert to Mbps
+            download_speed = results.get("download", 0) / 1_000_000
+            upload_speed = results.get("upload", 0) / 1_000_000
             server_name = results.get("server", {}).get("name", "N/A")
+            isp = results.get("client", {}).get("isp", "N/A")
+            jitter = results.get("jitter", 0)  # Correct key for idle jitter
+            packet_loss = results.get("packetLoss", 0)
+            result_url = st.results.share()  # Generate the shareable URL
 
             return {
                 "Ping": f"{ping:.2f} ms",
+                "Jitter": f"{jitter:.2f} ms",
                 "Download": f"{download_speed:.2f} Mbps",
                 "Upload": f"{upload_speed:.2f} Mbps",
+                "Packet Loss": f"{packet_loss if packet_loss is not None else 0:.1f}%",
                 "Server": server_name,
+                "ISP": isp,
+                "Result URL": result_url,
             }
 
         except Exception as e:
