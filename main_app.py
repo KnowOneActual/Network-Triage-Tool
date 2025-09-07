@@ -223,6 +223,95 @@ class ConnectionDetails(ttk.Frame):
         self.parent.after(0, update_ui)
 
 
+class PerformanceTab(ttk.Frame):
+    """Tab for running a network speed test."""
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.parent = parent
+        self.result_labels = {}
+        self.create_widgets()
+
+    def create_widgets(self):
+        """Create and arrange widgets for the speed test tab."""
+        performance_frame = ttk.LabelFrame(self, text="Internet Speed Test")
+        performance_frame.pack(padx=10, pady=10, fill="x")
+
+        # Create labels for results
+        result_points = ["Ping", "Download", "Upload", "Server"]
+        for i, point in enumerate(result_points):
+            label_title = ttk.Label(
+                performance_frame, text=f"{point}:", font=("Helvetica", 10, "bold")
+            )
+            label_title.grid(row=i, column=0, sticky="w", padx=5, pady=2)
+            label_value = ttk.Label(performance_frame, text="N/A")
+            label_value.grid(row=i, column=1, sticky="w", padx=5, pady=2)
+            self.result_labels[point] = label_value
+
+        # Status label and progress bar
+        self.status_label = ttk.Label(performance_frame, text="Ready to start.")
+        self.status_label.grid(
+            row=len(result_points),
+            column=0,
+            columnspan=2,
+            sticky="w",
+            padx=5,
+            pady=(10, 2),
+        )
+
+        self.progress = ttk.Progressbar(
+            performance_frame, orient="horizontal", mode="indeterminate"
+        )
+        self.progress.grid(
+            row=len(result_points) + 1,
+            column=0,
+            columnspan=2,
+            sticky="ew",
+            padx=5,
+            pady=2,
+        )
+
+        # Control button
+        self.start_button = ttk.Button(
+            self, text="Start Speed Test", command=self.start_test
+        )
+        self.start_button.pack(pady=10)
+
+    def start_test(self):
+        """Handles the button click to start the speed test."""
+        self.start_button.config(state="disabled")
+        for label in self.result_labels.values():
+            label.config(text="Testing...")
+        self.status_label.config(text="Finding the best server...")
+        self.progress.start(10)
+
+        # Run the test in a separate thread to keep the GUI responsive
+        threading.Thread(target=self.run_test_task, daemon=True).start()
+
+    def run_test_task(self):
+        """The actual speed test logic that runs in the background."""
+        results = net_tool.run_speed_test()
+
+        # Safely schedule the UI update on the main thread
+        self.parent.after(0, self.update_ui, results)
+
+    def update_ui(self, results):
+        """Updates the GUI with the speed test results."""
+        self.progress.stop()
+
+        if "Error" in results:
+            self.status_label.config(text=results["Error"])
+            for label in self.result_labels.values():
+                label.config(text="Failed")
+        else:
+            self.status_label.config(text="Test complete.")
+            for key, value in results.items():
+                if key in self.result_labels:
+                    self.result_labels[key].config(text=value)
+
+        self.start_button.config(state="normal")
+
+
 class ConnectivityTools(ttk.Frame):
     """Tab for interactive tools like ping, traceroute, etc."""
 
@@ -622,12 +711,14 @@ class MainApplication(tk.Tk):
 
         self.dashboard_tab = TriageDashboard(self)
         self.connection_tab = ConnectionDetails(self)
+        self.performance_tab = PerformanceTab(self)
         self.connectivity_tab = ConnectivityTools(self)
         self.lldp_tab = PhysicalLayerDiscovery(self)
         self.advanced_tab = AdvancedDiagnostics(self)
 
         notebook.add(self.dashboard_tab, text="Triage Dashboard")
         notebook.add(self.connection_tab, text="Connection Details")
+        notebook.add(self.performance_tab, text="Performance")
         notebook.add(self.connectivity_tab, text="Connectivity Tools")
         notebook.add(self.lldp_tab, text="Physical Layer")
         notebook.add(self.advanced_tab, text="Advanced Diagnostics")
