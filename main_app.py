@@ -239,15 +239,7 @@ class PerformanceTab(ttk.Frame):
         performance_frame.pack(padx=10, pady=10, fill="x")
 
         # Create labels for results
-        result_points = [
-            "Ping",
-            "Jitter",
-            "Download",
-            "Upload",
-            "Packet Loss",
-            "ISP",
-            "Server",
-        ]
+        result_points = ["Ping", "Download", "Upload", "Packet Loss", "ISP", "Server"]
         for i, point in enumerate(result_points):
             label_title = ttk.Label(
                 performance_frame, text=f"{point}:", font=("Helvetica", 10, "bold")
