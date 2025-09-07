@@ -13,9 +13,13 @@ This project is in the early stages of development and should be considered **un
 
 The Network Triage Tool provides a simple, tab-based interface to quickly gather critical network information.
 
-
-
 * **Triage Dashboard:** Get at-a-glance information about the local machine, including OS, hostname, internal/public IP addresses, and default gateway.
+* **Connection Details:** See detailed information about the active network connection, including connection type (Wi-Fi/Ethernet), DNS servers, and Wi-Fi specific metrics like SSID, signal strength, noise, and channel.
+* **Performance:** Run an internet speed test to measure key performance indicators:
+    * Ping, Jitter, and Packet Loss
+    * Download and Upload speeds
+    * The ISP and the server used for the test
+    * A shareable link to the full results on Speedtest.net
 * **Connectivity Tools:** A suite of essential tools for testing network reachability:
     * Continuous Ping
     * Traceroute
@@ -23,7 +27,7 @@ The Network Triage Tool provides a simple, tab-based interface to quickly gather
     * Port Scanning
 * **Physical Layer Discovery:** Scan the local network for LLDP and CDP packets to identify the switch and port the machine is connected to.
 * **Advanced Diagnostics:** Connect directly to network devices (routers, switches) via SSH to run commands and retrieve logs.
-* **Save Report:** Export all gathered information from all tabs into a single, easy-to-share text file.
+* **Save Report:** Export all gathered information from all tabs into a single, easy-to-share text file. (This needs work)
 
 
 ## Getting Started
@@ -41,37 +45,33 @@ The Network Triage Tool provides a simple, tab-based interface to quickly gather
 
 
 
-1. **Clone the repository:** 
+1.  **Clone the repository:**
 
-```bash
-git clone [https://github.com/knowoneactual/Network-Triage-Tool.git](https://github.com/knowoneactual/Network-Triage-Tool.git) 
-cd Network-Triage-Tool 
+    ```bash
+    git clone [https://github.com/knowoneactual/Network-Triage-Tool.git](https://github.com/knowoneactual/Network-Triage-Tool.git) 
+    cd Network-Triage-Tool 
+    ```
 
-```
+2.  **Create and activate a virtual environment:**
+    * **macOS / Linux:**
 
-2. **Create and activate a virtual environment:**
-    * **macOS / Linux:** 
+        ```bash
+        python3 -m venv .venv 
+        source .venv/bin/activate 
+        ```
 
-```bash
-python3 -m venv .venv 
-source .venv/bin/activate 
+    * **Windows:**
 
-```
+        ```bash
+        python -m venv .venv 
+        .\.venv\Scripts\activate 
+        ```
 
-    * **Windows:** 
+3.  **Install the required libraries:**
 
-```bash
-python -m venv .venv 
-.\.venv\Scripts\activate 
-
-```
-
-3. **Install the required libraries:** 
-
-```bash 
-pip install -r requirements.txt 
-
-```
+    ```bash 
+    pip install -r requirements.txt 
+    ```
  
 *Note: On some systems, you may need to install libpcap or Npcap for the LLDP/CDP scanning feature to work.*
 
@@ -80,20 +80,18 @@ pip install -r requirements.txt
 
 
 
-1. Make sure your virtual environment is activated.
-2. Run the main application file: 
+1.  Make sure your virtual environment is activated.
+2.  Run the main application file:
 
-```bash
-python3 main_app.py 
+    ```bash
+    python3 main_app.py 
+    ```
 
-```
+3.  On macOS and Linux, some features (like Traceroute and LLDP/CDP scanning) require administrator privileges to run correctly. You may need to run the application with sudo:
 
-3. On macOS and Linux, some features (like Traceroute and LLDP/CDP scanning) require administrator privileges to run correctly. You may need to run the application with sudo: 
-
-```bash
-sudo ./.venv/bin/python3 main_app.py 
-
-```
+    ```bash
+    sudo ./.venv/bin/python3 main_app.py 
+    ```
 
 
 

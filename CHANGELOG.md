@@ -10,19 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - PyInstaller configuration for creating standalone executables.
-
-## [0.2.0] - 2025-09-07
-
-### Added
-
 - **Connection Details Tab:** A new tab dedicated to showing detailed information about the active network connection.
-- **Connection Type Detection:** The tool now identifies the active connection as either Wi-Fi or Ethernet.
-- **Detailed Wi-Fi Metrics:** When on a Wi-Fi network, the tool displays:
-  - SSID (Network Name)
-  - Signal Strength (RSSI)
-  - Noise Level
-  - Channel Information
-- **DNS Server Information:** The active DNS servers are now displayed in the "Connection Details" tab.
+- **Performance Tab:** A new tab for running an internet speed test to measure key performance indicators like Ping, Jitter, Download/Upload speeds, ISP, and Packet Loss.
+- `speedtest-cli` to `requirements.txt` for the new Performance tab.
 
 ### Fixed
 
