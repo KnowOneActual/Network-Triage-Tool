@@ -1,802 +1,501 @@
-import queue
+import os
+import platform
+import socket
+import struct
+import subprocess
 import threading
 import time
-import tkinter as tk
-from tkinter import ttk, scrolledtext, messagebox
-from tkinter import filedialog
-
-from network_toolkit import NetworkTriageToolkit, RouterConnection
-
-net_tool = NetworkTriageToolkit()
-
-
-class TriageDashboard(ttk.Frame):
-    """Dashboard for at-a-glance network info."""
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.parent = parent
-        self.info_labels = {}
-        self.create_widgets()
-        self.refresh_data()
-
-    def create_widgets(self):
-        """Create and arrange widgets on the dashboard."""
-        info_frame = ttk.LabelFrame(self, text="System & Network Information")
-        info_frame.pack(padx=10, pady=10, fill="x", expand=True)
-
-        info_points = ["OS", "Hostname", "Internal IP", "Gateway", "Public IP"]
-        for i, point in enumerate(info_points):
-            label_title = ttk.Label(
-                info_frame, text=f"{point}:", font=("Helvetica", 10, "bold")
-            )
-            label_title.grid(row=i, column=0, sticky="w", padx=5, pady=2)
-
-            label_value = ttk.Label(info_frame, text="Loading...")
-            label_value.grid(row=i, column=1, sticky="w", padx=5, pady=2)
-            self.info_labels[point] = label_value
-
-        notes_frame = ttk.LabelFrame(self, text="User Notes")
-        notes_frame.pack(padx=10, pady=10, fill="both", expand=True)
-
-        self.notes_text = scrolledtext.ScrolledText(notes_frame, wrap=tk.WORD, height=5)
-        self.notes_text.pack(padx=5, pady=5, fill="both", expand=True)
-        self.notes_text.insert(
-            tk.END, "Enter any relevant details about the issue here..."
-        )
-
-        button_frame = ttk.Frame(self)
-        button_frame.pack(pady=5)
-
-        refresh_button = ttk.Button(
-            button_frame, text="Refresh Data", command=self.refresh_data
-        )
-        refresh_button.pack(side="left", padx=10)
-
-        adapter_button = ttk.Button(
-            button_frame, text="Show Full Adapter Info", command=self.show_adapter_info
-        )
-        adapter_button.pack(side="left", padx=10)
-
-    def refresh_data(self):
-        """Fetches and updates the network info labels."""
-        for label in self.info_labels.values():
-            label.config(text="Loading...")
-
-        thread = threading.Thread(target=self.task, daemon=True)
-        thread.start()
-
-    def task(self):
-        """The actual data-fetching task with error handling."""
-        all_info = {}
-        try:
-            # Fetch existing system and IP info
-            system_info = net_tool.get_system_info()
-            all_info.update(system_info)
-
-            ip_info = net_tool.get_ip_info()
-            all_info.update(ip_info)
-
-        except Exception as e:
-            # If any of the above functions fail, this will print the error
-            print(f"ERROR fetching data: {e}")
-            # Display a generic error in the UI
-            all_info["OS"] = "Error fetching data."
-            all_info["Hostname"] = "Check console for details."
-
-        finally:
-            # This part will run even if an error occurred,
-            # ensuring the UI gets updated.
-            def update_gui():
-                for key, value in all_info.items():
-                    if key in self.info_labels:
-                        self.info_labels[key].config(text=value)
-
-                # Mark any remaining fields that weren't updated
-                for key, label in self.info_labels.items():
-                    if label.cget("text") == "Loading...":
-                        label.config(text="N/A")
-
-            self.parent.after(0, update_gui)
-
-    def show_adapter_info(self):
-        """Displays full network adapter info in a new window."""
-        info_window = tk.Toplevel(self.parent)
-        info_window.title("Network Adapter Information")
-        info_window.geometry("600x400")
-
-        text_area = scrolledtext.ScrolledText(
-            info_window, wrap=tk.WORD, width=70, height=20
-        )
-        text_area.pack(padx=10, pady=10, fill="both", expand=True)
-        text_area.insert(tk.INSERT, "Fetching adapter information...")
-
-        def fetch_and_display():
-            adapter_info = net_tool.network_adapter_info()
-            text_area.delete("1.0", tk.END)
-            text_area.insert(tk.INSERT, adapter_info)
-
-        threading.Thread(target=fetch_and_display, daemon=True).start()
-
-
-class ConnectionDetails(ttk.Frame):
-    """Tab to show detailed Ethernet/Wi-Fi connection info."""
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.parent = parent
-        self.detail_labels = {}
-        self.create_widgets()
-        self.refresh_details()
-
-    def create_widgets(self):
-        """Create and arrange widgets on the tab."""
-        # Main container frame
-        container = ttk.Frame(self)
-        container.pack(fill="both", expand=True, padx=10, pady=10)
-
-        # Add the note about load time
-        note_label = ttk.Label(
-            container,
-            text="(Detailed info may take a moment to load on some systems)",
-            font=("Helvetica", 9, "italic"),
-        )
-        note_label.pack(side="top", pady=(0, 5), anchor="w", padx=5)
-
-        # Frame for basic connection details
-        connection_frame = ttk.LabelFrame(container, text="Connection Details")
-        connection_frame.pack(fill="x", expand=True, side="top")
-
-        # Frame for Wi-Fi specific details
-        self.wifi_frame = ttk.LabelFrame(container, text="Wi-Fi Details")
-        # We will pack this later only if it's a Wi-Fi connection
-
-        # --- Define all possible labels ---
-        self.detail_points = [
-            "Connection Type",
-            "Interface",
-            "Status",
-            "Speed",
-            "MTU",
-            "IP Address",
-            "Netmask",
-            "MAC Address",
-            "DNS Servers",
-        ]
-        self.wifi_points = ["SSID", "Signal", "Noise", "Channel"]
-
-        # Create labels for the connection frame
-        for i, point in enumerate(self.detail_points):
-            label_title = ttk.Label(
-                connection_frame, text=f"{point}:", font=("Helvetica", 10, "bold")
-            )
-            label_title.grid(row=i, column=0, sticky="w", padx=5, pady=2)
-            label_value = ttk.Label(connection_frame, text="Loading...")
-            label_value.grid(row=i, column=1, sticky="w", padx=5, pady=2)
-            self.detail_labels[point] = label_value
-
-        # Create labels for the Wi-Fi frame
-        for i, point in enumerate(self.wifi_points):
-            label_title = ttk.Label(
-                self.wifi_frame, text=f"{point}:", font=("Helvetica", 10, "bold")
-            )
-            label_title.grid(row=i, column=0, sticky="w", padx=5, pady=2)
-            label_value = ttk.Label(self.wifi_frame, text="Loading...")
-            label_value.grid(row=i, column=1, sticky="w", padx=5, pady=2)
-            self.detail_labels[point] = label_value  # Also add to the main dictionary
-
-        refresh_button = ttk.Button(
-            self, text="Refresh Details", command=self.refresh_details
-        )
-        refresh_button.pack(pady=10)
-
-    def refresh_details(self):
-        """Fetches and updates the connection detail labels."""
-        # Reset all labels to "Loading..."
-        for label in self.detail_labels.values():
-            label.config(text="Loading...")
-
-        # Hide the Wi-Fi frame initially
-        self.wifi_frame.pack_forget()
-
-        # Start the background task
-        threading.Thread(target=self.task, daemon=True).start()
-
-    def task(self):
-        """The actual data-fetching task."""
-        details = net_tool.get_connection_details()
-
-        def update_ui():
-            # Check if it is a Wi-Fi connection and show/hide the frame accordingly
-            if details.get("Connection Type") == "Wi-Fi":
-                self.wifi_frame.pack(fill="x", expand=True, side="top", pady=(10, 0))
-            else:
-                self.wifi_frame.pack_forget()
-
-            # Update all the labels with the fetched data
-            all_points = self.detail_points + self.wifi_points
-            for key in all_points:
-                value = details.get(key, "N/A")  # Default to N/A if a key is missing
-                if key in self.detail_labels:
-                    self.detail_labels[key].config(text=value)
-
-        self.parent.after(0, update_ui)
-
-
-class PerformanceTab(ttk.Frame):
-    """Tab for running a network speed test."""
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.parent = parent
-        self.result_labels = {}
-        self.create_widgets()
-
-    def create_widgets(self):
-        """Create and arrange widgets for the speed test tab."""
-        performance_frame = ttk.LabelFrame(self, text="Internet Speed Test")
-        performance_frame.pack(padx=10, pady=10, fill="x")
-
-        # Create labels for results
-        result_points = ["Ping", "Download", "Upload", "Server"]
-        for i, point in enumerate(result_points):
-            label_title = ttk.Label(
-                performance_frame, text=f"{point}:", font=("Helvetica", 10, "bold")
-            )
-            label_title.grid(row=i, column=0, sticky="w", padx=5, pady=2)
-            label_value = ttk.Label(performance_frame, text="N/A")
-            label_value.grid(row=i, column=1, sticky="w", padx=5, pady=2)
-            self.result_labels[point] = label_value
-
-        # Status label and progress bar
-        self.status_label = ttk.Label(performance_frame, text="Ready to start.")
-        self.status_label.grid(
-            row=len(result_points),
-            column=0,
-            columnspan=2,
-            sticky="w",
-            padx=5,
-            pady=(10, 2),
-        )
-
-        self.progress = ttk.Progressbar(
-            performance_frame, orient="horizontal", mode="indeterminate"
-        )
-        self.progress.grid(
-            row=len(result_points) + 1,
-            column=0,
-            columnspan=2,
-            sticky="ew",
-            padx=5,
-            pady=2,
-        )
-
-        # Control button
-        self.start_button = ttk.Button(
-            self, text="Start Speed Test", command=self.start_test
-        )
-        self.start_button.pack(pady=10)
-
-    def start_test(self):
-        """Handles the button click to start the speed test."""
-        self.start_button.config(state="disabled")
-        for label in self.result_labels.values():
-            label.config(text="Testing...")
-        self.status_label.config(text="Finding the best server...")
-        self.progress.start(10)
-
-        # Run the test in a separate thread to keep the GUI responsive
-        threading.Thread(target=self.run_test_task, daemon=True).start()
-
-    def run_test_task(self):
-        """The actual speed test logic that runs in the background."""
-        results = net_tool.run_speed_test()
-
-        # Safely schedule the UI update on the main thread
-        self.parent.after(0, self.update_ui, results)
-
-    def update_ui(self, results):
-        """Updates the GUI with the speed test results."""
-        self.progress.stop()
-
-        if "Error" in results:
-            self.status_label.config(text=results["Error"])
-            for label in self.result_labels.values():
-                label.config(text="Failed")
-        else:
-            self.status_label.config(text="Test complete.")
-            for key, value in results.items():
-                if key in self.result_labels:
-                    self.result_labels[key].config(text=value)
-
-        self.start_button.config(state="normal")
-
-
-class ConnectivityTools(ttk.Frame):
-    """Tab for interactive tools like ping, traceroute, etc."""
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.create_ping_widgets()
-        separator = ttk.Separator(self, orient="horizontal")
-        separator.pack(fill="x", padx=10, pady=5)
-        self.create_other_tools_widgets()
-
-    def create_ping_widgets(self):
-        """Create the UI elements for the ping tool."""
-        ping_frame = ttk.LabelFrame(self, text="Continuous Ping")
-        ping_frame.pack(padx=10, pady=10, fill="x")
-
-        control_frame = ttk.Frame(ping_frame)
-        control_frame.pack(fill="x", padx=5, pady=5)
-
-        host_label = ttk.Label(control_frame, text="Host/IP:")
-        host_label.pack(side="left", padx=(0, 5))
-
-        self.ping_host_entry = ttk.Entry(control_frame)
-        self.ping_host_entry.pack(side="left", fill="x", expand=True)
-        self.ping_host_entry.insert(0, "8.8.8.8")
-
-        self.start_button = ttk.Button(
-            control_frame, text="Start Ping", command=self.start_ping
-        )
-        self.start_button.pack(side="left", padx=5)
-
-        self.stop_button = ttk.Button(
-            control_frame, text="Stop Ping", command=self.stop_ping, state="disabled"
-        )
-        self.stop_button.pack(side="left")
-
-        self.ping_output_text = scrolledtext.ScrolledText(
-            ping_frame, wrap=tk.WORD, height=10
-        )
-        self.ping_output_text.pack(padx=5, pady=5, fill="both", expand=True)
-
-    def create_other_tools_widgets(self):
-        """Create UI for Traceroute, DNS Lookup, and Port Scan."""
-        tools_frame = ttk.Frame(self)
-        tools_frame.pack(padx=10, pady=10, fill="x")
-
-        trace_frame = ttk.LabelFrame(tools_frame, text="Traceroute")
-        trace_frame.pack(fill="x", expand=True, pady=(0, 10))
-
-        trace_host_label = ttk.Label(trace_frame, text="Host/IP:")
-        trace_host_label.pack(side="left", padx=5, pady=5)
-        self.trace_host_entry = ttk.Entry(trace_frame)
-        self.trace_host_entry.pack(side="left", fill="x", expand=True, padx=5, pady=5)
-        self.trace_host_entry.insert(0, "8.8.8.8")
-        trace_button = ttk.Button(
-            trace_frame, text="Run Trace", command=self.run_traceroute
-        )
-        trace_button.pack(side="left", padx=5, pady=5)
-
-        dns_frame = ttk.LabelFrame(tools_frame, text="DNS Lookup")
-        dns_frame.pack(fill="x", expand=True, pady=(0, 10))
-
-        dns_host_label = ttk.Label(dns_frame, text="Domain:")
-        dns_host_label.pack(side="left", padx=5, pady=5)
-        self.dns_host_entry = ttk.Entry(dns_frame)
-        self.dns_host_entry.pack(side="left", fill="x", expand=True, padx=5, pady=5)
-        self.dns_host_entry.insert(0, "google.com")
-        dns_button = ttk.Button(dns_frame, text="Lookup", command=self.run_dns_lookup)
-        dns_button.pack(side="left", padx=5, pady=5)
-
-        port_frame = ttk.LabelFrame(tools_frame, text="Port Scan")
-        port_frame.pack(fill="x", expand=True)
-
-        port_host_label = ttk.Label(port_frame, text="Host/IP:")
-        port_host_label.pack(side="left", padx=5, pady=5)
-        self.port_host_entry = ttk.Entry(port_frame)
-        self.port_host_entry.pack(side="left", fill="x", expand=True, padx=5, pady=5)
-        self.port_host_entry.insert(0, "google.com")
-
-        port_label = ttk.Label(port_frame, text="Port:")
-        port_label.pack(side="left", padx=5, pady=5)
-        self.port_entry = ttk.Entry(port_frame, width=6)
-        self.port_entry.pack(side="left", padx=5, pady=5)
-        self.port_entry.insert(0, "443")
-        port_button = ttk.Button(port_frame, text="Scan", command=self.run_port_scan)
-        port_button.pack(side="left", padx=5, pady=5)
-
-        output_frame = ttk.LabelFrame(self, text="Results")
-        output_frame.pack(padx=10, pady=10, fill="both", expand=True)
-        self.other_tools_output = scrolledtext.ScrolledText(
-            output_frame, wrap=tk.WORD, height=10
-        )
-        self.other_tools_output.pack(padx=5, pady=5, fill="both", expand=True)
-
-    def start_ping(self):
-        """Starts the continuous ping thread."""
-        host = self.ping_host_entry.get()
-        if not host:
-            messagebox.showerror("Error", "Please enter a host or IP address.")
-            return
-
-        self.ping_output_text.delete("1.0", tk.END)
-        self.start_button.config(state="disabled")
-        self.stop_button.config(state="normal")
-
-        def update_text(message):
-            self.ping_output_text.insert(tk.END, message)
-            self.ping_output_text.see(tk.END)
-
-        self.ping_thread = threading.Thread(
-            target=net_tool.continuous_ping, args=(host, update_text), daemon=True
-        )
-        self.ping_thread.start()
-
-    def stop_ping(self):
-        """Stops the continuous ping."""
-        net_tool.stop_ping()
-        self.start_button.config(state="normal")
-        self.stop_button.config(state="disabled")
-        self.ping_output_text.insert(tk.END, "\n--- Ping Stopped ---\n")
-
-    def run_tool_in_thread(self, tool_function, *args):
-        """Generic runner for single-shot tools to avoid freezing the GUI."""
-        self.other_tools_output.delete("1.0", tk.END)
-        self.other_tools_output.insert(
-            tk.INSERT, f"Running {tool_function.__name__}..."
-        )
-
-        def task_wrapper():
-            result = tool_function(*args)
-            self.other_tools_output.delete("1.0", tk.END)
-            self.other_tools_output.insert(tk.INSERT, result)
-
-        threading.Thread(target=task_wrapper, daemon=True).start()
-
-    def run_traceroute(self):
-        host = self.trace_host_entry.get()
-        if not host:
-            messagebox.showerror("Error", "Please enter a host for the traceroute.")
-            return
-        self.run_tool_in_thread(net_tool.traceroute_test, host)
-
-    def run_dns_lookup(self):
-        domain = self.dns_host_entry.get()
-        if not domain:
-            messagebox.showerror("Error", "Please enter a domain to look up.")
-            return
-        self.run_tool_in_thread(net_tool.dns_resolution_test, domain)
-
-    def run_port_scan(self):
-        host = self.port_host_entry.get()
-        port = self.port_entry.get()
-        if not host or not port:
-            messagebox.showerror(
-                "Error", "Please enter both a host and a port to scan."
-            )
-            return
-        self.run_tool_in_thread(net_tool.port_connectivity_test, host, port)
-
-
-class AdvancedDiagnostics(ttk.Frame):
-    """Tab for connecting to network devices and running commands."""
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.parent = parent
-        self.router_connection = None
-        self.create_widgets()
-
-    def create_widgets(self):
-        conn_frame = ttk.LabelFrame(self, text="Device Connection")
-        conn_frame.pack(padx=10, pady=10, fill="x")
-        conn_frame.columnconfigure(1, weight=1)
-
-        ttk.Label(conn_frame, text="Device IP:").grid(
-            row=0, column=0, sticky="w", padx=5, pady=2
-        )
-        self.ip_entry = ttk.Entry(conn_frame)
-        self.ip_entry.grid(row=0, column=1, sticky="ew", padx=5, pady=2)
-
-        ttk.Label(conn_frame, text="Username:").grid(
-            row=1, column=0, sticky="w", padx=5, pady=2
-        )
-        self.user_entry = ttk.Entry(conn_frame)
-        self.user_entry.grid(row=1, column=1, sticky="ew", padx=5, pady=2)
-
-        ttk.Label(conn_frame, text="Password:").grid(
-            row=2, column=0, sticky="w", padx=5, pady=2
-        )
-        self.pass_entry = ttk.Entry(conn_frame, show="*")
-        self.pass_entry.grid(row=2, column=1, sticky="ew", padx=5, pady=2)
-
-        ttk.Label(conn_frame, text="Device Type:").grid(
-            row=3, column=0, sticky="w", padx=5, pady=2
-        )
-        self.device_type_combo = ttk.Combobox(
-            conn_frame,
-            values=[
-                "cisco_ios",
-                "cisco_xr",
-                "cisco_nxos",
-                "arista_eos",
-                "juniper_junos",
-            ],
-        )
-        self.device_type_combo.grid(row=3, column=1, sticky="ew", padx=5, pady=2)
-        self.device_type_combo.set("cisco_ios")
-
-        button_frame = ttk.Frame(conn_frame)
-        button_frame.grid(row=4, column=0, columnspan=2, pady=5)
-
-        self.connect_button = ttk.Button(
-            button_frame, text="Connect", command=self.connect_device
-        )
-        self.connect_button.pack(side="left", padx=5)
-        self.disconnect_button = ttk.Button(
-            button_frame,
-            text="Disconnect",
-            command=self.disconnect_device,
-            state="disabled",
-        )
-        self.disconnect_button.pack(side="left", padx=5)
-
-        self.status_label = ttk.Label(
-            button_frame, text="Status: Disconnected", foreground="red"
-        )
-        self.status_label.pack(side="left", padx=10)
-
-        cmd_frame = ttk.LabelFrame(self, text="Run Command")
-        cmd_frame.pack(padx=10, pady=10, fill="x")
-        cmd_frame.columnconfigure(0, weight=1)
-
-        self.cmd_entry = ttk.Entry(cmd_frame)
-        self.cmd_entry.grid(row=0, column=0, sticky="ew", padx=5, pady=5)
-        self.cmd_entry.insert(0, "show ip interface brief")
-        self.send_cmd_button = ttk.Button(
-            cmd_frame, text="Send Command", command=self.send_command, state="disabled"
-        )
-        self.send_cmd_button.grid(row=0, column=1, padx=5, pady=5)
-
-        output_frame = ttk.LabelFrame(self, text="Device Output")
-        output_frame.pack(padx=10, pady=10, fill="both", expand=True)
-        self.output_text = scrolledtext.ScrolledText(
-            output_frame, wrap=tk.WORD, height=15
-        )
-        self.output_text.pack(padx=5, pady=5, fill="both", expand=True)
-
-    def connect_device(self):
-        ip = self.ip_entry.get()
-        user = self.user_entry.get()
-        password = self.pass_entry.get()
-        device_type = self.device_type_combo.get()
-
-        if not all([ip, user, password, device_type]):
-            messagebox.showerror("Error", "Please fill in all connection details.")
-            return
-
-        self.router_connection = RouterConnection(device_type, ip, user, password)
-        self.status_label.config(text="Status: Connecting...", foreground="orange")
-        self.output_text.delete("1.0", tk.END)
-        self.output_text.insert(tk.END, f"Attempting to connect to {ip}...")
-
-        threading.Thread(target=self.connection_task, daemon=True).start()
-
-    def connection_task(self):
-        result = self.router_connection.connect()
-
-        def update_ui():
-            self.output_text.insert(tk.END, f"\n{result}\n")
-            if "successful" in result:
-                self.status_label.config(text="Status: Connected", foreground="green")
-                self.connect_button.config(state="disabled")
-                self.disconnect_button.config(state="normal")
-                self.send_cmd_button.config(state="normal")
-            else:
-                self.status_label.config(text="Status: Failed", foreground="red")
-                self.router_connection = None
-
-        self.parent.after(0, update_ui)
-
-    def disconnect_device(self):
-        if self.router_connection:
-            result = self.router_connection.disconnect()
-            self.output_text.insert(tk.END, f"\n{result}\n")
-
-        self.status_label.config(text="Status: Disconnected", foreground="red")
-        self.connect_button.config(state="normal")
-        self.disconnect_button.config(state="disabled")
-        self.send_cmd_button.config(state="disabled")
-        self.router_connection = None
-
-    def send_command(self):
-        command = self.cmd_entry.get()
-        if not command:
-            messagebox.showerror("Error", "Please enter a command to send.")
-            return
-
-        self.output_text.delete("1.0", tk.END)
-        self.output_text.insert(tk.END, f"Sending command: '{command}'...")
-
-        threading.Thread(target=self.command_task, args=(command,), daemon=True).start()
-
-    def command_task(self, command):
-        if self.router_connection:
-            result = self.router_connection.send_command(command)
-
-            def update_ui():
-                self.output_text.delete("1.0", tk.END)
-                self.output_text.insert(tk.END, f"\n--- Output for '{command}' ---\n")
-                self.output_text.insert(tk.END, result)
-
-            self.parent.after(0, update_ui)
-
-
-class PhysicalLayerDiscovery(ttk.Frame):
-    """Tab for discovering connected switch and port via LLDP/CDP."""
-
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.parent = parent
-        self.create_widgets()
-
-    def create_widgets(self):
-        """Create and arrange widgets for LLDP/CDP discovery."""
-        lldp_frame = ttk.LabelFrame(self, text="LLDP / CDP Discovery")
-        lldp_frame.pack(padx=10, pady=10, fill="both", expand=True)
-
-        control_frame = ttk.Frame(lldp_frame)
-        control_frame.pack(fill="x", padx=5, pady=5)
-
-        self.start_button = ttk.Button(
-            control_frame, text="Start Scan", command=self.start_scan
-        )
-        self.start_button.pack(side="left", padx=5)
-
-        self.stop_button = ttk.Button(
-            control_frame, text="Stop Scan", command=self.stop_scan, state="disabled"
-        )
-        self.stop_button.pack(side="left")
-
-        self.progress = ttk.Progressbar(
-            lldp_frame, orient="horizontal", mode="indeterminate"
-        )
-        self.progress.pack(fill="x", padx=5, pady=(0, 5))
-
-        self.output_text = scrolledtext.ScrolledText(
-            lldp_frame, wrap=tk.WORD, height=15
-        )
-        self.output_text.pack(padx=5, pady=5, fill="both", expand=True)
-
-    def start_scan(self):
-        """Starts the LLDP/CDP packet capture."""
-        self.output_text.delete("1.0", tk.END)
-        self.start_button.config(state="disabled")
-        self.stop_button.config(state="normal")
-        self.progress.start(10)
-
-        def update_output(message):
-            self.parent.after(0, self._update_text_widget, message)
-
-        net_tool.start_discovery_capture(update_output, timeout=60)
-        self.output_text.insert(
-            tk.END, "Scanning for LLDP/CDP packets for 60 seconds...\n"
-        )
-
-    def _update_text_widget(self, message):
-        """Helper method to safely update the text widget and UI state."""
-        self.output_text.insert(tk.END, message + "\n")
-        self.output_text.see(tk.END)
-
-        if any(
-            keyword in message
-            for keyword in ["Found", "Scan complete", "requires administrator", "Error"]
-        ):
-            self.progress.stop()
-            self.start_button.config(state="normal")
-            self.stop_button.config(state="disabled")
-
-    def stop_scan(self):
-        """Stops the packet capture and resets the UI."""
-        net_tool.stop_discovery_capture()
-        self.progress.stop()
-        self.start_button.config(state="normal")
-        self.stop_button.config(state="disabled")
-        self.output_text.insert(tk.END, "\n--- Scan Stopped by User ---\n")
-
-
-class MainApplication(tk.Tk):
-    """The main application window."""
+import requests
+import psutil
+import re
+from netmiko import ConnectHandler
+from scapy.all import sniff, inet_ntoa
+from scapy.contrib.lldp import LLDPDU
+from scapy.contrib.cdp import CDPMsg, CDPAddrRecord
+
+
+class NetworkTriageToolkit:
+    """A collection of network troubleshooting functions."""
 
     def __init__(self):
-        super().__init__()
-        self.title("Network Triage Tool")
-        self.geometry("600x750")
+        self.stop_ping_event = threading.Event()
+        self.discovery_thread = None
+        self.stop_discovery = False
 
-        notebook = ttk.Notebook(self)
-        notebook.pack(pady=10, padx=10, fill="both", expand=True)
+    def get_system_info(self):
+        """Gathers basic system information."""
+        try:
+            return {
+                "OS": f"{platform.system()} {platform.release()}",
+                "Hostname": socket.gethostname(),
+            }
+        except Exception as e:
+            return {"OS": f"Error: {e}", "Hostname": f"Error: {e}"}
 
-        self.dashboard_tab = TriageDashboard(self)
-        self.connection_tab = ConnectionDetails(self)
-        self.performance_tab = PerformanceTab(self)
-        self.connectivity_tab = ConnectivityTools(self)
-        self.lldp_tab = PhysicalLayerDiscovery(self)
-        self.advanced_tab = AdvancedDiagnostics(self)
+    def get_ip_info(self):
+        """Fetches local IP, public IP, and gateway information."""
+        info = {
+            "Internal IP": "N/A",
+            "Gateway": "N/A",
+            "Public IP": "N/A",
+        }
+        # Get Internal IP
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.connect(("8.8.8.8", 80))
+            info["Internal IP"] = s.getsockname()[0]
+            s.close()
+        except Exception:
+            info["Internal IP"] = "Error fetching IP"
 
-        notebook.add(self.dashboard_tab, text="Triage Dashboard")
-        notebook.add(self.connection_tab, text="Connection Details")
-        notebook.add(self.performance_tab, text="Performance")
-        notebook.add(self.connectivity_tab, text="Connectivity Tools")
-        notebook.add(self.lldp_tab, text="Physical Layer")
-        notebook.add(self.advanced_tab, text="Advanced Diagnostics")
+        # Get Gateway using the reliable psutil method, with a fallback for macOS
+        try:
+            gws = psutil.net_if_gateways()
+            default_gateway = gws.get("default", {}).get(psutil.AF_INET)
+            if default_gateway:
+                info["Gateway"] = default_gateway[0]
+            else:
+                raise Exception("psutil could not find gateway")
+        except Exception:
+            if platform.system() == "Darwin":
+                try:
+                    command = "netstat -rn -f inet | grep default | awk '{print $2}'"
+                    gateway = subprocess.check_output(
+                        command, shell=True, text=True
+                    ).strip()
+                    if gateway:
+                        info["Gateway"] = gateway
+                    else:
+                        info["Gateway"] = "Could not determine"
+                except Exception:
+                    info["Gateway"] = "Could not determine"
+            else:
+                info["Gateway"] = "Could not determine"
 
-        report_button = ttk.Button(self, text="Save Report", command=self.save_report)
-        report_button.pack(pady=10)
+        # Get Public IP
+        try:
+            response = requests.get("https://ipinfo.io/json", timeout=5)
+            data = response.json()
+            info["Public IP"] = data.get("ip", "N/A")
+        except Exception:
+            info["Public IP"] = "Error fetching public IP"
 
-    def save_report(self):
-        """Gathers data from all tabs and saves it to a text file."""
-        report_content = []
+        return info
 
-        report_content.append("=" * 50)
-        report_content.append("NETWORK TRIAGE REPORT")
-        report_content.append(f"Generated on: {time.strftime('%Y-%m-%d %H:%M:%S')}")
-        report_content.append("=" * 50 + "\n")
-
-        report_content.append("--- System & Network Information ---")
-        for key, label in self.dashboard_tab.info_labels.items():
-            report_content.append(f"{key}: {label.cget('text')}")
-        report_content.append("\n")
-
-        report_content.append("--- Connection Details ---")
-        # Gather details from the dynamically shown/hidden frames
-        for key in self.connection_tab.detail_points:
-            if key in self.connection_tab.detail_labels:
-                report_content.append(
-                    f"{key}: {self.connection_tab.detail_labels[key].cget('text')}"
-                )
-
-        if self.connection_tab.detail_labels["Connection Type"].cget("text") == "Wi-Fi":
-            for key in self.connection_tab.wifi_points:
-                if key in self.connection_tab.detail_labels:
-                    report_content.append(
-                        f"{key}: {self.connection_tab.detail_labels[key].cget('text')}"
-                    )
-        report_content.append("\n")
-
-        report_content.append("--- User Notes ---")
-        report_content.append(self.dashboard_tab.notes_text.get("1.0", tk.END).strip())
-        report_content.append("\n")
-
-        report_content.append("--- Connectivity Tools Output ---")
-        report_content.append("Ping Output:")
-        report_content.append(
-            self.connectivity_tab.ping_output_text.get("1.0", tk.END).strip()
-        )
-        report_content.append("\nOther Tools Output:")
-        report_content.append(
-            self.connectivity_tab.other_tools_output.get("1.0", tk.END).strip()
-        )
-        report_content.append("\n")
-
-        report_content.append("--- Physical Layer (LLDP / CDP) Output ---")
-        report_content.append(self.lldp_tab.output_text.get("1.0", tk.END).strip())
-        report_content.append("\n")
-
-        report_content.append("--- Advanced Diagnostics Output ---")
-        report_content.append(self.advanced_tab.output_text.get("1.0", tk.END).strip())
-        report_content.append("\n")
-
-        file_path = filedialog.asksaveasfilename(
-            defaultextension=".txt",
-            filetypes=[("Text files", "*.txt"), ("All files", "*.*")],
-            title="Save Network Report",
-            initialfile=f"network_report_{time.strftime('%Y%m%d_%H%M%S')}.txt",
-        )
-
-        if file_path:
+    def get_connection_details(self):
+        """Gets details about the active network connection, with special handling for macOS."""
+        # macOS specific implementation
+        if platform.system() == "Darwin":
             try:
-                with open(file_path, "w", encoding="utf-8") as f:
-                    f.write("\n".join(report_content))
-                messagebox.showinfo(
-                    "Success", f"Report saved successfully to:\n{file_path}"
-                )
+                # Find the default interface using netstat
+                command = "netstat -rn -f inet"
+                result = subprocess.check_output(command, shell=True, text=True)
+                interface = None
+                for line in result.splitlines():
+                    if line.startswith("default"):
+                        parts = line.split()
+                        if len(parts) >= 4:
+                            gateway, iface = parts[1], parts[3]
+                            if all(c in "0123456789." for c in gateway):
+                                interface = iface
+                                break
+
+                if not interface:
+                    return {"Status": "Could not determine default network interface."}
+
+                info = {"Interface": interface}
+
+                # Use system_profiler to get all Wi-Fi details
+                try:
+                    profiler_cmd = f"system_profiler SPAirPortDataType"
+                    profiler_result = subprocess.check_output(
+                        profiler_cmd, shell=True, text=True
+                    )
+
+                    # Check if the interface is listed as a Wi-Fi card
+                    if (
+                        f"{interface}:" in profiler_result
+                        and "Card Type: Wi-Fi" in profiler_result
+                    ):
+                        info["Connection Type"] = "Wi-Fi"
+                    else:
+                        info["Connection Type"] = "Ethernet"
+
+                    if info["Connection Type"] == "Wi-Fi":
+                        # Isolate the correct network block
+                        network_info_block = re.search(
+                            r"Current Network Information:(.*?)(\n\s*\n|$)",
+                            profiler_result,
+                            re.DOTALL,
+                        )
+                        if network_info_block:
+                            block_text = network_info_block.group(1)
+
+                            # The SSID is the first line in the block, ending with a colon
+                            ssid_match = re.search(
+                                r"^\s*(.+):$", block_text, re.MULTILINE
+                            )
+                            if ssid_match:
+                                info["SSID"] = ssid_match.group(1).strip()
+
+                            channel = re.search(r"Channel:\s*(.+)", block_text)
+                            signal_noise = re.search(
+                                r"Signal / Noise:\s*(.+)", block_text
+                            )
+
+                            if channel:
+                                info["Channel"] = channel.group(1).strip()
+                            if signal_noise:
+                                parts = signal_noise.group(1).strip().split(" / ")
+                                info["Signal"] = parts[0]
+                                if len(parts) > 1:
+                                    info["Noise"] = parts[1]
+                except (subprocess.CalledProcessError, AttributeError):
+                    info["Connection Type"] = "Ethernet"  # Fallback if profiler fails
+
+                # Get DNS Servers on macOS
+                try:
+                    dns_cmd = "scutil --dns | grep 'nameserver\\[[0-9]*\\]' | awk '{print $3}'"
+                    dns_result = subprocess.check_output(dns_cmd, shell=True, text=True)
+                    dns_servers = list(dict.fromkeys(dns_result.strip().split("\n")))
+                    info["DNS Servers"] = ", ".join(dns_servers)
+                except Exception:
+                    info["DNS Servers"] = "N/A"
+
+                # Get IP and MAC address details from psutil
+                addresses = psutil.net_if_addrs().get(interface, [])
+                for addr in addresses:
+                    if addr.family == socket.AF_INET:
+                        info["IP Address"] = addr.address
+                        info["Netmask"] = addr.netmask
+                    elif addr.family == psutil.AF_LINK:
+                        info["MAC Address"] = addr.address
+
+                stats = psutil.net_if_stats().get(interface)
+                if stats:
+                    info["Status"] = "Up" if stats.isup else "Down"
+                    info["Speed"] = f"{stats.speed} Mbps" if stats.speed > 0 else "N/A"
+                    info["MTU"] = str(stats.mtu)
+
+                return info
+
             except Exception as e:
-                messagebox.showerror("Error", f"Failed to save report: {e}")
+                return {"Error": f"macOS-specific check failed: {e}"}
+
+        # Fallback for other operating systems
+        else:
+            return {"Status": "Detailed info not yet implemented for this OS."}
+
+    def run_speed_test(self):
+        """Performs a network speed test and returns the results."""
+        try:
+            import speedtest
+
+            st = speedtest.Speedtest()
+            st.get_best_server()
+            st.download()
+            st.upload()
+
+            results = st.results.dict()
+
+            ping = results.get("ping", 0)
+            download_speed = results.get("download", 0) / 1_000_000  # Convert to Mbps
+            upload_speed = results.get("upload", 0) / 1_000_000  # Convert to Mbps
+            server_name = results.get("server", {}).get("name", "N/A")
+
+            return {
+                "Ping": f"{ping:.2f} ms",
+                "Download": f"{download_speed:.2f} Mbps",
+                "Upload": f"{upload_speed:.2f} Mbps",
+                "Server": server_name,
+            }
+
+        except Exception as e:
+            return {"Error": f"Speed test failed: {e}"}
+
+    def continuous_ping(self, host, callback):
+        """Pings a host continuously and sends output to a callback."""
+        self.stop_ping_event.clear()
+        param = "-n" if platform.system().lower() == "windows" else "-c"
+        command = ["ping", host]
+
+        try:
+            process = subprocess.Popen(
+                command,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1,
+                universal_newlines=True,
+            )
+            for line in iter(process.stdout.readline, ""):
+                if self.stop_ping_event.is_set():
+                    process.terminate()
+                    break
+                callback(line)
+            process.stdout.close()
+        except FileNotFoundError:
+            callback("Ping command not found. Is it in your system's PATH?")
+        except Exception as e:
+            callback(f"An error occurred: {e}\n")
+
+    def stop_ping(self):
+        """Signals the continuous ping to stop."""
+        self.stop_ping_event.set()
+
+    def traceroute_test(self, host):
+        """Performs a traceroute to a specific host."""
+        if platform.system() != "Windows" and os.geteuid() != 0:
+            return "Traceroute on this OS requires administrator privileges. Please run the application with 'sudo'."
+
+        try:
+            if platform.system() == "Windows":
+                command = ["tracert", "-d", host]
+            else:  # Linux/macOS
+                command = ["traceroute", "-I", host]  # -I uses ICMP, more reliable
+
+            process = subprocess.Popen(
+                command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
+            )
+            output, _ = process.communicate(timeout=45)
+
+            if (
+                process.returncode != 0 and "administrat" in output
+            ):  # a more specific check
+                return f"Traceroute failed due to permissions. Please run with 'sudo'."
+            return f"--- Traceroute to {host} ---\n{output}"
+
+        except subprocess.TimeoutExpired:
+            return f"Traceroute to {host} timed out. The host may be unreachable or a firewall is blocking the request."
+        except FileNotFoundError:
+            return "Traceroute command not found. Ensure it is installed and in your system's PATH."
+        except Exception as e:
+            return f"An unexpected error occurred during traceroute: {e}"
+
+    def dns_resolution_test(self, domain):
+        """Tests DNS resolution for a specific domain."""
+        try:
+            ip = socket.gethostbyname(domain)
+            return f"DNS resolution for {domain}: {ip}"
+        except socket.gaierror:
+            return f"DNS resolution failed for {domain}. Check your DNS settings."
+        except Exception as e:
+            return f"An error occurred during DNS resolution: {e}"
+
+    def port_connectivity_test(self, host, port):
+        """Tests if a specific port is open on a given host."""
+        try:
+            port_num = int(port)
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                sock.settimeout(2)
+                result = sock.connect_ex((host, port_num))
+                if result == 0:
+                    return f"Port {port_num} on {host} is OPEN."
+                else:
+                    return f"Port {port_num} on {host} is CLOSED or filtered."
+        except ValueError:
+            return "Invalid port number. Please enter an integer."
+        except socket.gaierror:
+            return f"Hostname '{host}' could not be resolved."
+        except Exception as e:
+            return f"An error occurred: {e}"
+
+    def network_adapter_info(self):
+        """Gathers detailed network adapter information."""
+        try:
+            if platform.system() == "Windows":
+                command = ["ipconfig", "/all"]
+            else:
+                command = ["ifconfig"]
+
+            result = subprocess.run(
+                command, capture_output=True, text=True, check=True, timeout=10
+            )
+            return result.stdout
+        except FileNotFoundError:
+            return "Could not find 'ipconfig' or 'ifconfig'. Please ensure it's in your system PATH."
+        except Exception as e:
+            return f"Failed to get adapter info: {e}"
+
+    def start_discovery_capture(self, callback, timeout=60):
+        """Starts a thread to capture LLDP or CDP packets."""
+        if self.discovery_thread and self.discovery_thread.is_alive():
+            callback("A scan is already in progress.")
+            return
+
+        self.stop_discovery = False
+        self.discovery_thread = threading.Thread(
+            target=self._run_discovery_capture, args=(callback, timeout), daemon=True
+        )
+        self.discovery_thread.start()
+
+    def stop_discovery_capture(self):
+        """Signals the packet capture thread to stop."""
+        self.stop_discovery = True
+
+    def _run_discovery_capture(self, callback, timeout):
+        """The actual packet sniffing logic."""
+        if platform.system() != "Windows" and os.geteuid() != 0:
+            callback(
+                "Packet capture requires administrator privileges. Please run with 'sudo'."
+            )
+            return
+
+        packet_found = [False]  # Use list for mutability in callback
+
+        def _packet_callback(packet):
+            """This function is called for every captured packet."""
+            if self.stop_discovery or packet_found[0]:
+                return True
+
+            result = ""
+            if packet.haslayer(LLDPDU):
+                packet_found[0] = True
+                try:
+                    chassis_id_val = None
+                    port_id_val = None
+                    port_id_subtype = "N/A"
+                    port_description_val = None
+                    system_name_val = None
+                    mgmt_address_val = None
+
+                    # Manual TLV parsing from raw bytes
+                    raw_payload = bytes(packet[LLDPDU].payload)
+                    i = 0
+                    while i < len(raw_payload):
+                        if i + 2 > len(raw_payload):
+                            break
+
+                        tlv_header = struct.unpack("!H", raw_payload[i : i + 2])[0]
+                        tlv_type = tlv_header >> 9
+                        tlv_len = tlv_header & 0x1FF
+
+                        if i + 2 + tlv_len > len(raw_payload):
+                            break
+
+                        value_bytes = raw_payload[i + 2 : i + 2 + tlv_len]
+
+                        if tlv_type == 1:  # Chassis ID
+                            chassis_id_val = value_bytes[1:]
+                        elif tlv_type == 2:  # Port ID
+                            port_id_subtype = value_bytes[0]
+                            port_id_val = value_bytes[1:]
+                        elif tlv_type == 4:  # Port Description
+                            port_description_val = value_bytes
+                        elif tlv_type == 5:  # System Name
+                            system_name_val = value_bytes
+                        elif tlv_type == 8:  # Management Address
+                            # Mgmt Addr TLV has its own structure
+                            if len(value_bytes) > 1:
+                                addr_subtype = value_bytes[1]
+                                if addr_subtype == 1:  # IPv4
+                                    mgmt_address_val = inet_ntoa(value_bytes[2:6])
+                        elif tlv_type == 0:  # End of LLDPDU
+                            break
+
+                        i += 2 + tlv_len
+
+                    if not chassis_id_val or not port_id_val:
+                        raise ValueError(
+                            "Essential LLDP fields not found via manual parsing."
+                        )
+
+                    # --- Smart Decoding ---
+                    chassis_id_str = chassis_id_val.decode("utf-8", "ignore")
+
+                    result = f"--- LLDP Packet Found ---\n"
+                    if system_name_val:
+                        result += f"System Name: {system_name_val.decode('utf-8', 'ignore')}\n"
+
+                    result += f"Switch ID: {chassis_id_str}\n"
+
+                    if mgmt_address_val:
+                        result += f"Management Address: {mgmt_address_val}\n"
+
+                    if port_description_val:
+                        result += f"Port Description: {port_description_val.decode('utf-8', 'ignore')}\n"
+
+                except Exception as e:
+                    result = f"Error parsing LLDP packet: {e}"
+
+                callback(result)
+                return True
+
+            if packet.haslayer(CDPMsg):
+                packet_found[0] = True
+                try:
+                    device_id = packet[CDPMsg].device_id.decode()
+                    port_id = packet[CDPMsg].port_id.decode()
+                    platform = packet[CDPMsg].platform.decode()
+                    mgmt_address = "N/A"
+                    if packet.haslayer(CDPAddrRecord):
+                        mgmt_address = packet[CDPAddrRecord].addr
+
+                    result = (
+                        f"--- CDP Packet Found ---\n"
+                        f"Device ID: {device_id}\n"
+                        f"Management Address: {mgmt_address}\n"
+                        f"Port ID: {port_id}\n"
+                        f"Platform: {platform}"
+                    )
+                except Exception as e:
+                    result = f"Error parsing CDP packet: {e}"
+
+                callback(result)
+                return True
+
+            return False
+
+        try:
+            sniff(
+                filter="ether proto 0x88cc or ether dst 01:00:0c:cc:cc:cc",
+                stop_filter=_packet_callback,
+                timeout=timeout,
+            )
+        except Exception as e:
+            callback(f"An error occurred during packet capture: {e}")
+        finally:
+            if not packet_found[0] and not self.stop_discovery:
+                callback(
+                    f"\nScan complete. No LLDP or CDP packets found in {timeout} seconds."
+                )
 
 
-if __name__ == "__main__":
-    app = MainApplication()
-    app.mainloop()
+class RouterConnection:
+    """Handles connection and commands for a network device."""
+
+    def __init__(self, device_type, ip, username, password):
+        self.device_info = {
+            "device_type": device_type,
+            "ip": ip,
+            "username": username,
+            "password": password,
+        }
+        self.connection = None
+
+    def connect(self):
+        """Establishes a connection to the device."""
+        try:
+            self.connection = ConnectHandler(**self.device_info)
+            return "Connection successful."
+        except Exception as e:
+            self.connection = None
+            return f"Connection failed: {e}"
+
+    def disconnect(self):
+        """Closes the connection."""
+        if self.connection:
+            self.connection.disconnect()
+            self.connection = None
+            return "Disconnected."
+        return "No active connection."
+
+    def send_command(self, command):
+        """Sends a command to the connected device."""
+        if self.connection:
+            try:
+                output = self.connection.send_command(command)
+                return output
+            except Exception as e:
+                return f"Error sending command: {e}"
+        return "Not connected."
