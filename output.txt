@@ -1,0 +1,203 @@
+--- 1. Gateway Information (netstat) ---
+Routing tables
+
+Internet:
+Destination        Gateway            Flags               Netif Expire
+default            10.100.10.1        UGScg                 en0       
+10.100.10/24       link#6             UCS                   en0      !
+10.100.10.1/32     link#6             UCS                   en0      !
+10.100.10.1        68:d7:9a:69:f2:5e  UHLWIir               en0   1124
+10.100.10.9        82:24:36:38:6d:7c  UHLWIi                en0   1188
+10.100.10.159/32   link#6             UCS                   en0      !
+127                127.0.0.1          UCS                   lo0       
+127.0.0.1          127.0.0.1          UH                    lo0       
+127.215.243.195    127.215.243.195    UH                    lo0       
+169.254            link#6             UCS                   en0      !
+169.254.169.254    link#6             UHRLSW                en0      !
+224.0.0/4          link#6             UmCS                  en0      !
+224.0.0.251        1:0:5e:0:0:fb      UHmLWI                en0       
+255.255.255.255/32 link#6             UCS                   en0      !
+
+
+==================================================
+
+--- 2. Wi-Fi Details (system_profiler) ---
+Wi-Fi:
+
+      Software Versions:
+          CoreWLAN: 16.0 (1657)
+          CoreWLANKit: 16.0 (1657)
+          Menu Extra: 17.0 (1728)
+          System Information: 15.0 (1502)
+          IO80211 Family: 12.0 (1200.13.1)
+          Diagnostics: 11.0 (1163)
+          AirPort Utility: 6.3.9 (639.26)
+      Interfaces:
+        en0:
+          Card Type: Wi-Fi  (0x14E4, 0x7BF)
+          Firmware Version: wl0: Jul 26 2024 22:09:35 version 9.30.514.0.32.5.94 FWID 01-47278712
+          MAC Address: 92:13:00:2c:6c:fc
+          Locale: FCC
+          Country Code: US
+          Supported PHY Modes: 802.11 a/b/g/n/ac
+          Supported Channels: 1 (2GHz), 2 (2GHz), 3 (2GHz), 4 (2GHz), 5 (2GHz), 6 (2GHz), 7 (2GHz), 8 (2GHz), 9 (2GHz), 10 (2GHz), 11 (2GHz), 12 (2GHz), 13 (2GHz), 36 (5GHz), 40 (5GHz), 44 (5GHz), 48 (5GHz), 52 (5GHz), 56 (5GHz), 60 (5GHz), 64 (5GHz), 100 (5GHz), 104 (5GHz), 108 (5GHz), 112 (5GHz), 116 (5GHz), 120 (5GHz), 124 (5GHz), 128 (5GHz), 132 (5GHz), 136 (5GHz), 140 (5GHz), 144 (5GHz), 149 (5GHz), 153 (5GHz), 157 (5GHz), 161 (5GHz), 165 (5GHz)
+          Wake On Wireless: Supported
+          AirDrop: Supported
+          Auto Unlock: Supported
+          Status: Connected
+          Current Network Information:
+            Wu Tang Lan:
+              PHY Mode: 802.11ac
+              Channel: 161 (5GHz, 80MHz)
+              Country Code: US
+              Network Type: Infrastructure
+              Security: WPA2/WPA3 Personal
+              Signal / Noise: -27 dBm / -91 dBm
+              Transmit Rate: 1300
+              MCS Index: 9
+          Other Local Wi-Fi Networks:
+            4875Magnolia:
+              PHY Mode: 802.11b/g/n
+              Channel: 11 (2GHz, 20MHz)
+              Network Type: Infrastructure
+              Security: WPA2 Personal
+              Signal / Noise: -58 dBm / -91 dBm
+            AL WiFi:
+              PHY Mode: 802.11g/n/ax
+              Channel: 6 (2GHz, 20MHz)
+              Network Type: Infrastructure
+              Security: WPA2/WPA3 Personal
+              Signal / Noise: -53 dBm / -91 dBm
+            ARRIS-AB75-5G:
+              PHY Mode: 802.11a/n/ac
+              Channel: 48 (5GHz, 80MHz)
+              Network Type: Infrastructure
+              Security: WPA2 Personal
+              Signal / Noise: -76 dBm / -91 dBm
+            CBCI-8CA4:
+              PHY Mode: 802.11a/n/ac
+              Channel: 44 (5GHz, 80MHz)
+              Network Type: Infrastructure
+              Security: WPA2 Personal
+              Signal / Noise: -85 dBm / -91 dBm
+            IDIoT:
+              PHY Mode: 802.11b/g/n
+              Channel: 6 (2GHz, 40MHz)
+              Network Type: Infrastructure
+              Security: WPA2 Personal
+              Signal / Noise: -21 dBm / -91 dBm
+            Mamalona333:
+              PHY Mode: 802.11b/g/n/ax
+              Channel: 2 (2GHz, 20MHz)
+              Network Type: Infrastructure
+              Security: WPA2/WPA3 Personal
+              Signal / Noise: -54 dBm / -91 dBm
+            Mamalona333:
+              PHY Mode: 802.11a/n/ac/ax
+              Channel: 149 (5GHz, 80MHz)
+              Network Type: Infrastructure
+              Security: WPA2/WPA3 Personal
+              Signal / Noise: -70 dBm / -91 dBm
+            MissMarie:
+              PHY Mode: 802.11g/n
+              Channel: 11 (2GHz, 20MHz)
+              Network Type: Infrastructure
+              Security: WPA2 Personal
+              Signal / Noise: -54 dBm / -91 dBm
+            MissMarie:
+              PHY Mode: 802.11a/n/ac
+              Channel: 157 (5GHz, 80MHz)
+              Network Type: Infrastructure
+              Security: WPA2 Personal
+              Signal / Noise: -74 dBm / -91 dBm
+            NewEnglandClamRouter:
+              PHY Mode: 802.11a/n/ac/ax
+              Channel: 36 (5GHz, 80MHz)
+              Network Type: Infrastructure
+              Security: WPA2/WPA3 Personal
+              Signal / Noise: -76 dBm / -91 dBm
+            TMOBILE-4769:
+              PHY Mode: 802.11a/n/ac/ax
+              Channel: 48 (5GHz, 80MHz)
+              Network Type: Infrastructure
+              Security: WPA2/WPA3 Personal
+              Signal / Noise: -73 dBm / -91 dBm
+            The Magnolia at Uptown:
+              PHY Mode: 802.11b/g/n
+              Channel: 11 (2GHz, 20MHz)
+              Network Type: Infrastructure
+              Security: WPA/WPA2 Personal
+              Signal / Noise: -57 dBm / -91 dBm
+            Wu Tang Lan:
+              PHY Mode: 802.11a/n/ac
+              Channel: 161 (5GHz, 80MHz)
+              Network Type: Infrastructure
+              Security: WPA2/WPA3 Personal
+              Signal / Noise: -26 dBm / -91 dBm
+            Xfinity Mobile:
+              PHY Mode: 802.11a/n/ac
+              Channel: 157 (5GHz, 80MHz)
+              Network Type: Infrastructure
+              Security: WPA2 Enterprise
+              Signal / Noise: -88 dBm / -91 dBm
+            Xfinity Mobile:
+              PHY Mode: 802.11a/n/ac/ax
+              Channel: 44 (5GHz, 80MHz)
+              Network Type: Infrastructure
+              Security: WPA2 Enterprise
+              Signal / Noise: -45 dBm / -91 dBm
+            are you sure:
+              PHY Mode: 802.11a/n/ac/ax
+              Channel: 157 (5GHz, 80MHz)
+              Network Type: Infrastructure
+              Security: WPA2 Personal
+              Signal / Noise: -85 dBm / -91 dBm
+            cloudtrax secure:
+              PHY Mode: 802.11b/g/n
+              Channel: 6 (2GHz, 20MHz)
+              Network Type: Infrastructure
+              Security: None
+              Signal / Noise: -36 dBm / -91 dBm
+            fun and fresh:
+              PHY Mode: 802.11a/n/ac/ax
+              Channel: 44 (5GHz, 80MHz)
+              Network Type: Infrastructure
+              Security: WPA2 Personal
+              Signal / Noise: -51 dBm / -91 dBm
+            maklimka:
+              PHY Mode: 802.11g/n/ax
+              Channel: 1 (2GHz, 20MHz)
+              Network Type: Infrastructure
+              Security: WPA2/WPA3 Personal
+              Signal / Noise: -58 dBm / -91 dBm
+            tigerbalm:
+              PHY Mode: 802.11g/n/ax
+              Channel: 6 (2GHz, 20MHz)
+              Network Type: Infrastructure
+              Security: WPA2/WPA3 Personal
+              Signal / Noise: -38 dBm / -91 dBm
+            tigerbalm:
+              PHY Mode: 802.11a/n/ac/ax
+              Channel: 44 (5GHz, 80MHz)
+              Network Type: Infrastructure
+              Security: WPA2/WPA3 Personal
+              Signal / Noise: -38 dBm / -91 dBm
+            xfinitywifi:
+              PHY Mode: 802.11a/n/ac
+              Channel: 157 (5GHz, 80MHz)
+              Network Type: Infrastructure
+              Security: None
+              Signal / Noise: -75 dBm / -91 dBm
+            xfinitywifi:
+              PHY Mode: 802.11a/n/ac/ax
+              Channel: 44 (5GHz, 80MHz)
+              Network Type: Infrastructure
+              Security: None
+              Signal / Noise: -38 dBm / -91 dBm
+        awdl0:
+          MAC Address: a2:e0:ad:95:5c:e1
+          Supported Channels: 1 (2GHz), 2 (2GHz), 3 (2GHz), 4 (2GHz), 5 (2GHz), 6 (2GHz), 7 (2GHz), 8 (2GHz), 9 (2GHz), 10 (2GHz), 11 (2GHz), 12 (2GHz), 13 (2GHz), 36 (5GHz), 40 (5GHz), 44 (5GHz), 48 (5GHz), 52 (5GHz), 56 (5GHz), 60 (5GHz), 64 (5GHz), 100 (5GHz), 104 (5GHz), 108 (5GHz), 112 (5GHz), 116 (5GHz), 120 (5GHz), 124 (5GHz), 128 (5GHz), 132 (5GHz), 136 (5GHz), 140 (5GHz), 144 (5GHz), 149 (5GHz), 153 (5GHz), 157 (5GHz), 161 (5GHz), 165 (5GHz)
+          Current Network Information:
+              Network Type: Infrastructure
+
+

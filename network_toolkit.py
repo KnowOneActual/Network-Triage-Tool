@@ -48,14 +48,29 @@ class NetworkTriageToolkit:
         except Exception:
             info["Internal IP"] = "Error fetching IP"
 
-        # Get Gateway
+        # Get Gateway using the reliable psutil method, with a fallback for macOS
         try:
             gws = psutil.net_if_gateways()
             default_gateway = gws.get("default", {}).get(psutil.AF_INET)
             if default_gateway:
                 info["Gateway"] = default_gateway[0]
+            else:
+                raise Exception("psutil could not find gateway")
         except Exception:
-            info["Gateway"] = "Could not determine"
+            if platform.system() == "Darwin":
+                try:
+                    command = "netstat -rn -f inet | grep default | awk '{print $2}'"
+                    gateway = subprocess.check_output(
+                        command, shell=True, text=True
+                    ).strip()
+                    if gateway:
+                        info["Gateway"] = gateway
+                    else:
+                        info["Gateway"] = "Could not determine"
+                except Exception:
+                    info["Gateway"] = "Could not determine"
+            else:
+                info["Gateway"] = "Could not determine"
 
         # Get Public IP
         try:
@@ -90,47 +105,44 @@ class NetworkTriageToolkit:
 
                 info = {"Interface": interface}
 
-                # Use the reliable method from check_network.py to determine the type
+                # Use system_profiler to get all Wi-Fi details
                 try:
-                    networksetup_cmd = f"networksetup -getairportnetwork {interface}"
-                    networksetup_result = subprocess.check_output(
-                        networksetup_cmd,
-                        shell=True,
-                        text=True,
-                        stderr=subprocess.DEVNULL,
+                    profiler_cmd = f"system_profiler SPAirPortDataType"
+                    profiler_result = subprocess.check_output(
+                        profiler_cmd, shell=True, text=True
                     )
-                    info["Connection Type"] = "Wi-Fi"
-                except subprocess.CalledProcessError:
-                    info["Connection Type"] = "Ethernet"
 
-                # If it's a Wi-Fi connection, get the detailed metrics using system_profiler
-                if info.get("Connection Type") == "Wi-Fi":
-                    try:
-                        profiler_cmd = "system_profiler SPAirPortDataType"
-                        profiler_result = subprocess.check_output(
-                            profiler_cmd, shell=True, text=True
-                        )
+                    # Check if the interface is listed as a Wi-Fi card
+                    if (
+                        f"{interface}:" in profiler_result
+                        and "Card Type: Wi-Fi" in profiler_result
+                    ):
+                        info["Connection Type"] = "Wi-Fi"
+                    else:
+                        info["Connection Type"] = "Ethernet"
 
-                        # Use regex to parse the output for current network info
+                    if info["Connection Type"] == "Wi-Fi":
+                        # Isolate the correct network block
                         network_info_block = re.search(
-                            r"Current Network Information:(.*)",
+                            r"Current Network Information:(.*?)(\n\s*\n|$)",
                             profiler_result,
                             re.DOTALL,
                         )
                         if network_info_block:
                             block_text = network_info_block.group(1)
 
-                            ssid = re.search(r"^\s*(.+):$", block_text, re.MULTILINE)
-                            bssid = re.search(r"BSSID: (.+)", block_text)
-                            channel = re.search(r"Channel: (.+)", block_text)
+                            # The SSID is the first line in the block, ending with a colon
+                            ssid_match = re.search(
+                                r"^\s*(.+):$", block_text, re.MULTILINE
+                            )
+                            if ssid_match:
+                                info["SSID"] = ssid_match.group(1).strip()
+
+                            channel = re.search(r"Channel:\s*(.+)", block_text)
                             signal_noise = re.search(
-                                r"Signal / Noise: (.+)", block_text
+                                r"Signal / Noise:\s*(.+)", block_text
                             )
 
-                            if ssid:
-                                info["SSID"] = ssid.group(1).strip()
-                            if bssid:
-                                info["BSSID"] = bssid.group(1).strip()
                             if channel:
                                 info["Channel"] = channel.group(1).strip()
                             if signal_noise:
@@ -138,15 +150,13 @@ class NetworkTriageToolkit:
                                 info["Signal"] = parts[0]
                                 if len(parts) > 1:
                                     info["Noise"] = parts[1]
-
-                    except (subprocess.CalledProcessError, AttributeError):
-                        pass  # Ignore if we can't get details, we still know it's Wi-Fi
+                except (subprocess.CalledProcessError, AttributeError):
+                    info["Connection Type"] = "Ethernet"  # Fallback if profiler fails
 
                 # Get DNS Servers on macOS
                 try:
                     dns_cmd = "scutil --dns | grep 'nameserver\\[[0-9]*\\]' | awk '{print $3}'"
                     dns_result = subprocess.check_output(dns_cmd, shell=True, text=True)
-                    # Filter out duplicates while preserving order
                     dns_servers = list(dict.fromkeys(dns_result.strip().split("\n")))
                     info["DNS Servers"] = ", ".join(dns_servers)
                 except Exception:
@@ -172,19 +182,9 @@ class NetworkTriageToolkit:
             except Exception as e:
                 return {"Error": f"macOS-specific check failed: {e}"}
 
-        # Fallback for other operating systems (Windows, Linux, etc.)
+        # Fallback for other operating systems
         else:
-            try:
-                # This part can be enhanced in the future for other OS's
-                gws = psutil.net_if_gateways()
-                default_gateway_info = gws.get("default", {}).get(psutil.AF_INET)
-                if not default_gateway_info:
-                    return {"Status": "No active network connection found."}
-
-                return {"Status": "Details not yet implemented for this OS."}
-
-            except Exception as e:
-                return {"Error": f"Could not retrieve connection details: {e}"}
+            return {"Status": "Detailed info not yet implemented for this OS."}
 
     def continuous_ping(self, host, callback):
         """Pings a host continuously and sends output to a callback."""

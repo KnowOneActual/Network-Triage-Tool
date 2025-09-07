@@ -135,6 +135,14 @@ class ConnectionDetails(ttk.Frame):
         container = ttk.Frame(self)
         container.pack(fill="both", expand=True, padx=10, pady=10)
 
+        # Add the note about load time
+        note_label = ttk.Label(
+            container,
+            text="(Detailed info may take a moment to load on some systems)",
+            font=("Helvetica", 9, "italic"),
+        )
+        note_label.pack(side="top", pady=(0, 5), anchor="w", padx=5)
+
         # Frame for basic connection details
         connection_frame = ttk.LabelFrame(container, text="Connection Details")
         connection_frame.pack(fill="x", expand=True, side="top")
@@ -155,7 +163,7 @@ class ConnectionDetails(ttk.Frame):
             "MAC Address",
             "DNS Servers",
         ]
-        self.wifi_points = ["SSID", "BSSID", "Signal", "Noise", "Channel"]
+        self.wifi_points = ["SSID", "Signal", "Noise", "Channel"]
 
         # Create labels for the connection frame
         for i, point in enumerate(self.detail_points):
