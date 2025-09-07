@@ -4,3 +4,4 @@ netmiko
 scapy
 psutil
 requests
+pyobjc-framework-CoreWLAN
