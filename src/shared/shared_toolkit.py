@@ -1,19 +1,18 @@
+import os
 import platform
 import socket
+import struct
 import subprocess
 import threading
-import re
-import psutil
 import requests
 from netmiko import ConnectHandler
 from scapy.all import sniff, inet_ntoa
 from scapy.contrib.lldp import LLDPDU
 from scapy.contrib.cdp import CDPMsg, CDPAddrRecord
-import struct
 
 
-class NetworkTriageToolkit:
-    """A collection of network troubleshooting functions tailored for macOS."""
+class NetworkTriageToolkitBase:
+    """A collection of OS-agnostic network troubleshooting functions."""
 
     def __init__(self):
         self.stop_ping_event = threading.Event()
@@ -29,132 +28,6 @@ class NetworkTriageToolkit:
             }
         except Exception as e:
             return {"OS": f"Error: {e}", "Hostname": f"Error: {e}"}
-
-    def get_ip_info(self):
-        """Fetches local IP, public IP, and gateway information."""
-        info = {
-            "Internal IP": "N/A",
-            "Gateway": "N/A",
-            "Public IP": "N/A",
-        }
-        try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            s.connect(("8.8.8.8", 80))
-            info["Internal IP"] = s.getsockname()[0]
-            s.close()
-        except Exception:
-            info["Internal IP"] = "Error fetching IP"
-
-        try:
-            command = "netstat -rn -f inet | grep default | awk '{print $2}'"
-            gateway = subprocess.check_output(command, shell=True, text=True).strip()
-            if gateway:
-                info["Gateway"] = gateway
-            else:
-                info["Gateway"] = "Could not determine"
-        except Exception:
-            info["Gateway"] = "Could not determine"
-
-        try:
-            response = requests.get("https://ipinfo.io/json", timeout=5)
-            data = response.json()
-            info["Public IP"] = data.get("ip", "N/A")
-        except Exception:
-            info["Public IP"] = "Error fetching public IP"
-
-        return info
-
-    def get_connection_details(self):
-        """Gets details about the active network connection on macOS."""
-        try:
-            # Find the default interface using netstat
-            command = "netstat -rn -f inet"
-            result = subprocess.check_output(command, shell=True, text=True)
-            interface = None
-            for line in result.splitlines():
-                if line.startswith("default"):
-                    parts = line.split()
-                    if len(parts) >= 4:
-                        gateway, iface = parts[1], parts[3]
-                        if all(c in "0123456789." for c in gateway):
-                            interface = iface
-                            break
-
-            if not interface:
-                return {"Status": "Could not determine default network interface."}
-
-            info = {"Interface": interface}
-
-            # Use system_profiler to get all Wi-Fi details
-            try:
-                profiler_cmd = f"system_profiler SPAirPortDataType"
-                profiler_result = subprocess.check_output(
-                    profiler_cmd, shell=True, text=True
-                )
-
-                if (
-                    f"{interface}:" in profiler_result
-                    and "Card Type: Wi-Fi" in profiler_result
-                ):
-                    info["Connection Type"] = "Wi-Fi"
-                else:
-                    info["Connection Type"] = "Ethernet"
-
-                if info["Connection Type"] == "Wi-Fi":
-                    network_info_block = re.search(
-                        r"Current Network Information:(.*?)(\n\s*\n|$)",
-                        profiler_result,
-                        re.DOTALL,
-                    )
-                    if network_info_block:
-                        block_text = network_info_block.group(1)
-                        ssid_match = re.search(
-                            r"^\s*(.+):$", block_text, re.MULTILINE
-                        )
-                        if ssid_match:
-                            info["SSID"] = ssid_match.group(1).strip()
-
-                        channel = re.search(r"Channel:\s*(.+)", block_text)
-                        signal_noise = re.search(
-                            r"Signal / Noise:\s*(.+)", block_text
-                        )
-
-                        if channel:
-                            info["Channel"] = channel.group(1).strip()
-                        if signal_noise:
-                            parts = signal_noise.group(1).strip().split(" / ")
-                            info["Signal"] = parts[0]
-                            if len(parts) > 1:
-                                info["Noise"] = parts[1]
-            except (subprocess.CalledProcessError, AttributeError):
-                info["Connection Type"] = "Ethernet"  # Fallback if profiler fails
-
-            try:
-                dns_cmd = "scutil --dns | grep 'nameserver\\[[0-9]*\\]' | awk '{print $3}'"
-                dns_result = subprocess.check_output(dns_cmd, shell=True, text=True)
-                dns_servers = list(dict.fromkeys(dns_result.strip().split("\n")))
-                info["DNS Servers"] = ", ".join(dns_servers)
-            except Exception:
-                info["DNS Servers"] = "N/A"
-
-            addresses = psutil.net_if_addrs().get(interface, [])
-            for addr in addresses:
-                if addr.family == socket.AF_INET:
-                    info["IP Address"] = addr.address
-                    info["Netmask"] = addr.netmask
-                elif hasattr(psutil, 'AF_LINK') and addr.family == psutil.AF_LINK:
-                    info["MAC Address"] = addr.address
-
-            stats = psutil.net_if_stats().get(interface)
-            if stats:
-                info["Status"] = "Up" if stats.isup else "Down"
-                info["Speed"] = f"{stats.speed} Mbps" if stats.speed > 0 else "N/A"
-                info["MTU"] = str(stats.mtu)
-
-            return info
-
-        except Exception as e:
-            return {"Error": f"macOS-specific check failed: {e}"}
 
     def run_speed_test(self):
         """Performs a network speed test and returns the results."""
@@ -194,6 +67,7 @@ class NetworkTriageToolkit:
     def continuous_ping(self, host, callback):
         """Pings a host continuously and sends output to a callback."""
         self.stop_ping_event.clear()
+        param = "-n" if platform.system().lower() == "windows" else "-c"
         command = ["ping", host]
 
         try:
@@ -220,33 +94,13 @@ class NetworkTriageToolkit:
         """Signals the continuous ping to stop."""
         self.stop_ping_event.set()
 
-    def traceroute_test(self, host):
-        """Performs a traceroute to a specific host."""
-        try:
-            command = ["traceroute", "-I", host]
-            process = subprocess.Popen(
-                command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
-            )
-            output, _ = process.communicate(timeout=45)
-
-            if process.returncode != 0 and "administrat" in output:
-                return f"Traceroute failed due to permissions. Please run with 'sudo'."
-            return f"--- Traceroute to {host} ---\n{output}"
-
-        except subprocess.TimeoutExpired:
-            return f"Traceroute to {host} timed out."
-        except FileNotFoundError:
-            return "Traceroute command not found."
-        except Exception as e:
-            return f"An unexpected error occurred during traceroute: {e}"
-
     def dns_resolution_test(self, domain):
         """Tests DNS resolution for a specific domain."""
         try:
             ip = socket.gethostbyname(domain)
             return f"DNS resolution for {domain}: {ip}"
         except socket.gaierror:
-            return f"DNS resolution failed for {domain}."
+            return f"DNS resolution failed for {domain}. Check your DNS settings."
         except Exception as e:
             return f"An error occurred during DNS resolution: {e}"
 
@@ -262,24 +116,11 @@ class NetworkTriageToolkit:
                 else:
                     return f"Port {port_num} on {host} is CLOSED or filtered."
         except ValueError:
-            return "Invalid port number."
+            return "Invalid port number. Please enter an integer."
         except socket.gaierror:
             return f"Hostname '{host}' could not be resolved."
         except Exception as e:
             return f"An error occurred: {e}"
-
-    def network_adapter_info(self):
-        """Gathers detailed network adapter information."""
-        try:
-            command = ["ifconfig"]
-            result = subprocess.run(
-                command, capture_output=True, text=True, check=True, timeout=10
-            )
-            return result.stdout
-        except FileNotFoundError:
-            return "Could not find 'ifconfig'."
-        except Exception as e:
-            return f"Failed to get adapter info: {e}"
 
     def start_discovery_capture(self, callback, timeout=60):
         """Starts a thread to capture LLDP or CDP packets."""
@@ -299,9 +140,16 @@ class NetworkTriageToolkit:
 
     def _run_discovery_capture(self, callback, timeout):
         """The actual packet sniffing logic."""
+        if platform.system() != "Windows" and os.geteuid() != 0:
+            callback(
+                "Packet capture requires administrator privileges. Please run with 'sudo'."
+            )
+            return
+
         packet_found = [False]
 
         def _packet_callback(packet):
+            """This function is called for every captured packet."""
             if self.stop_discovery or packet_found[0]:
                 return True
 
@@ -309,43 +157,23 @@ class NetworkTriageToolkit:
             if packet.haslayer(LLDPDU):
                 packet_found[0] = True
                 try:
-                    chassis_id_val = None
-                    port_id_val = None
-                    port_description_val = None
-                    system_name_val = None
-                    mgmt_address_val = None
-
+                    chassis_id_val, port_id_val, port_description_val, system_name_val, mgmt_address_val = (None,) * 5
                     raw_payload = bytes(packet[LLDPDU].payload)
                     i = 0
                     while i < len(raw_payload):
-                        if i + 2 > len(raw_payload):
-                            break
-
+                        if i + 2 > len(raw_payload): break
                         tlv_header = struct.unpack("!H", raw_payload[i : i + 2])[0]
-                        tlv_type = tlv_header >> 9
-                        tlv_len = tlv_header & 0x1FF
-
-                        if i + 2 + tlv_len > len(raw_payload):
-                            break
-
+                        tlv_type, tlv_len = tlv_header >> 9, tlv_header & 0x1FF
+                        if i + 2 + tlv_len > len(raw_payload): break
                         value_bytes = raw_payload[i + 2 : i + 2 + tlv_len]
 
-                        if tlv_type == 1:
-                            chassis_id_val = value_bytes[1:]
-                        elif tlv_type == 2:
-                            port_id_val = value_bytes[1:]
-                        elif tlv_type == 4:
-                            port_description_val = value_bytes
-                        elif tlv_type == 5:
-                            system_name_val = value_bytes
-                        elif tlv_type == 8:
-                            if len(value_bytes) > 1:
-                                addr_subtype = value_bytes[1]
-                                if addr_subtype == 1:
-                                    mgmt_address_val = inet_ntoa(value_bytes[2:6])
-                        elif tlv_type == 0:
-                            break
-
+                        if tlv_type == 1: chassis_id_val = value_bytes[1:]
+                        elif tlv_type == 2: port_id_val = value_bytes[1:]
+                        elif tlv_type == 4: port_description_val = value_bytes
+                        elif tlv_type == 5: system_name_val = value_bytes
+                        elif tlv_type == 8 and len(value_bytes) > 1 and value_bytes[1] == 1:
+                            mgmt_address_val = inet_ntoa(value_bytes[2:6])
+                        elif tlv_type == 0: break
                         i += 2 + tlv_len
 
                     if not chassis_id_val or not port_id_val:
@@ -354,12 +182,9 @@ class NetworkTriageToolkit:
                     result = f"--- LLDP Packet Found ---\n"
                     if system_name_val:
                         result += f"System Name: {system_name_val.decode('utf-8', 'ignore')}\n"
-
                     result += f"Switch ID: {chassis_id_val.decode('utf-8', 'ignore')}\n"
-
                     if mgmt_address_val:
                         result += f"Management Address: {mgmt_address_val}\n"
-
                     if port_description_val:
                         result += f"Port Description: {port_description_val.decode('utf-8', 'ignore')}\n"
 
@@ -372,26 +197,26 @@ class NetworkTriageToolkit:
             if packet.haslayer(CDPMsg):
                 packet_found[0] = True
                 try:
-                    device_id = packet[CDPMsg].device_id.decode()
-                    port_id = packet[CDPMsg].port_id.decode()
-                    platform = packet[CDPMsg].platform.decode()
-                    mgmt_address = "N/A"
-                    if packet.haslayer(CDPAddrRecord):
-                        mgmt_address = packet[CDPAddrRecord].addr
-
+                    device_id, port_id, platform_id = (
+                        packet[CDPMsg].device_id.decode(),
+                        packet[CDPMsg].port_id.decode(),
+                        packet[CDPMsg].platform.decode(),
+                    )
+                    mgmt_address = next(
+                        (addr.addr for addr in packet[CDPMsg].addr if isinstance(addr, CDPAddrRecord)), "N/A"
+                    )
                     result = (
                         f"--- CDP Packet Found ---\n"
                         f"Device ID: {device_id}\n"
                         f"Management Address: {mgmt_address}\n"
                         f"Port ID: {port_id}\n"
-                        f"Platform: {platform}"
+                        f"Platform: {platform_id}"
                     )
                 except Exception as e:
                     result = f"Error parsing CDP packet: {e}"
 
                 callback(result)
                 return True
-
             return False
 
         try:
