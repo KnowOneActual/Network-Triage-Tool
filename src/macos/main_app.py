@@ -1,5 +1,6 @@
-import tkinter as tk
-from tkinter import ttk, scrolledtext, messagebox, filedialog
+import ttkbootstrap as tk
+from ttkbootstrap import ttk
+from tkinter import scrolledtext, messagebox, filedialog
 import webbrowser
 import platform
 import os
@@ -8,7 +9,7 @@ import subprocess
 import time
 import threading
 
-# Corrected relative import
+# Relative import
 from .network_toolkit import NetworkTriageToolkit, RouterConnection
 
 net_tool = NetworkTriageToolkit()
@@ -46,7 +47,7 @@ class TriageDashboard(ttk.Frame):
         self.notes_text = scrolledtext.ScrolledText(notes_frame, wrap=tk.WORD, height=5)
         self.notes_text.pack(padx=5, pady=5, fill="both", expand=True)
         self.notes_text.insert(
-            tk.END, "Enter any relevant details about the issue here..."
+            tk.END, "Enter job name, date and relevant details about the issue here..."
         )
 
         button_frame = ttk.Frame(self)
@@ -215,7 +216,7 @@ class PerformanceTab(ttk.Frame):
         )
         label_title.grid(row=len(result_points), column=0, sticky="w", padx=5, pady=2)
         self.url_label = ttk.Label(
-            performance_frame, text="N/A", foreground="blue", cursor="hand2"
+            performance_frame, text="N/A", foreground="#8be9fd", cursor="hand2"
         )
         self.url_label.grid(
             row=len(result_points), column=1, sticky="w", padx=5, pady=2
@@ -602,23 +603,24 @@ class PhysicalLayerDiscovery(ttk.Frame):
         self.output_text.insert(tk.END, "\n--- Scan Stopped by User ---\n")
 
 
-class MainApplication(tk.Tk):
+class MainApplication(tk.Window):
     """The main application window."""
 
     def __init__(self):
-        super().__init__()
+        super().__init__(themename="darkly")
         self.title("Network Triage Tool")
         self.geometry("600x750")
 
         notebook = ttk.Notebook(self)
         notebook.pack(pady=10, padx=10, fill="both", expand=True)
 
-        self.dashboard_tab = TriageDashboard(self)
-        self.connection_tab = ConnectionDetails(self)
-        self.performance_tab = PerformanceTab(self)
-        self.connectivity_tab = ConnectivityTools(self)
-        self.lldp_tab = PhysicalLayerDiscovery(self)
-        self.advanced_tab = AdvancedDiagnostics(self)
+        # CORRECTED: Pass the notebook as the parent to each tab
+        self.dashboard_tab = TriageDashboard(notebook)
+        self.connection_tab = ConnectionDetails(notebook)
+        self.performance_tab = PerformanceTab(notebook)
+        self.connectivity_tab = ConnectivityTools(notebook)
+        self.lldp_tab = PhysicalLayerDiscovery(notebook)
+        self.advanced_tab = AdvancedDiagnostics(notebook)
 
         notebook.add(self.dashboard_tab, text="Dashboard")
         notebook.add(self.connection_tab, text="Connection")
@@ -627,15 +629,13 @@ class MainApplication(tk.Tk):
         notebook.add(self.lldp_tab, text="Physical Layer")
         notebook.add(self.advanced_tab, text="Advanced")
 
-        ttk.Button(self, text="Save Report", command=self.save_report).pack(pady=10)
+        report_button = ttk.Button(self, text="Save Report", command=self.save_report, bootstyle="secondary")
+        report_button.pack(pady=10)
 
     def save_report(self):
         """Gathers data from all tabs and saves it to a text file."""
         report_content = [
-            "=" * 50,
-            "NETWORK TRIAGE REPORT",
-            f"Generated on: {time.strftime('%Y-%m-%d %H:%M:%S')}",
-            "=" * 50 + "\n",
+            "=" * 50, "NETWORK TRIAGE REPORT", f"Generated on: {time.strftime('%Y-%m-%d %H:%M:%S')}", "=" * 50 + "\n",
             "--- System & Network Information ---",
         ]
         for key, label in self.dashboard_tab.info_labels.items():
@@ -689,25 +689,15 @@ def main():
 if __name__ == "__main__":
     if platform.system() == "Darwin" and os.geteuid() != 0:
         try:
-            # Get the path to the python interpreter and the project's root directory
-            python_executable = sys.executable
-            project_root = os.getcwd()
-
-            # Reconstruct the command to run as a module
+            python_executable, project_root = sys.executable, os.getcwd()
             command_to_run = f"cd '{project_root}' && '{python_executable}' -m src.macos.main_app"
-
-            # Use AppleScript to request admin privileges and run the command
             applescript = f'do shell script "{command_to_run}" with administrator privileges'
-
             subprocess.Popen(['osascript', '-e', applescript])
-            sys.exit(0) # Exit the non-elevated instance
-
+            sys.exit(0)
         except Exception as e:
-            # This can happen if the user cancels the password prompt
             root = tk.Tk()
             root.withdraw()
             messagebox.showerror("Permissions Error", f"Could not relaunch with admin privileges.\n\nError: {e}")
             sys.exit("Administrator privileges are required.")
 
-    # If we are on macOS and already have root, or on another OS, run the app directly.
     main()
