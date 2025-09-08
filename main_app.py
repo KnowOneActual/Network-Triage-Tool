@@ -811,7 +811,7 @@ class MainApplication(tk.Tk):
             defaultextension=".txt",
             filetypes=[("Text files", "*.txt"), ("All files", "*.*")],
             title="Save Network Report",
-            initialfile=f"network_report_{time.strftime('%Y%m%d_%H%M%S')}.txt",
+            initialfile=f"network_report_{time.strftime('%Y-%m-%d_%H%M%S')}.txt",
         )
 
         if file_path:
@@ -827,24 +827,20 @@ class MainApplication(tk.Tk):
 
 if __name__ == "__main__":
     # Self-elevation logic for macOS
-    if platform.system() == "Darwin" and "SUDO_USER" not in os.environ:
+    if platform.system() == "Darwin" and os.geteuid() != 0:
         try:
-            # Use sys.executable to get the path to the running binary
-            executable_path = sys.executable
-            script_path = os.path.abspath(sys.argv[0])
-
-            # Determine if we're running as a standalone PyInstaller bundle or as a script
-            if "python" in os.path.basename(executable_path).lower():
-                # We are running as a script (e.g., /usr/bin/python3)
-                command_to_run = f'"{executable_path}" "{script_path}"'
+            # Determine the full command to re-run the script/app
+            if "python" in os.path.basename(sys.executable).lower():
+                 # Running as a script (e.g., /usr/bin/python3)
+                command_to_run = f"'{sys.executable}' '{os.path.abspath(sys.argv[0])}'"
             else:
-                # We are running as a packaged app. The executable is the app itself.
-                command_to_run = f'"{executable_path}"'
-            
-            # The AppleScript command to run the command. We use 'quoted form of' for robust path handling.
-            applescript = f'do shell script quoted form of "{command_to_run}" with administrator privileges'
-            
-            # Use Popen to launch and detach, preventing the original script from stalling.
+                # Running as a packaged app. The executable is the app itself.
+                command_to_run = f"'{sys.executable}'"
+
+            # The AppleScript command to run the command in the background to prevent stalling
+            applescript = f'do shell script "{command_to_run} &> /dev/null &" with administrator privileges'
+
+            # Use Popen to launch and detach, which is non-blocking.
             subprocess.Popen(["osascript", "-e", applescript])
             sys.exit(0) # Exit the non-elevated instance
 
@@ -854,7 +850,7 @@ if __name__ == "__main__":
             root.withdraw()
             messagebox.showerror("Permissions Error", f"Could not relaunch with admin privileges.\n\nError: {e}")
             sys.exit("Administrator privileges are required.")
-            
+
     app = MainApplication()
     app.mainloop()
 
