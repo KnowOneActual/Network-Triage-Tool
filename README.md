@@ -1,6 +1,6 @@
 ### ⚠️ Current Status: Work in Progress ⚠️
 
-I'm early stages of development and should be considered **unstable**. While the basic functions described below are operational, features may change, break, or be incomplete.
+I'm in the early stages of development and should be considered **unstable**. While the basic functions described below are operational, features may change, break, or be incomplete.
 
 
 # Network Triage Tool
@@ -11,7 +11,7 @@ I'm early stages of development and should be considered **unstable**. While the
 
 A standalone GUI application designed to help network people quickly diagnose and troubleshoot common network issues.
 
-![Screenshot of the Network Triage Tool](/img/readme_assets/Screenshot_midpoint_000001.webp)
+![Screenshot of the Network Triage Tool](/img/readme_assets/Screenshot_midpoint_000020.webp)
 
 ## 🚧 Project Status
 
@@ -67,6 +67,7 @@ Because the application requires administrator privileges for certain functions 
 
 ```bash
 python3 -m src.macos.main_app
+```
 The application will prompt you for your password to relaunch with the necessary permissions.
 
 🤝 Contributing
