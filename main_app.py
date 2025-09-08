@@ -5,6 +5,10 @@ import tkinter as tk
 from tkinter import ttk, scrolledtext, messagebox
 from tkinter import filedialog
 import webbrowser
+import platform
+import os
+import sys
+import subprocess
 
 from network_toolkit import NetworkTriageToolkit, RouterConnection
 
@@ -807,7 +811,7 @@ class MainApplication(tk.Tk):
             defaultextension=".txt",
             filetypes=[("Text files", "*.txt"), ("All files", "*.*")],
             title="Save Network Report",
-            initialfile=f"network_report_{time.strftime('%Y%m%d_%H%M%S')}.txt",
+            initialfile=f"network_report_{time.strftime('%Y-%m-%d_%H%M%S')}.txt",
         )
 
         if file_path:
@@ -822,5 +826,31 @@ class MainApplication(tk.Tk):
 
 
 if __name__ == "__main__":
+    # Self-elevation logic for macOS
+    if platform.system() == "Darwin" and os.geteuid() != 0:
+        try:
+            # Determine the full command to re-run the script/app
+            if "python" in os.path.basename(sys.executable).lower():
+                 # Running as a script (e.g., /usr/bin/python3)
+                command_to_run = f"'{sys.executable}' '{os.path.abspath(sys.argv[0])}'"
+            else:
+                # Running as a packaged app. The executable is the app itself.
+                command_to_run = f"'{sys.executable}'"
+
+            # The AppleScript command to run the command in the background to prevent stalling
+            applescript = f'do shell script "{command_to_run} &> /dev/null &" with administrator privileges'
+
+            # Use Popen to launch and detach, which is non-blocking.
+            subprocess.Popen(["osascript", "-e", applescript])
+            sys.exit(0) # Exit the non-elevated instance
+
+        except Exception as e:
+            # This can happen if the user cancels the password prompt
+            root = tk.Tk()
+            root.withdraw()
+            messagebox.showerror("Permissions Error", f"Could not relaunch with admin privileges.\n\nError: {e}")
+            sys.exit("Administrator privileges are required.")
+
     app = MainApplication()
     app.mainloop()
+
