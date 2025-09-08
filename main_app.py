@@ -5,6 +5,10 @@ import tkinter as tk
 from tkinter import ttk, scrolledtext, messagebox
 from tkinter import filedialog
 import webbrowser
+import platform
+import os
+import sys
+import subprocess
 
 from network_toolkit import NetworkTriageToolkit, RouterConnection
 
@@ -822,5 +826,35 @@ class MainApplication(tk.Tk):
 
 
 if __name__ == "__main__":
+    # Self-elevation logic for macOS
+    if platform.system() == "Darwin" and "SUDO_USER" not in os.environ:
+        try:
+            # Use sys.executable to get the path to the running binary
+            executable_path = sys.executable
+            script_path = os.path.abspath(sys.argv[0])
+
+            # Determine if we're running as a standalone PyInstaller bundle or as a script
+            if "python" in os.path.basename(executable_path).lower():
+                # We are running as a script (e.g., /usr/bin/python3)
+                command_to_run = f'"{executable_path}" "{script_path}"'
+            else:
+                # We are running as a packaged app. The executable is the app itself.
+                command_to_run = f'"{executable_path}"'
+            
+            # The AppleScript command to run the command. We use 'quoted form of' for robust path handling.
+            applescript = f'do shell script quoted form of "{command_to_run}" with administrator privileges'
+            
+            # Use Popen to launch and detach, preventing the original script from stalling.
+            subprocess.Popen(["osascript", "-e", applescript])
+            sys.exit(0) # Exit the non-elevated instance
+
+        except Exception as e:
+            # This can happen if the user cancels the password prompt
+            root = tk.Tk()
+            root.withdraw()
+            messagebox.showerror("Permissions Error", f"Could not relaunch with admin privileges.\n\nError: {e}")
+            sys.exit("Administrator privileges are required.")
+            
     app = MainApplication()
     app.mainloop()
+
