@@ -1,8 +1,9 @@
 #pip install -r requirements.txt
 
+# Libraries required for the Network Triage Tool
 netmiko
 scapy
 psutil
 requests
-pyobjc-framework-CoreWLAN
 speedtest-cli
+ttkbootstrap
