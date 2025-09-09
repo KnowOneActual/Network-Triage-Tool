@@ -11,7 +11,7 @@ I'm in the early stages of development and should be considered **unstable**. Wh
 
 A standalone GUI application designed to help network people quickly diagnose and troubleshoot common network issues.
 
-![Screenshot of the Network Triage Tool](/img/readme_assets/Screenshot_midpoint_000020.webp)
+![Screenshot of the Network Triage Tool](/img/assets/readme/Screenshot_midpoint_000020.webp)
 
 ## 🚧 Project Status
 
