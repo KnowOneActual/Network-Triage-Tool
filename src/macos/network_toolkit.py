@@ -6,12 +6,51 @@ import re
 import psutil
 import requests
 
-# Import the base class AND RouterConnection from the shared toolkit
+# Import the base class and RouterConnection from the shared toolkit
 from ..shared.shared_toolkit import NetworkTriageToolkitBase, RouterConnection
 
 
 class NetworkTriageToolkit(NetworkTriageToolkitBase):
     """macOS-specific network troubleshooting functions."""
+
+    def get_system_info(self):
+        """Gathers basic system information, with macOS-specific name resolution."""
+        # Start with the basic info as a fallback
+        os_string = f"{platform.system()} {platform.release()}"
+        hostname = socket.gethostname()
+
+        try:
+            # Use the 'sw_vers' command to get the macOS product name and version
+            product_name = subprocess.check_output(['sw_vers', '-productName'], text=True).strip()
+            product_version = subprocess.check_output(['sw_vers', '-productVersion'], text=True).strip()
+
+            major_version = int(product_version.split('.')[0])
+
+            # Mapping of major macOS versions to marketing names
+            marketing_names = {
+                15: "Sequoia",
+                14: "Sonoma",
+                13: "Ventura",
+                12: "Monterey",
+                11: "Big Sur",
+            }
+
+            marketing_name = marketing_names.get(major_version, "")
+
+            # If we found a marketing name, construct the full, user-friendly string
+            if marketing_name:
+                os_string = f"{product_name} {marketing_name} ({platform.system()} {platform.release()})"
+            else:
+                os_string = f"{product_name} ({platform.system()} {platform.release()})"
+
+        except Exception as e:
+            # If any part of the name resolution fails, we'll just use the basic string
+            print(f"Could not resolve macOS marketing name: {e}")
+
+        return {
+            "OS": os_string,
+            "Hostname": hostname,
+        }
 
     def get_ip_info(self):
         """Fetches local IP, public IP, and gateway information for macOS."""
@@ -27,7 +66,6 @@ class NetworkTriageToolkit(NetworkTriageToolkitBase):
         except Exception:
             info["Internal IP"] = "Error fetching IP"
 
-        # macOS-specific method for gateway
         try:
             command = "netstat -rn -f inet | grep default | awk '{print $2}'"
             gateway = subprocess.check_output(command, shell=True, text=True).strip()
