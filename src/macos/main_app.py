@@ -44,7 +44,7 @@ class TriageDashboard(ttk.Frame):
         notes_frame.pack(padx=10, pady=10, fill="both", expand=True)
         self.notes_text = scrolledtext.ScrolledText(notes_frame, wrap=tk.WORD, height=5)
         self.notes_text.pack(padx=5, pady=5, fill="both", expand=True)
-        self.notes_text.insert(tk.END, "Enter any relevant details about the issue here...")
+        self.notes_text.insert(tk.END, "Enter job name, date and any relevant details about the issue here...")
 
         button_frame = ttk.Frame(self)
         button_frame.pack(pady=5)
