@@ -11,7 +11,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PyInstaller configuration for creating standalone executables.
 
 ## [0.2.0] 
-
 ### Added
 - **Modern UI Theme:** Integrated the `ttkbootstrap` library to provide a modern, dark theme ("darkly") for the entire application.
 - **Status Bar:** Added a persistent status bar at the bottom of the window for user feedback messages (e.g., "Ready", "Scan complete").
@@ -20,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - **Project Structure:** Major refactoring to support future multi-platform versions (Windows, Linux). Code is now split into `src/shared` for common logic and `src/macos` for OS-specific implementations.
 - **UI Layout:** Relocated the "Save Report" button to the new status bar to prevent it from being hidden and to make it globally accessible.
+- **macOS Name Resolution:** The OS version on the dashboard now displays the user-friendly macOS marketing name (e.g., "macOS Sonoma") instead of just the Darwin kernel version.
 
 ### Fixed
 - **macOS Wi-Fi Details:** Resolved a major known issue by replacing the previous Wi-Fi detection method with a more reliable implementation using `system_profiler`.
@@ -29,7 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - **Unused Dependencies:** Cleaned up `requirements.txt` by removing `pyobjc-framework-CoreWLAN` and `Pillow`, as they are no longer used in the macOS version.
 
-## [0.1.0] 
+## [0.1.0] - 2025-09-07
 
 This marks the first functional version of the Network Triage Tool, consolidating various scripts into a single GUI application.
 
@@ -59,7 +59,3 @@ This marks the first functional version of the Network Triage Tool, consolidatin
 ### Fixed
 - Resolved numerous UI threading bugs to ensure the application remains responsive during network operations.
 - Implemented robust, low-level packet parsing for LLDP to handle non-standard packet formats discovered during testing.
-
-### Known Issues
-- **Wi-Fi Details (macOS):** This feature is currently not functional on all macOS versions. Extensive testing has revealed a profound system-level anomaly on some Mac configurations where the operating system's own command-line tools and native frameworks incorrectly report the Wi-Fi status, making a universally reliable implementation impossible at this time. The feature is preserved in a separate branch for future investigation.
-- **Self-Elevation on macOS:** The feature to automatically request administrator privileges for the packaged application is currently unstable and can cause the app to hang or crash on launch. This feature is also under review for a more robust implementation.
