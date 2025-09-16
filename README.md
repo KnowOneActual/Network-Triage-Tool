@@ -1,6 +1,6 @@
 ### ⚠️ Current Status: Work in Progress ⚠️
 
-I'm in the early stages of development and should be considered **unstable**. While the basic functions described below are operational, features may change, break, or be incomplete.
+This should be considered **unstable**. While the basic functions described below are operational, features may change, break, or be incomplete.
 
 
 # Network Triage Tool
