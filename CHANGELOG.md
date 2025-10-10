@@ -11,7 +11,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   Add icons to tabs and buttons.
 -   Parse Nmap results into a user-friendly table.
 
-## [0.3.0] - 
+## [0.4.0] - 2025-10-09
+### Added
+-   Added a user-facing note on the **Connection** tab to explain that the SSID may show as `<redacted>` due to macOS privacy settings and should be manually recorded in the User Notes. This is a result of the Sequoia 15.7.1 update.
+
+### Changed
+-   The **Packet Loss** calculation on the Performance tab now correctly interprets a missing result from the speed test as **0.0%** instead of displaying "N/A".
+
+### Fixed
+-   Resolved a major issue where the speed test on the **Performance** tab would hang indefinitely during the upload phase.
+-   Fixed a bug causing the progress bar on the **Performance** tab to remain incomplete after a speed test finished.
+-   Corrected a typo in the backend (`mtU` instead of `mtu`) that caused all fields on the **Connection Details** tab to fail and display "N/A".
+-   Stabilized the Wi-Fi detection logic to prevent crashes and correctly handle the `<redacted>` SSID value provided by newer macOS versions.
+-   Restored the missing `run_speed_test` function to the shared toolkit, which was causing the Performance tab to crash.
+
+## [0.3.0]
 ### Added
 -   **Nmap Network Scan Tab:** Added a new tab dedicated to running Nmap scans.
 -   **Scan Type Presets:** Implemented a dropdown menu with scan types (Ping, Fast, Intense) that use pre-configured Nmap arguments.
