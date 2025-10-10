@@ -5,6 +5,7 @@ netmiko
 scapy
 psutil
 requests
-speedtest-cli
+ookla-speedtest-cli
 ttkbootstrap
 python-nmap
+pyobjc-framework-CoreWLAN
