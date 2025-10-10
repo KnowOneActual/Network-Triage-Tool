@@ -114,6 +114,14 @@ class ConnectionDetails(ttk.Frame):
             label_value = ttk.Label(self.wifi_frame, text="Loading...")
             label_value.grid(row=i, column=1, sticky="w", padx=5, pady=2)
             self.detail_labels[point] = label_value
+        
+        ssid_note = ttk.Label(
+            self.wifi_frame,
+            text="Note: If SSID shows '<redacted>', please add it manually to the User Notes on the Dashboard.",
+            font=("Helvetica", 9, "italic")
+        )
+        ssid_note.grid(row=len(self.wifi_points), columnspan=2, sticky="w", padx=5, pady=(10, 2))
+
         refresh_button = ttk.Button(self, text="Refresh Details", command=self.refresh_details)
         refresh_button.pack(pady=10)
 
@@ -191,7 +199,10 @@ class PerformanceTab(ttk.Frame):
         self.parent.after(0, self.update_ui, results)
 
     def update_ui(self, results):
+        # **THE FIX**: Stop the indeterminate animation and set the progress bar to 100%
         self.progress.stop()
+        self.progress['value'] = 100
+        
         if "Error" in results:
             self.status_label.config(text=results["Error"])
             self.main_app.status_label.config(text="Speed test failed.")
@@ -468,7 +479,6 @@ class PhysicalLayerDiscovery(ttk.Frame):
 
 class NetworkScanTab(ttk.Frame):
     """Tab for running Nmap network scans."""
-
     def __init__(self, parent, main_app_instance):
         super().__init__(parent)
         self.main_app = main_app_instance
@@ -597,7 +607,6 @@ class MainApplication(tk.Window):
         notebook.add(self.advanced_tab, text="Advanced")
 
     def save_report(self):
-        # ... (save_report method is unchanged) ...
         pass
 
 def main():
