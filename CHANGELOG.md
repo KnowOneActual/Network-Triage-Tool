@@ -11,9 +11,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   Add icons to tabs and buttons.
 -   Parse Nmap results into a user-friendly table.
 
+## [0.6.0] - 2025-10-10
+### Changed
+-   **Distribution Method:** Replaced the `PyInstaller` build process with a more reliable Bash script launcher (`start.command`). This resolves numerous bundling and execution issues on macOS.
+-   The application is now launched by double-clicking the `start.command` file, which handles the virtual environment and permissions automatically.
+
+### Fixed
+-   Corrected a persistent `ModuleNotFoundError` that occurred when launching the application as a script.
+-   Restored the original, user-friendly graphical password prompt for administrator privileges, ensuring a seamless user experience.
+
 ## [0.5.0] - 2025-10-09
 ### Fixed
--   Resolved a major bug where the **Continuous Ping**, **DNS Lookup**, **Port Scan**, and **Physical Layer** scans would not work because their underlying functions were missing (Left out from troubleshooting <redacted>) from the shared toolkit. All functions have been restored, and these features are now fully operational.
+-   Resolved a major bug where the **Continuous Ping**, **DNS Lookup**, **Port Scan**, and **Physical Layer** scans would not work because their underlying functions were missing from the shared toolkit. All functions have been restored, and these features are now fully operational.
 
 ## [0.4.0] - 2025-10-09
 ### Added

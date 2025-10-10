@@ -10,12 +10,12 @@ import subprocess
 import time
 import threading
 
-# Relative import
+# Use the correct relative import
 from .network_toolkit import NetworkTriageToolkit, RouterConnection
 
 net_tool = NetworkTriageToolkit()
 
-
+# ... (all of your class definitions like TriageDashboard, etc., are unchanged) ...
 class TriageDashboard(ttk.Frame):
     """Dashboard for at-a-glance network info."""
     def __init__(self, parent, main_app_instance):
@@ -117,7 +117,7 @@ class ConnectionDetails(ttk.Frame):
         
         ssid_note = ttk.Label(
             self.wifi_frame,
-            text="Note: If SSID shows '<redacted>', please add it manually to the User Notes on the Dashboard.",
+            text="Note: If SSID shows '<redacted>', please add it to the User Notes on the Dashboard.",
             font=("Helvetica", 9, "italic")
         )
         ssid_note.grid(row=len(self.wifi_points), columnspan=2, sticky="w", padx=5, pady=(10, 2))
@@ -199,7 +199,6 @@ class PerformanceTab(ttk.Frame):
         self.parent.after(0, self.update_ui, results)
 
     def update_ui(self, results):
-        # **THE FIX**: Stop the indeterminate animation and set the progress bar to 100%
         self.progress.stop()
         self.progress['value'] = 100
         
@@ -614,11 +613,16 @@ def main():
     app = MainApplication()
     app.mainloop()
 
+# This is the original, correct code for launching and getting admin rights
 if __name__ == "__main__":
     if platform.system() == "Darwin" and os.geteuid() != 0:
         try:
-            python_executable, project_root = sys.executable, os.getcwd()
+            # Reconstruct the path to the project root from the script's location
+            project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            python_executable = sys.executable
+            # The command to run the module from the project root
             command_to_run = f"cd '{project_root}' && '{python_executable}' -m src.macos.main_app"
+            # Use AppleScript to ask for the password graphically
             applescript = f'do shell script "{command_to_run}" with administrator privileges'
             subprocess.Popen(['osascript', '-e', applescript])
             sys.exit(0)
@@ -626,6 +630,7 @@ if __name__ == "__main__":
             root = tk.Tk()
             root.withdraw()
             messagebox.showerror("Permissions Error", f"Could not relaunch with admin privileges.\n\nError: {e}")
-            sys.exit("Administrator privileges are required.")
-
+            sys.exit(1)
+    
+    # If we have permissions, or are not on macOS, run the app
     main()
