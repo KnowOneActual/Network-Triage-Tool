@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.5.0] - 2025-10-09
 ### Fixed
--   Resolved a major bug where the **Continuous Ping**, **DNS Lookup**, **Port Scan**, and **Physical Layer** scans would not work because their underlying functions were missing (Let out for troubleshooting) from the shared toolkit. All functions have been restored, and these features are now fully operational.
+-   Resolved a major bug where the **Continuous Ping**, **DNS Lookup**, **Port Scan**, and **Physical Layer** scans would not work because their underlying functions were missing (Left out from troubleshooting <redacted>) from the shared toolkit. All functions have been restored, and these features are now fully operational.
 
 ## [0.4.0] - 2025-10-09
 ### Added
