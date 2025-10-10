@@ -7,6 +7,7 @@ import threading
 import re
 import requests
 import psutil
+import speedtest # Make sure to import speedtest
 from netmiko import ConnectHandler
 from scapy.all import sniff, inet_ntoa
 from scapy.contrib.lldp import LLDPDU
@@ -22,21 +23,45 @@ class NetworkTriageToolkitBase:
         self.stop_discovery = False
         self.nmap_process = None
 
-    # ... (other functions like get_system_info, run_speed_test, etc., are unchanged) ...
+    def run_speed_test(self):
+        """Performs a network speed test and returns the results."""
+        try:
+            st = speedtest.Speedtest()
+            st.get_best_server()
+            st.download()
+            st.upload(pre_allocate=False)
+
+            results = st.results.dict()
+
+            # **THE FIX**: Assume 0.0% packet loss if the key is missing from the results.
+            packet_loss = results.get("packetLoss", 0) # Default to 0 if not found
+            
+            return {
+                "Ping": f"{results.get('ping', 0):.2f} ms",
+                "Jitter": f"{results.get('client', {}).get('jitter', 0):.2f} ms",
+                "Download": f"{results.get('download', 0) / 1_000_000:.2f} Mbps",
+                "Upload": f"{results.get('upload', 0) / 1_000_000:.2f} Mbps",
+                "Packet Loss": f"{packet_loss:.1f}%",
+                "Server": results.get("server", {}).get("name", "N/A"),
+                "ISP": results.get("client", {}).get("isp", "N/A"),
+                "Result URL": st.results.share() or "N/A",
+            }
+
+        except Exception as e:
+            return {"Error": f"Speed test failed: {e}"}
+
 
     def run_network_scan(self, target, arguments='-F', callback=None, progress_callback=None):
         """
         Performs an Nmap scan using a direct subprocess for real-time feedback.
         """
         try:
-            # Check if Nmap is installed and available
             subprocess.check_output(['nmap', '-V'])
         except (subprocess.CalledProcessError, FileNotFoundError):
             return "Error: Nmap not found. Please ensure it is installed and in your system's PATH."
 
         try:
             args_list = arguments.split()
-            # Add arguments to get progress updates from Nmap
             if progress_callback:
                 if '--stats-every' not in arguments:
                     args_list.extend(['--stats-every', '2s'])
@@ -57,7 +82,6 @@ class NetworkTriageToolkitBase:
             output = ""
             if self.nmap_process and self.nmap_process.stdout:
                 for line in iter(self.nmap_process.stdout.readline, ''):
-                    # Check if the process has been terminated by the stop button
                     if self.nmap_process is None or self.nmap_process.poll() is not None and not line:
                         break
 
@@ -65,14 +89,12 @@ class NetworkTriageToolkitBase:
                     if callback:
                         callback(line)
 
-                    # Parse progress from Nmap's verbose output
                     if progress_callback and 'About' in line and '%' in line:
                         match = re.search(r'([\d.]+)% done', line)
                         if match:
                             progress = float(match.group(1))
                             progress_callback(progress)
 
-            # Ensure process is cleaned up
             if self.nmap_process:
                 self.nmap_process.wait()
             self.nmap_process = None
@@ -102,5 +124,4 @@ class NetworkTriageToolkitBase:
 
 
 class RouterConnection:
-    # ... (no change to this class)
     pass
