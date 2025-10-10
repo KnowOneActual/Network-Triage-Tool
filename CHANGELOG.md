@@ -11,9 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   Add icons to tabs and buttons.
 -   Parse Nmap results into a user-friendly table.
 
+## [0.5.0] - 2025-10-09
+### Fixed
+-   Resolved a major bug where the **Continuous Ping**, **DNS Lookup**, **Port Scan**, and **Physical Layer** scans would not work because their underlying functions were missing (Let out for troubleshooting) from the shared toolkit. All functions have been restored, and these features are now fully operational.
+
 ## [0.4.0] - 2025-10-09
 ### Added
--   Added a user-facing note on the **Connection** tab to explain that the SSID may show as `<redacted>` due to macOS privacy settings and should be manually recorded in the User Notes. This is a result of the Sequoia 15.7.1 update.
+-   Added a user-facing note on the **Connection** tab to explain that the SSID may show as `<redacted>` due to macOS privacy settings and should be manually recorded in the User Notes.
 
 ### Changed
 -   The **Packet Loss** calculation on the Performance tab now correctly interprets a missing result from the speed test as **0.0%** instead of displaying "N/A".
