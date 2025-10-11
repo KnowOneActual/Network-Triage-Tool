@@ -11,6 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   Add icons to tabs and buttons.
 -   Parse Nmap results into a user-friendly table.
 
+## [0.7.0] - 2025-10-11
+### Added
+-   **Save Report:** Implemented a "Save Report" feature that gathers all diagnostic information from all tabs into a single, shareable text file.
+
+### Changed
+-   **macOS Launch Method:** The recommended way to run the application on macOS is now via a custom Automator application. This provides a true double-click experience without a terminal window appearing. The `README.md` has been updated with instructions.
+
+### Fixed
+-   Resolved a timing issue where the "Connection Details" section of a saved report could be empty if the report was saved before the details had finished loading on-screen.
+
 ## [0.6.0] - 2025-10-10
 ### Changed
 -   **Distribution Method:** Replaced the `PyInstaller` build process with a more reliable Bash script launcher (`start.command`). This resolves numerous bundling and execution issues on macOS.

@@ -10,97 +10,101 @@ This should be considered **unstable**. While the basic functions described belo
 [![Python Version](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
 
 
-A standalone GUI application designed to help network professionals quickly diagnose and troubleshoot common network issues.
-
+A standalone GUI application designed to help network professionals and enthusiasts quickly diagnose and troubleshoot common network issues from their desktop.
 
 ## 🚧 Project Status
 
-This project is currently functional on macOS. The multi-platform refactor is ongoing.
+This project is currently fully functional on macOS.
 
-
-
-* ✅ **macOS:** The macOS version is stable and launchable via the included script.
-* ⏳ **Windows:** Coming soon.
-* ⏳ **Linux (Debian):** Coming soon.
-
+  * ✅ **macOS:** Stable and ready for use.
+  * ⏳ **Windows:** Coming soon.
+  * ⏳ **Linux (Debian):** Coming soon.
 
 ## ✨ Features
 
-The Network Triage Tool offers a tab-based interface that consolidates essential network diagnostic utilities into a single, user-friendly application.
+The Network Triage Tool consolidates essential diagnostic utilities into a single, user-friendly, tab-based interface.
 
-
-
-* **Triage Dashboard:** Get an at-a-glance overview of your system (OS, hostname) and network connection (internal IP, gateway, public IP).
-* **Connection Details:** View detailed information about your active network interface, including IP address, MAC address, connection speed, and Wi-Fi details (SSID, signal strength, channel).
-* **Performance:** Run an internet speed test to measure your download speed, upload speed, and latency.
-* **Connectivity Tools:**
-    * **Continuous Ping:** Ping a host or IP address to check for reachability and packet loss.
-    * **Traceroute:** Trace the path that packets take to a destination host.
-    * **DNS Lookup:** Resolve a domain name to its corresponding IP address.
-    * **Port Scan:** Check if a specific port is open on a given host.
-* **Physical Layer Discovery:** Use LLDP and CDP packet sniffing to discover information about the directly connected switch, such as its name, management address, and port ID.
-* **Advanced Diagnostics:** Directly connect to network devices (routers, switches) via SSH to run commands and view the output.
-* **Save Report:** Export all collected data from all tabs into a single, easy-to-share text file.
-
+  * **Triage Dashboard:** Get an at-a-glance overview of your system (OS, hostname) and network connection (internal IP, gateway, public IP).
+  * **Connection Details:** View detailed information about your active network interface, including IP address, MAC address, speed, and Wi-Fi details (SSID, signal strength, channel).
+  * **Performance:** Run an internet speed test to measure your download speed, upload speed, and latency.
+  * **Connectivity Tools:** Includes Continuous Ping, Traceroute, DNS Lookup, and Port Scan.
+  * **Physical Layer Discovery:** Use LLDP and CDP packet sniffing to discover information about a directly connected switch.
+  * **Nmap Scanner:** Run pre-configured or custom Nmap scans against your local network to discover hosts and services.
+  * **Advanced Diagnostics:** Directly connect to network devices (routers, switches) via SSH to run commands.
+  * **Save Report:** Export all collected data from all tabs into a single, easy-to-share text file.
 
 ## 🚀 Getting Started (macOS)
 
-
 ### Prerequisites
 
-
-
-* Python 3.7+
-
+  * Python 3.7+
 
 ### Installation
 
+1.  **Clone the repository:**
 
+    ```bash
+    git clone https://github.com/knowoneactual/Network-Triage-Tool.git
+    cd Network-Triage-Tool
+    ```
 
-1. **Clone the repository:** 
+2.  **Create a virtual environment:**
 
-```bash
-git clone [https://github.com/knowoneactual/Network-Triage-Tool.git](https://github.com/knowoneactual/Network-Triage-Tool.git) 
-cd Network-Triage-Tool 
-```
+    ```bash
+    python3 -m venv .venv
+    source .venv/bin/activate
+    ```
 
-2. **Create a virtual environment:** 
-```bash
-python3 -m venv .venv 
-source .venv/bin/activate 
-```
+3.  **Install the required dependencies:**
 
-3. **Install the required dependencies:** 
-```bash
-pip install -r requirements.txt 
-```
-
-4. Make the Launcher Executable (One-Time Step): 
-You need to give the launcher script permission to run. Open your terminal in the project folder and run this command once: 
-```bash
-chmod +x start.command 
-```
-
-
+    ```bash
+    pip install -r requirements.txt
+    ```
 
 ### Running the Application
 
-To launch the application, simply **double-click the start.command file** in the project directory.
+For the best experience, a simple, double-clickable application can be created using macOS's built-in Automator. This will launch the tool without a terminal window.
 
-This will:
+1.  **Open Automator** and create a new **Application**.
+2.  Add the **Run AppleScript** action.
+3.  Paste the following script into the window:
+    ```applescript
+    on run {input, parameters}
+        -- Get the path to this Automator application
+        set appPath to path to me
+        
+        -- Get the folder containing this application (which is the project root)
+        tell application "Finder"
+            set projectPath to POSIX path of (container of appPath as alias)
+        end tell
+        
+        -- Construct the full command to run the Python module
+        set pythonExecutable to quoted form of (projectPath & ".venv/bin/python3")
+        set commandToRun to "cd " & quoted form of projectPath & " && " & pythonExecutable & " -m src.macos.main_app"
+        
+        -- Run the final command. The Python script's own code will trigger the graphical password prompt.
+        do shell script commandToRun
+    end run
+    ```
+4.  **Save** the application as "**Network Triage Tool**" inside the cloned project folder.
+5.  You can now **double-click** this new application to start the tool.
 
+#### Alternative: Terminal Launch
 
+You can still run the tool from the terminal if you prefer. First, make the included `start.command` script executable:
 
-1. Open a new Terminal window.
-2. Automatically activate the correct Python environment.
-3. Launch the application, which will then show a graphical macOS prompt for your administrator password.
+```bash
+chmod +x start.command
+```
 
-After you enter your password, the app will have the necessary permissions for all its features.
+Then, you can launch it by double-clicking `start.command` or running `./start.command` in your terminal.
 
-🤝 Contributing
+## 🤝 Contributing
 
-Contributions are welcome! If you have a suggestion or find a bug, please open an issue to discuss it. If you'd like to contribute directly, you can also open a pull request.
+Contributions are welcome\! This project is open-source and lives on GitHub.
 
-📄 License
+If you have a suggestion, find a bug, or want to add a new feature, please **[open an issue](https://www.google.com/search?q=https://github.com/knowoneactual/Network-Triage-Tool/issues)** to start a discussion. If you'd like to contribute directly, feel free to fork the repository and open a pull request.
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+## 📄 License
+
+This project is licensed under the MIT License. You are free to use, copy, modify, and distribute the software. See the [LICENSE](https://www.google.com/search?q=LICENSE) file for details.
