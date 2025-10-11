@@ -10,12 +10,12 @@ import subprocess
 import time
 import threading
 
-# Use the correct relative import
+
 from .network_toolkit import NetworkTriageToolkit, RouterConnection
 
 net_tool = NetworkTriageToolkit()
 
-# ... (all of your class definitions like TriageDashboard, etc., are unchanged) ...
+
 class TriageDashboard(ttk.Frame):
     """Dashboard for at-a-glance network info."""
     def __init__(self, parent, main_app_instance):
@@ -632,5 +632,5 @@ if __name__ == "__main__":
             messagebox.showerror("Permissions Error", f"Could not relaunch with admin privileges.\n\nError: {e}")
             sys.exit(1)
     
-    # If we have permissions, or are not on macOS, run the app
+    # If it has permissions, or are not on macOS, run the app
     main()
