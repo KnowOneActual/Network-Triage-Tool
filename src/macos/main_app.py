@@ -606,7 +606,57 @@ class MainApplication(tk.Window):
         notebook.add(self.advanced_tab, text="Advanced")
 
     def save_report(self):
-        pass
+        report_content = []
+        report_content.append("Network Triage Report")
+        report_content.append("=" * 30)
+
+        # Dashboard Data
+        report_content.append("\n--- Dashboard ---\n")
+        for key, label in self.dashboard_tab.info_labels.items():
+            report_content.append(f"{key}: {label.cget('text')}")
+        report_content.append(f"\nUser Notes:\n{self.dashboard_tab.notes_text.get('1.0', tk.END).strip()}")
+
+        # Connection Details
+        report_content.append("\n\n--- Connection Details ---\n")
+        for key, label in self.connection_tab.detail_labels.items():
+            if label.winfo_ismapped(): # Only include visible labels
+                report_content.append(f"{key}: {label.cget('text')}")
+
+        # Performance
+        report_content.append("\n\n--- Performance ---\n")
+        for key, label in self.performance_tab.result_labels.items():
+            report_content.append(f"{key}: {label.cget('text')}")
+        report_content.append(f"Result URL: {self.performance_tab.url_label.cget('text')}")
+
+        # Connectivity Tools
+        report_content.append("\n\n--- Connectivity Tools ---\n")
+        report_content.append("Ping Results:\n" + self.connectivity_tab.ping_output_text.get('1.0', tk.END).strip())
+        report_content.append("\nOther Tools Results:\n" + self.connectivity_tab.other_tools_output.get('1.0', tk.END).strip())
+
+        # Network Scan
+        report_content.append("\n\n--- Network Scan ---\n")
+        report_content.append(self.network_scan_tab.output_text.get('1.0', tk.END).strip())
+
+        # Physical Layer
+        report_content.append("\n\n--- Physical Layer ---\n")
+        report_content.append(self.lldp_tab.output_text.get('1.0', tk.END).strip())
+
+        # Advanced Diagnostics
+        report_content.append("\n\n--- Advanced Diagnostics ---\n")
+        report_content.append(self.advanced_tab.output_text.get('1.0', tk.END).strip())
+
+        try:
+            file_path = filedialog.asksaveasfilename(
+                defaultextension=".txt",
+                filetypes=[("Text files", "*.txt"), ("All files", "*.*")],
+                title="Save Network Report"
+            )
+            if file_path:
+                with open(file_path, "w") as f:
+                    f.write("\n".join(report_content))
+                messagebox.showinfo("Success", f"Report saved to {file_path}")
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to save report: {e}")
 
 def main():
     """Main function to run the application."""
