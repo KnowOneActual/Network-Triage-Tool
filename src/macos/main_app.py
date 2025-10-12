@@ -499,15 +499,21 @@ class NetworkScanTab(ttk.Frame):
         ToolTip(self.target_entry, text="Enter a single IP or a network range (e.g., 192.168.1.0/24)")
 
         ttk.Label(control_frame, text="Scan Type:").grid(row=1, column=0, padx=(0, 5), pady=5, sticky="w")
-        self.scan_type = ttk.Combobox(control_frame, values=["Ping Scan", "Fast Scan", "Intense Scan"], width=12, state="readonly")
+        # --- NEW: Add "Custom" to the scan types ---
+        self.scan_type = ttk.Combobox(control_frame, values=["Ping Scan", "Fast Scan", "Intense Scan", "Custom"], width=12, state="readonly")
         self.scan_type.grid(row=1, column=1, pady=5, sticky="w")
         self.scan_type.set("Fast Scan")
-        ToolTip(self.scan_type, text="Ping: Host discovery only.\nFast: Scans 100 common ports.\nIntense: Slower, detailed scan for OS and services.")
+        self.scan_type.bind("<<ComboboxSelected>>", self.toggle_custom_args) # Event to show/hide custom field
+        ToolTip(self.scan_type, text="Choose a preset or select 'Custom' to enter your own Nmap arguments.")
 
         self.start_button = ttk.Button(control_frame, text="Start Scan", command=self.start_scan)
         self.start_button.grid(row=1, column=2, padx=(10, 5), pady=5, sticky="e")
         
-        # --- NEW: Add instructional label ---
+        # --- NEW: Custom arguments entry (initially hidden) ---
+        self.custom_args_label = ttk.Label(control_frame, text="Arguments:")
+        self.custom_args_entry = ttk.Entry(control_frame)
+        ToolTip(self.custom_args_entry, text="Enter your custom Nmap flags here (e.g., -sV -p 80,443)")
+
         info_label = ttk.Label(scan_frame, text="(Double-click a host in the results to see detailed port and service information)", font="-size 10 -slant italic")
         info_label.pack(fill="x", padx=10, pady=(0, 5))
         
@@ -536,10 +542,24 @@ class NetworkScanTab(ttk.Frame):
         
         self.results_tree.bind("<Double-1>", self.show_host_details)
 
-        # --- NEW: Add progress bar ---
-        self.progress_bar = ttk.Progressbar(scan_frame, mode="indeterminate")
-        self.progress_bar.pack(fill="x", padx=5, pady=(5,0), side="bottom")
+        bottom_frame = ttk.Frame(scan_frame)
+        bottom_frame.pack(fill="x", padx=5, pady=(5,0), side="bottom")
 
+        self.progress_bar = ttk.Progressbar(bottom_frame, mode="indeterminate")
+        self.progress_bar.pack(fill="x", expand=True, side="left")
+
+        # --- NEW: Add Export to CSV button ---
+        self.export_button = ttk.Button(bottom_frame, text="Export CSV", command=self.export_to_csv, state="disabled")
+        self.export_button.pack(side="right", padx=(10, 0))
+
+    # --- NEW: Function to show/hide the custom arguments field ---
+    def toggle_custom_args(self, event):
+        if self.scan_type.get() == "Custom":
+            self.custom_args_label.grid(row=2, column=0, padx=(0, 5), pady=5, sticky="w")
+            self.custom_args_entry.grid(row=2, column=1, columnspan=3, padx=(0, 5), pady=5, sticky="ew")
+        else:
+            self.custom_args_label.grid_forget()
+            self.custom_args_entry.grid_forget()
 
     def prefill_target(self):
         try:
@@ -556,17 +576,26 @@ class NetworkScanTab(ttk.Frame):
         if not target:
             messagebox.showerror("Error", "Please enter a target.")
             return
-
-        scan_map = {"Ping Scan": "-sn", "Fast Scan": "-F", "Intense Scan": "-T4 -A -v"}
-        arguments = scan_map.get(self.scan_type.get(), "-F")
+        
+        # --- NEW: Logic to handle custom arguments ---
+        scan_choice = self.scan_type.get()
+        if scan_choice == "Custom":
+            arguments = self.custom_args_entry.get()
+            if not arguments:
+                messagebox.showerror("Error", "Please enter your custom Nmap arguments.")
+                return
+        else:
+            scan_map = {"Ping Scan": "-sn", "Fast Scan": "-F", "Intense Scan": "-T4 -A -v"}
+            arguments = scan_map.get(scan_choice, "-F")
 
         for item in self.results_tree.get_children():
             self.results_tree.delete(item)
         self.scan_results_data.clear()
 
         self.start_button.config(state="disabled")
+        self.export_button.config(state="disabled") # Disable export during scan
         self.main_app.status_label.config(text=f"Scanning {target} with Nmap...")
-        self.progress_bar.start(10) # Start the progress bar animation
+        self.progress_bar.start(10)
         
         self.results_tree.insert("", "end", values=("Scanning...", "", "", "", ""))
 
@@ -577,7 +606,7 @@ class NetworkScanTab(ttk.Frame):
         self.after(0, self.update_ui, results)
 
     def update_ui(self, results):
-        self.progress_bar.stop() # Stop the progress bar animation
+        self.progress_bar.stop()
         for item in self.results_tree.get_children():
             self.results_tree.delete(item)
 
@@ -592,24 +621,22 @@ class NetworkScanTab(ttk.Frame):
                         host_data.get('mac', 'N/A'),
                         host_data.get('vendor', 'N/A')
                     ))
+            self.export_button.config(state="normal") # Enable export after scan
         else:
             self.results_tree.insert("", "end", values=("No hosts found.", "", "", "", ""))
+            self.export_button.config(state="disabled")
 
         self.start_button.config(state="normal")
         self.main_app.status_label.config(text="Nmap scan complete.")
 
     def show_host_details(self, event):
-        """Displays a new window with detailed information for the selected host."""
         selected_item = self.results_tree.focus()
-        if not selected_item:
-            return
+        if not selected_item: return
         
         item_values = self.results_tree.item(selected_item, 'values')
         host_ip = item_values[0]
         host_data = self.scan_results_data.get(host_ip)
-
-        if not host_data:
-            return
+        if not host_data: return
 
         details_window = tk.Toplevel(self)
         details_window.title(f"Details for {host_ip}")
@@ -624,17 +651,11 @@ class NetworkScanTab(ttk.Frame):
         port_columns = ("port", "protocol", "state", "service", "product")
         ports_tree = ttk.Treeview(ports_frame, columns=port_columns, show="headings")
         
-        ports_tree.heading("port", text="Port", anchor=tk.W)
-        ports_tree.column("port", width=60, anchor=tk.W)
-        ports_tree.heading("protocol", text="Protocol", anchor=tk.W)
-        ports_tree.column("protocol", width=60, anchor=tk.W)
-        ports_tree.heading("state", text="State", anchor=tk.W)
-        ports_tree.column("state", width=80, anchor=tk.W)
-        ports_tree.heading("service", text="Service", anchor=tk.W)
-        ports_tree.column("service", width=120, anchor=tk.W)
-        ports_tree.heading("product", text="Product/Version", anchor=tk.W)
-        ports_tree.column("product", width=180, anchor=tk.W)
-        
+        ports_tree.heading("port", text="Port", anchor=tk.W); ports_tree.column("port", width=60, anchor=tk.W)
+        ports_tree.heading("protocol", text="Protocol", anchor=tk.W); ports_tree.column("protocol", width=60, anchor=tk.W)
+        ports_tree.heading("state", text="State", anchor=tk.W); ports_tree.column("state", width=80, anchor=tk.W)
+        ports_tree.heading("service", text="Service", anchor=tk.W); ports_tree.column("service", width=120, anchor=tk.W)
+        ports_tree.heading("product", text="Product/Version", anchor=tk.W); ports_tree.column("product", width=180, anchor=tk.W)
         ports_tree.pack(fill="both", expand=True)
 
         ports_data = host_data['details'].get('ports', [])
@@ -642,14 +663,37 @@ class NetworkScanTab(ttk.Frame):
             for port in ports_data:
                 product_version = f"{port.get('product', '')} {port.get('version', '')}".strip()
                 ports_tree.insert("", "end", values=(
-                    port.get('port', 'N/A'),
-                    port.get('protocol', 'N/A'),
-                    port.get('state', 'N/A'),
-                    port.get('name', 'N/A'),
+                    port.get('port', 'N/A'), port.get('protocol', 'N/A'),
+                    port.get('state', 'N/A'), port.get('name', 'N/A'),
                     product_version if product_version else 'N/A'
                 ))
         else:
             ports_tree.insert("", "end", values=("No open ports found.", "", "", "", ""))
+    
+    # --- NEW: Function to export the results table to a CSV file ---
+    def export_to_csv(self):
+        try:
+            file_path = filedialog.asksaveasfilename(
+                defaultextension=".csv",
+                filetypes=[("CSV files", "*.csv"), ("All files", "*.*")],
+                title="Export Scan Results"
+            )
+            if not file_path:
+                return
+
+            import csv
+            with open(file_path, "w", newline="") as f:
+                writer = csv.writer(f)
+                # Write header
+                writer.writerow(['IP Address', 'Hostname', 'Status', 'MAC Address', 'Vendor'])
+                # Write data
+                for item_id in self.results_tree.get_children():
+                    row = self.results_tree.item(item_id)['values']
+                    writer.writerow(row)
+            messagebox.showinfo("Success", f"Scan results exported to {file_path}")
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to export CSV: {e}")
+
 class MainApplication(tk.Window):
     """The main application window."""
     def __init__(self):

@@ -12,6 +12,7 @@ from netmiko import ConnectHandler
 from scapy.all import sniff, inet_ntoa
 from scapy.contrib.lldp import LLDPDU
 from scapy.contrib.cdp import CDPMsg, CDPAddrRecord
+import xml.etree.ElementTree as ET
 
 
 class NetworkTriageToolkitBase:
@@ -198,62 +199,83 @@ class NetworkTriageToolkitBase:
             return {"Error": f"Speed test failed: {e}"}
 
     def run_network_scan(self, target, arguments='-F', callback=None):
-        """Performs an Nmap scan and returns a structured list of hosts with detailed info."""
+        """
+        Performs an Nmap scan by running it as a subprocess and parsing the XML output.
+        """
         try:
-            import nmap
-        except ImportError:
-            return [{'ip': 'Error', 'hostname': 'python-nmap library not found.', 'status': 'Please run pip install python-nmap', 'mac': '', 'vendor': '', 'details': {}}]
-
-        try:
-            nm = nmap.PortScanner()
-            nm.scan(hosts=target, arguments=arguments)
+            # Use the full path to Nmap to avoid PATH issues
+            command = ["/usr/local/bin/nmap", *arguments.split(), target, "-oX", "-"]
             
+            process = subprocess.run(
+                command,
+                capture_output=True,
+                text=True,
+                check=False
+            )
+
+            if process.returncode != 0:
+                if "command not found" in process.stderr:
+                    return [{'ip': 'Error', 'hostname': 'Nmap not found.', 'status': "Please ensure it is installed and in your system's PATH.", 'mac': '', 'vendor': '', 'details': {}}]
+                return [{'ip': 'Error', 'hostname': 'An Nmap error occurred.', 'status': process.stderr.strip(), 'mac': '', 'vendor': '', 'details': {}}]
+
+            root = ET.fromstring(process.stdout)
             results = []
-            for host in nm.all_hosts():
+            
+            for host in root.findall('host'):
+                status_elem = host.find('status')
+                status = status_elem.get('state') if status_elem is not None else 'unknown'
+                
+                if status != 'up':
+                    continue
+
+                addr_elem = host.find("address[@addrtype='ipv4']")
+                ip_addr = addr_elem.get('addr') if addr_elem is not None else 'N/A'
+                
+                mac_elem = host.find("address[@addrtype='mac']")
+                mac_addr = mac_elem.get('addr') if mac_elem is not None else ''
+                vendor = mac_elem.get('vendor') if mac_elem is not None else ''
+                
+                hostname_elem = host.find("hostnames/hostname")
+                hostname = hostname_elem.get('name') if hostname_elem is not None else ''
+                
                 host_details = {
-                    'ip': host,
-                    'hostname': nm[host].hostname() if nm[host].hostname() else '',
-                    'status': nm[host].state(),
-                    'mac': nm[host]['addresses'].get('mac', ''),
-                    'vendor': nm[host]['vendor'].get(nm[host]['addresses'].get('mac', ''), ''),
-                    'details': {} # Dictionary to hold detailed info
+                    'ip': ip_addr, 'hostname': hostname, 'status': status,
+                    'mac': mac_addr, 'vendor': vendor, 'details': {}
                 }
 
-                # Extract OS, port, and service details
-                if 'osmatch' in nm[host] and nm[host]['osmatch']:
-                    host_details['details']['os'] = nm[host]['osmatch'][0]['name']
-                
+                os_match_elem = host.find("os/osmatch")
+                if os_match_elem is not None:
+                    host_details['details']['os'] = os_match_elem.get('name', 'N/A')
+
                 host_details['details']['ports'] = []
-                for proto in nm[host].all_protocols():
-                    ports = nm[host][proto].keys()
-                    for port in ports:
+                ports_elem = host.find('ports')
+                if ports_elem is not None:
+                    for port in ports_elem.findall('port'):
+                        service_elem = port.find('service')
                         port_info = {
-                            'port': port,
-                            'protocol': proto,
-                            'state': nm[host][proto][port]['state'],
-                            'name': nm[host][proto][port]['name'],
-                            'product': nm[host][proto][port]['product'],
-                            'version': nm[host][proto][port]['version']
+                            'port': port.get('portid'),
+                            'protocol': port.get('protocol'),
+                            'state': port.find('state').get('state'),
+                            'name': service_elem.get('name', '') if service_elem is not None else '',
+                            'product': service_elem.get('product', '') if service_elem is not None else '',
+                            'version': service_elem.get('version', '') if service_elem is not None else ''
                         }
                         host_details['details']['ports'].append(port_info)
 
                 results.append(host_details)
             
-            if callback:
-                callback(results)
             return results
 
-        except nmap.nmap.PortScannerError as e:
-            error_message = str(e)
-            if "nmap: command not found" in error_message:
-                return [{'ip': 'Error', 'hostname': 'Nmap not found.', 'status': "Please ensure it is installed and in your system's PATH.", 'mac': '', 'vendor': '', 'details': {}}]
-            return [{'ip': 'Error', 'hostname': 'An error occurred during the Nmap scan.', 'status': error_message, 'mac': '', 'vendor': '', 'details': {}}]
+        except FileNotFoundError:
+             return [{'ip': 'Error', 'hostname': 'Nmap not found.', 'status': "Please ensure it is installed and in your system's PATH.", 'mac': '', 'vendor': '', 'details': {}}]
+        except ET.ParseError:
+            return [{'ip': 'Error', 'hostname': 'Failed to parse Nmap output.', 'status': 'The scan may have been interrupted or produced invalid XML.', 'mac': '', 'vendor': '', 'details': {}}]
         except Exception as e:
             return [{'ip': 'Error', 'hostname': 'An unexpected error occurred.', 'status': str(e), 'mac': '', 'vendor': '', 'details': {}}]
 
     def stop_network_scan(self):
         """Stops a running Nmap scan."""
-        return "Scan stopping is not directly supported with this method. Scans will time out naturally."
+        return "Scan stopping is not directly supported with this method."
 
 
 class RouterConnection:
