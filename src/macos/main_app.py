@@ -481,40 +481,85 @@ class NetworkScanTab(ttk.Frame):
     def __init__(self, parent, main_app_instance):
         super().__init__(parent)
         self.main_app = main_app_instance
+        self.scan_results_data = {} # To store full scan data for each host
         self.create_widgets()
         self.prefill_target()
 
     def create_widgets(self):
         scan_frame = ttk.LabelFrame(self, text="Nmap Network Scanner")
         scan_frame.pack(padx=10, pady=10, fill="both", expand=True)
+
         control_frame = ttk.Frame(scan_frame)
         control_frame.pack(fill="x", padx=5, pady=5)
         control_frame.columnconfigure(1, weight=1)
+
         ttk.Label(control_frame, text="Target:").grid(row=0, column=0, padx=(0, 5), pady=5, sticky="w")
         self.target_entry = ttk.Entry(control_frame)
-        self.target_entry.grid(row=0, column=1, columnspan=4, padx=(0, 5), pady=5, sticky="ew")
+        self.target_entry.grid(row=0, column=1, columnspan=3, padx=(0, 5), pady=5, sticky="ew")
         ToolTip(self.target_entry, text="Enter a single IP or a network range (e.g., 192.168.1.0/24)")
+
         ttk.Label(control_frame, text="Scan Type:").grid(row=1, column=0, padx=(0, 5), pady=5, sticky="w")
-        self.scan_type = ttk.Combobox(control_frame, values=["Ping Scan", "Fast Scan", "Intense Scan"], width=12, state="readonly")
+        # --- NEW: Add "Custom" to the scan types ---
+        self.scan_type = ttk.Combobox(control_frame, values=["Ping Scan", "Fast Scan", "Intense Scan", "Custom"], width=12, state="readonly")
         self.scan_type.grid(row=1, column=1, pady=5, sticky="w")
         self.scan_type.set("Fast Scan")
-        ToolTip(self.scan_type, text="Ping: Host discovery only.\nFast: Scans 100 common ports.\nIntense: Slower, detailed scan for OS and services.")
-        self.verbose_var = tk.BooleanVar(value=True)
-        verbose_check = ttk.Checkbutton(control_frame, text="Verbose", variable=self.verbose_var, bootstyle="round-toggle")
-        verbose_check.grid(row=1, column=2, padx=5, pady=5, sticky="w")
-        ToolTip(verbose_check, text="Show Nmap's progress in real-time. Scans will take longer.")
+        self.scan_type.bind("<<ComboboxSelected>>", self.toggle_custom_args) # Event to show/hide custom field
+        ToolTip(self.scan_type, text="Choose a preset or select 'Custom' to enter your own Nmap arguments.")
+
         self.start_button = ttk.Button(control_frame, text="Start Scan", command=self.start_scan)
-        self.start_button.grid(row=1, column=3, padx=(10, 5), pady=5, sticky="e")
-        self.stop_button = ttk.Button(control_frame, text="Stop Scan", command=self.stop_scan, state="disabled")
-        self.stop_button.grid(row=1, column=4, pady=5, sticky="w")
-        progress_frame = ttk.Frame(scan_frame)
-        progress_frame.pack(fill="x", padx=5, pady=(5,0))
-        self.progress_label = ttk.Label(progress_frame, text="Progress:")
-        self.progress_label.pack(side="left")
-        self.progress_bar = ttk.Progressbar(progress_frame, orient="horizontal", mode="determinate")
-        self.progress_bar.pack(side="left", fill="x", expand=True, padx=5)
-        self.output_text = scrolledtext.ScrolledText(scan_frame, wrap=tk.WORD, height=15)
-        self.output_text.pack(padx=5, pady=5, fill="both", expand=True)
+        self.start_button.grid(row=1, column=2, padx=(10, 5), pady=5, sticky="e")
+        
+        # --- NEW: Custom arguments entry (initially hidden) ---
+        self.custom_args_label = ttk.Label(control_frame, text="Arguments:")
+        self.custom_args_entry = ttk.Entry(control_frame)
+        ToolTip(self.custom_args_entry, text="Enter your custom Nmap flags here (e.g., -sV -p 80,443)")
+
+        info_label = ttk.Label(scan_frame, text="(Double-click a host in the results to see detailed port and service information)", font="-size 10 -slant italic")
+        info_label.pack(fill="x", padx=10, pady=(0, 5))
+        
+        result_frame = ttk.Frame(scan_frame)
+        result_frame.pack(padx=5, pady=5, fill="both", expand=True)
+        
+        columns = ("ip", "hostname", "status", "mac", "vendor")
+        self.results_tree = ttk.Treeview(result_frame, columns=columns, show="headings")
+        
+        self.results_tree.heading("ip", text="IP Address", anchor=tk.W)
+        self.results_tree.column("ip", width=120, anchor=tk.W)
+        self.results_tree.heading("hostname", text="Hostname", anchor=tk.W)
+        self.results_tree.column("hostname", width=150, anchor=tk.W)
+        self.results_tree.heading("status", text="Status", anchor=tk.W)
+        self.results_tree.column("status", width=80, anchor=tk.W)
+        self.results_tree.heading("mac", text="MAC Address", anchor=tk.W)
+        self.results_tree.column("mac", width=150, anchor=tk.W)
+        self.results_tree.heading("vendor", text="Vendor", anchor=tk.W)
+        self.results_tree.column("vendor", width=180, anchor=tk.W)
+        
+        self.results_tree.pack(side="left", fill="both", expand=True)
+
+        scrollbar = ttk.Scrollbar(result_frame, orient="vertical", command=self.results_tree.yview)
+        self.results_tree.configure(yscrollcommand=scrollbar.set)
+        scrollbar.pack(side="right", fill="y")
+        
+        self.results_tree.bind("<Double-1>", self.show_host_details)
+
+        bottom_frame = ttk.Frame(scan_frame)
+        bottom_frame.pack(fill="x", padx=5, pady=(5,0), side="bottom")
+
+        self.progress_bar = ttk.Progressbar(bottom_frame, mode="indeterminate")
+        self.progress_bar.pack(fill="x", expand=True, side="left")
+
+        # --- NEW: Add Export to CSV button ---
+        self.export_button = ttk.Button(bottom_frame, text="Export CSV", command=self.export_to_csv, state="disabled")
+        self.export_button.pack(side="right", padx=(10, 0))
+
+    # --- NEW: Function to show/hide the custom arguments field ---
+    def toggle_custom_args(self, event):
+        if self.scan_type.get() == "Custom":
+            self.custom_args_label.grid(row=2, column=0, padx=(0, 5), pady=5, sticky="w")
+            self.custom_args_entry.grid(row=2, column=1, columnspan=3, padx=(0, 5), pady=5, sticky="ew")
+        else:
+            self.custom_args_label.grid_forget()
+            self.custom_args_entry.grid_forget()
 
     def prefill_target(self):
         try:
@@ -531,43 +576,123 @@ class NetworkScanTab(ttk.Frame):
         if not target:
             messagebox.showerror("Error", "Please enter a target.")
             return
-        scan_map = {"Ping Scan": "-sn", "Fast Scan": "-F", "Intense Scan": "-T4 -A -v"}
-        arguments = scan_map.get(self.scan_type.get(), "-F")
-        if self.verbose_var.get() and arguments != "-sn":
-            arguments += " -v"
-        self.output_text.delete("1.0", tk.END)
-        self.output_text.insert(tk.END, f"Starting Nmap '{self.scan_type.get()}' on {target}...\n")
+        
+        # --- NEW: Logic to handle custom arguments ---
+        scan_choice = self.scan_type.get()
+        if scan_choice == "Custom":
+            arguments = self.custom_args_entry.get()
+            if not arguments:
+                messagebox.showerror("Error", "Please enter your custom Nmap arguments.")
+                return
+        else:
+            scan_map = {"Ping Scan": "-sn", "Fast Scan": "-F", "Intense Scan": "-T4 -A -v"}
+            arguments = scan_map.get(scan_choice, "-F")
+
+        for item in self.results_tree.get_children():
+            self.results_tree.delete(item)
+        self.scan_results_data.clear()
+
         self.start_button.config(state="disabled")
-        self.stop_button.config(state="normal")
+        self.export_button.config(state="disabled") # Disable export during scan
         self.main_app.status_label.config(text=f"Scanning {target} with Nmap...")
-        self.progress_bar['value'] = 0
-        def progress_callback(progress_percent):
-            self.progress_bar['value'] = progress_percent
-        def update_output(line):
-            self.output_text.insert(tk.END, line)
-            self.output_text.see(tk.END)
-        callback = update_output if self.verbose_var.get() else None
-        threading.Thread(target=self.run_scan_task, args=(target, arguments, callback, progress_callback), daemon=True).start()
+        self.progress_bar.start(10)
+        
+        self.results_tree.insert("", "end", values=("Scanning...", "", "", "", ""))
 
-    def stop_scan(self):
-        result = net_tool.stop_network_scan()
-        self.output_text.insert(tk.END, f"\n--- {result} ---\n")
+        threading.Thread(target=self.run_scan_task, args=(target, arguments), daemon=True).start()
+
+    def run_scan_task(self, target, arguments):
+        results = net_tool.run_network_scan(target, arguments=arguments)
+        self.after(0, self.update_ui, results)
+
+    def update_ui(self, results):
+        self.progress_bar.stop()
+        for item in self.results_tree.get_children():
+            self.results_tree.delete(item)
+
+        if results:
+            for host_data in results:
+                self.scan_results_data[host_data['ip']] = host_data
+                if host_data['status'] == 'up' or 'Error' in host_data.values():
+                    self.results_tree.insert("", "end", values=(
+                        host_data.get('ip', 'N/A'),
+                        host_data.get('hostname', 'N/A'),
+                        host_data.get('status', 'N/A'),
+                        host_data.get('mac', 'N/A'),
+                        host_data.get('vendor', 'N/A')
+                    ))
+            self.export_button.config(state="normal") # Enable export after scan
+        else:
+            self.results_tree.insert("", "end", values=("No hosts found.", "", "", "", ""))
+            self.export_button.config(state="disabled")
+
         self.start_button.config(state="normal")
-        self.stop_button.config(state="disabled")
-        self.main_app.status_label.config(text="Nmap scan stopped by user.")
+        self.main_app.status_label.config(text="Nmap scan complete.")
 
-    def run_scan_task(self, target, arguments, callback, progress_callback):
-        result = net_tool.run_network_scan(target, arguments=arguments, callback=callback, progress_callback=progress_callback)
-        def update_ui():
-            if not self.verbose_var.get():
-                self.output_text.delete("1.0", tk.END)
-                self.output_text.insert(tk.END, result)
-            self.start_button.config(state="normal")
-            self.stop_button.config(state="disabled")
-            self.progress_bar['value'] = 100
-            if "stopped by user" not in result:
-                self.main_app.status_label.config(text="Nmap scan complete.")
-        self.after(0, update_ui)
+    def show_host_details(self, event):
+        selected_item = self.results_tree.focus()
+        if not selected_item: return
+        
+        item_values = self.results_tree.item(selected_item, 'values')
+        host_ip = item_values[0]
+        host_data = self.scan_results_data.get(host_ip)
+        if not host_data: return
+
+        details_window = tk.Toplevel(self)
+        details_window.title(f"Details for {host_ip}")
+        details_window.geometry("500x400")
+
+        os_info = host_data['details'].get('os', 'N/A')
+        ttk.Label(details_window, text=f"Operating System: {os_info}", font=("-weight bold")).pack(anchor="w", padx=10, pady=5)
+
+        ports_frame = ttk.LabelFrame(details_window, text="Open Ports & Services")
+        ports_frame.pack(fill="both", expand=True, padx=10, pady=5)
+        
+        port_columns = ("port", "protocol", "state", "service", "product")
+        ports_tree = ttk.Treeview(ports_frame, columns=port_columns, show="headings")
+        
+        ports_tree.heading("port", text="Port", anchor=tk.W); ports_tree.column("port", width=60, anchor=tk.W)
+        ports_tree.heading("protocol", text="Protocol", anchor=tk.W); ports_tree.column("protocol", width=60, anchor=tk.W)
+        ports_tree.heading("state", text="State", anchor=tk.W); ports_tree.column("state", width=80, anchor=tk.W)
+        ports_tree.heading("service", text="Service", anchor=tk.W); ports_tree.column("service", width=120, anchor=tk.W)
+        ports_tree.heading("product", text="Product/Version", anchor=tk.W); ports_tree.column("product", width=180, anchor=tk.W)
+        ports_tree.pack(fill="both", expand=True)
+
+        ports_data = host_data['details'].get('ports', [])
+        if ports_data:
+            for port in ports_data:
+                product_version = f"{port.get('product', '')} {port.get('version', '')}".strip()
+                ports_tree.insert("", "end", values=(
+                    port.get('port', 'N/A'), port.get('protocol', 'N/A'),
+                    port.get('state', 'N/A'), port.get('name', 'N/A'),
+                    product_version if product_version else 'N/A'
+                ))
+        else:
+            ports_tree.insert("", "end", values=("No open ports found.", "", "", "", ""))
+    
+    # --- NEW: Function to export the results table to a CSV file ---
+    def export_to_csv(self):
+        try:
+            file_path = filedialog.asksaveasfilename(
+                defaultextension=".csv",
+                filetypes=[("CSV files", "*.csv"), ("All files", "*.*")],
+                title="Export Scan Results"
+            )
+            if not file_path:
+                return
+
+            import csv
+            with open(file_path, "w", newline="") as f:
+                writer = csv.writer(f)
+                # Write header
+                writer.writerow(['IP Address', 'Hostname', 'Status', 'MAC Address', 'Vendor'])
+                # Write data
+                for item_id in self.results_tree.get_children():
+                    row = self.results_tree.item(item_id)['values']
+                    writer.writerow(row)
+            messagebox.showinfo("Success", f"Scan results exported to {file_path}")
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to export CSV: {e}")
 
 class MainApplication(tk.Window):
     """The main application window."""
@@ -619,7 +744,7 @@ class MainApplication(tk.Window):
         # Connection Details
         report_content.append("\n\n--- Connection Details ---\n")
         for key, label in self.connection_tab.detail_labels.items():
-            if label.winfo_ismapped(): # Only include visible labels
+            if label.winfo_ismapped():
                 report_content.append(f"{key}: {label.cget('text')}")
 
         # Performance
@@ -635,7 +760,10 @@ class MainApplication(tk.Window):
 
         # Network Scan
         report_content.append("\n\n--- Network Scan ---\n")
-        report_content.append(self.network_scan_tab.output_text.get('1.0', tk.END).strip())
+        for item in self.network_scan_tab.results_tree.get_children():
+            values = self.network_scan_tab.results_tree.item(item, 'values')
+            if len(values) == 5:
+                report_content.append(f"IP: {values[0]}, Hostname: {values[1]}, Status: {values[2]}, MAC: {values[3]}, Vendor: {values[4]}")
 
         # Physical Layer
         report_content.append("\n\n--- Physical Layer ---\n")
@@ -652,7 +780,7 @@ class MainApplication(tk.Window):
                 title="Save Network Report"
             )
             if file_path:
-                with open(file_path, "w") as f:
+                with open(file_path, "w", encoding='utf-8') as f:
                     f.write("\n".join(report_content))
                 messagebox.showinfo("Success", f"Report saved to {file_path}")
         except Exception as e:
@@ -663,16 +791,12 @@ def main():
     app = MainApplication()
     app.mainloop()
 
-# This is the original, correct code for launching and getting admin rights
 if __name__ == "__main__":
     if platform.system() == "Darwin" and os.geteuid() != 0:
         try:
-            # Reconstruct the path to the project root from the script's location
             project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
             python_executable = sys.executable
-            # The command to run the module from the project root
             command_to_run = f"cd '{project_root}' && '{python_executable}' -m src.macos.main_app"
-            # Use AppleScript to ask for the password graphically
             applescript = f'do shell script "{command_to_run}" with administrator privileges'
             subprocess.Popen(['osascript', '-e', applescript])
             sys.exit(0)
@@ -682,5 +806,4 @@ if __name__ == "__main__":
             messagebox.showerror("Permissions Error", f"Could not relaunch with admin privileges.\n\nError: {e}")
             sys.exit(1)
     
-    # If it has permissions, or are not on macOS, run the app
     main()

@@ -9,7 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### To-Do
 -   Add icons to tabs and buttons.
--   Parse Nmap results into a user-friendly table.
+
+## [0.8.0] - 2025-10-11
+### Added
+-   **Nmap Host Details:** Implemented a "Click for Details" feature. Double-clicking a host in the scan results now opens a new window showing detailed OS, port, and service information.
+-   **Nmap Custom Scans:** Added a "Custom" scan type that allows users to enter their own Nmap arguments for full control over the scanning process.
+-   **Nmap Export to CSV:** Added an "Export CSV" button to save the results of a network scan to a CSV file.
+-   **Nmap UI Feedback:** Added a progress bar and an instructional label to the Network Scan tab to improve user experience during scans.
+
+### Changed
+-   **Nmap Results Display:** Replaced the raw text output on the Network Scan tab with a structured, sortable table (Treeview) that displays IP Address, Hostname, Status, MAC Address, and Vendor. This provides a much cleaner and more readable overview of scan results.
+-   **Nmap Backend:** Refactored the Nmap scanning logic to use a direct `subprocess` call that parses XML output. This approach is more reliable and robust than the previous library-based method.
+
+### Fixed
+-   Resolved a critical bug where Nmap scans would stall indefinitely due to a conflict with how the application handles administrator privileges.
+-   Fixed an environment issue where the application could not find the Nmap executable when launched as a standalone app. The tool now uses a direct path to `nmap`.
+-   Corrected the text alignment in the Nmap results table, ensuring both headers and data are properly left-aligned for readability.
 
 ## [0.7.0] - 2025-10-11
 ### Added

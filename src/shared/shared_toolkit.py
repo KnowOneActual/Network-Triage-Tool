@@ -12,6 +12,7 @@ from netmiko import ConnectHandler
 from scapy.all import sniff, inet_ntoa
 from scapy.contrib.lldp import LLDPDU
 from scapy.contrib.cdp import CDPMsg, CDPAddrRecord
+import xml.etree.ElementTree as ET
 
 
 class NetworkTriageToolkitBase:
@@ -80,7 +81,6 @@ class NetworkTriageToolkitBase:
         except Exception as e:
             return f"An error occurred: {e}"
 
-    # **THE FIX**: Re-add the discovery capture functions
     def start_discovery_capture(self, callback, timeout=60):
         """Starts a thread to capture LLDP or CDP packets."""
         if self.discovery_thread and self.discovery_thread.is_alive():
@@ -184,13 +184,13 @@ class NetworkTriageToolkitBase:
             st.download()
             st.upload(pre_allocate=False)
             results = st.results.dict()
-            packet_loss = results.get("packetLoss", 0)
+            packet_loss = results.get("packetLoss")
             return {
                 "Ping": f"{results.get('ping', 0):.2f} ms",
                 "Jitter": f"{results.get('client', {}).get('jitter', 0):.2f} ms",
                 "Download": f"{results.get('download', 0) / 1_000_000:.2f} Mbps",
                 "Upload": f"{results.get('upload', 0) / 1_000_000:.2f} Mbps",
-                "Packet Loss": f"{packet_loss:.1f}%",
+                "Packet Loss": f"{packet_loss if packet_loss is not None else 0:.1f}%",
                 "Server": results.get("server", {}).get("name", "N/A"),
                 "ISP": results.get("client", {}).get("isp", "N/A"),
                 "Result URL": st.results.share() or "N/A",
@@ -198,66 +198,84 @@ class NetworkTriageToolkitBase:
         except Exception as e:
             return {"Error": f"Speed test failed: {e}"}
 
-    def run_network_scan(self, target, arguments='-F', callback=None, progress_callback=None):
-        """Performs an Nmap scan using a direct subprocess for real-time feedback."""
+    def run_network_scan(self, target, arguments='-F', callback=None):
+        """
+        Performs an Nmap scan by running it as a subprocess and parsing the XML output.
+        """
         try:
-            subprocess.check_output(['nmap', '-V'])
-        except (subprocess.CalledProcessError, FileNotFoundError):
-            return "Error: Nmap not found. Please ensure it is installed and in your system's PATH."
-        try:
-            args_list = arguments.split()
-            if progress_callback:
-                if '--stats-every' not in arguments:
-                    args_list.extend(['--stats-every', '2s'])
-                if '-v' not in arguments:
-                    args_list.append('-v')
-            command = ['nmap', *args_list, target]
-            self.nmap_process = subprocess.Popen(
+            # Use the full path to Nmap to avoid PATH issues
+            command = ["/usr/local/bin/nmap", *arguments.split(), target, "-oX", "-"]
+            
+            process = subprocess.run(
                 command,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
+                capture_output=True,
                 text=True,
-                bufsize=1,
-                universal_newlines=True
+                check=False
             )
-            output = ""
-            if self.nmap_process and self.nmap_process.stdout:
-                for line in iter(self.nmap_process.stdout.readline, ''):
-                    if self.nmap_process is None or self.nmap_process.poll() is not None and not line:
-                        break
-                    output += line
-                    if callback:
-                        callback(line)
-                    if progress_callback and 'About' in line and '%' in line:
-                        match = re.search(r'([\d.]+)% done', line)
-                        if match:
-                            progress = float(match.group(1))
-                            progress_callback(progress)
-            if self.nmap_process:
-                self.nmap_process.wait()
-            self.nmap_process = None
-            return output
+
+            if process.returncode != 0:
+                if "command not found" in process.stderr:
+                    return [{'ip': 'Error', 'hostname': 'Nmap not found.', 'status': "Please ensure it is installed and in your system's PATH.", 'mac': '', 'vendor': '', 'details': {}}]
+                return [{'ip': 'Error', 'hostname': 'An Nmap error occurred.', 'status': process.stderr.strip(), 'mac': '', 'vendor': '', 'details': {}}]
+
+            root = ET.fromstring(process.stdout)
+            results = []
+            
+            for host in root.findall('host'):
+                status_elem = host.find('status')
+                status = status_elem.get('state') if status_elem is not None else 'unknown'
+                
+                if status != 'up':
+                    continue
+
+                addr_elem = host.find("address[@addrtype='ipv4']")
+                ip_addr = addr_elem.get('addr') if addr_elem is not None else 'N/A'
+                
+                mac_elem = host.find("address[@addrtype='mac']")
+                mac_addr = mac_elem.get('addr') if mac_elem is not None else ''
+                vendor = mac_elem.get('vendor') if mac_elem is not None else ''
+                
+                hostname_elem = host.find("hostnames/hostname")
+                hostname = hostname_elem.get('name') if hostname_elem is not None else ''
+                
+                host_details = {
+                    'ip': ip_addr, 'hostname': hostname, 'status': status,
+                    'mac': mac_addr, 'vendor': vendor, 'details': {}
+                }
+
+                os_match_elem = host.find("os/osmatch")
+                if os_match_elem is not None:
+                    host_details['details']['os'] = os_match_elem.get('name', 'N/A')
+
+                host_details['details']['ports'] = []
+                ports_elem = host.find('ports')
+                if ports_elem is not None:
+                    for port in ports_elem.findall('port'):
+                        service_elem = port.find('service')
+                        port_info = {
+                            'port': port.get('portid'),
+                            'protocol': port.get('protocol'),
+                            'state': port.find('state').get('state'),
+                            'name': service_elem.get('name', '') if service_elem is not None else '',
+                            'product': service_elem.get('product', '') if service_elem is not None else '',
+                            'version': service_elem.get('version', '') if service_elem is not None else ''
+                        }
+                        host_details['details']['ports'].append(port_info)
+
+                results.append(host_details)
+            
+            return results
+
+        except FileNotFoundError:
+             return [{'ip': 'Error', 'hostname': 'Nmap not found.', 'status': "Please ensure it is installed and in your system's PATH.", 'mac': '', 'vendor': '', 'details': {}}]
+        except ET.ParseError:
+            return [{'ip': 'Error', 'hostname': 'Failed to parse Nmap output.', 'status': 'The scan may have been interrupted or produced invalid XML.', 'mac': '', 'vendor': '', 'details': {}}]
         except Exception as e:
-            self.nmap_process = None
-            return f"An error occurred during the Nmap scan: {e}"
+            return [{'ip': 'Error', 'hostname': 'An unexpected error occurred.', 'status': str(e), 'mac': '', 'vendor': '', 'details': {}}]
 
     def stop_network_scan(self):
         """Stops a running Nmap scan."""
-        if self.nmap_process and self.nmap_process.poll() is None:
-            try:
-                parent = psutil.Process(self.nmap_process.pid)
-                for child in parent.children(recursive=True):
-                    child.terminate()
-                parent.terminate()
-                self.nmap_process.wait()
-                self.nmap_process = None
-                return "Scan stopped by user."
-            except psutil.NoSuchProcess:
-                self.nmap_process = None
-                return "Scan already completed."
-            except Exception as e:
-                return f"Error stopping scan: {e}"
-        return "No active scan to stop."
+        return "Scan stopping is not directly supported with this method."
 
 
 class RouterConnection:
