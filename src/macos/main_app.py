@@ -487,34 +487,47 @@ class NetworkScanTab(ttk.Frame):
     def create_widgets(self):
         scan_frame = ttk.LabelFrame(self, text="Nmap Network Scanner")
         scan_frame.pack(padx=10, pady=10, fill="both", expand=True)
+
         control_frame = ttk.Frame(scan_frame)
         control_frame.pack(fill="x", padx=5, pady=5)
         control_frame.columnconfigure(1, weight=1)
+
         ttk.Label(control_frame, text="Target:").grid(row=0, column=0, padx=(0, 5), pady=5, sticky="w")
         self.target_entry = ttk.Entry(control_frame)
-        self.target_entry.grid(row=0, column=1, columnspan=4, padx=(0, 5), pady=5, sticky="ew")
+        self.target_entry.grid(row=0, column=1, columnspan=3, padx=(0, 5), pady=5, sticky="ew")
         ToolTip(self.target_entry, text="Enter a single IP or a network range (e.g., 192.168.1.0/24)")
+
         ttk.Label(control_frame, text="Scan Type:").grid(row=1, column=0, padx=(0, 5), pady=5, sticky="w")
         self.scan_type = ttk.Combobox(control_frame, values=["Ping Scan", "Fast Scan", "Intense Scan"], width=12, state="readonly")
         self.scan_type.grid(row=1, column=1, pady=5, sticky="w")
         self.scan_type.set("Fast Scan")
         ToolTip(self.scan_type, text="Ping: Host discovery only.\nFast: Scans 100 common ports.\nIntense: Slower, detailed scan for OS and services.")
-        self.verbose_var = tk.BooleanVar(value=True)
-        verbose_check = ttk.Checkbutton(control_frame, text="Verbose", variable=self.verbose_var, bootstyle="round-toggle")
-        verbose_check.grid(row=1, column=2, padx=5, pady=5, sticky="w")
-        ToolTip(verbose_check, text="Show Nmap's progress in real-time. Scans will take longer.")
+
         self.start_button = ttk.Button(control_frame, text="Start Scan", command=self.start_scan)
-        self.start_button.grid(row=1, column=3, padx=(10, 5), pady=5, sticky="e")
-        self.stop_button = ttk.Button(control_frame, text="Stop Scan", command=self.stop_scan, state="disabled")
-        self.stop_button.grid(row=1, column=4, pady=5, sticky="w")
-        progress_frame = ttk.Frame(scan_frame)
-        progress_frame.pack(fill="x", padx=5, pady=(5,0))
-        self.progress_label = ttk.Label(progress_frame, text="Progress:")
-        self.progress_label.pack(side="left")
-        self.progress_bar = ttk.Progressbar(progress_frame, orient="horizontal", mode="determinate")
-        self.progress_bar.pack(side="left", fill="x", expand=True, padx=5)
-        self.output_text = scrolledtext.ScrolledText(scan_frame, wrap=tk.WORD, height=15)
-        self.output_text.pack(padx=5, pady=5, fill="both", expand=True)
+        self.start_button.grid(row=1, column=2, padx=(10, 5), pady=5, sticky="e")
+        
+        result_frame = ttk.Frame(scan_frame)
+        result_frame.pack(padx=5, pady=5, fill="both", expand=True)
+        
+        columns = ("ip", "hostname", "status", "mac", "vendor")
+        self.results_tree = ttk.Treeview(result_frame, columns=columns, show="headings")
+        
+        self.results_tree.heading("ip", text="IP Address")
+        self.results_tree.column("ip", width=120, anchor=tk.W)
+        self.results_tree.heading("hostname", text="Hostname", anchor=tk.W)
+        self.results_tree.column("hostname", width=150, anchor=tk.W)
+        self.results_tree.heading("status", text="Status", anchor=tk.W)
+        self.results_tree.column("status", width=80, anchor=tk.W)
+        self.results_tree.heading("mac", text="MAC Address", anchor=tk.W)
+        self.results_tree.column("mac", width=150, anchor=tk.W)
+        self.results_tree.heading("vendor", text="Vendor", anchor=tk.W)
+        self.results_tree.column("vendor", width=150, anchor=tk.W)
+        
+        self.results_tree.pack(side="left", fill="both", expand=True)
+
+        scrollbar = ttk.Scrollbar(result_frame, orient="vertical", command=self.results_tree.yview)
+        self.results_tree.configure(yscrollcommand=scrollbar.set)
+        scrollbar.pack(side="right", fill="y")
 
     def prefill_target(self):
         try:
@@ -531,43 +544,43 @@ class NetworkScanTab(ttk.Frame):
         if not target:
             messagebox.showerror("Error", "Please enter a target.")
             return
+
         scan_map = {"Ping Scan": "-sn", "Fast Scan": "-F", "Intense Scan": "-T4 -A -v"}
         arguments = scan_map.get(self.scan_type.get(), "-F")
-        if self.verbose_var.get() and arguments != "-sn":
-            arguments += " -v"
-        self.output_text.delete("1.0", tk.END)
-        self.output_text.insert(tk.END, f"Starting Nmap '{self.scan_type.get()}' on {target}...\n")
+
+        for item in self.results_tree.get_children():
+            self.results_tree.delete(item)
+
         self.start_button.config(state="disabled")
-        self.stop_button.config(state="normal")
         self.main_app.status_label.config(text=f"Scanning {target} with Nmap...")
-        self.progress_bar['value'] = 0
-        def progress_callback(progress_percent):
-            self.progress_bar['value'] = progress_percent
-        def update_output(line):
-            self.output_text.insert(tk.END, line)
-            self.output_text.see(tk.END)
-        callback = update_output if self.verbose_var.get() else None
-        threading.Thread(target=self.run_scan_task, args=(target, arguments, callback, progress_callback), daemon=True).start()
+        
+        self.results_tree.insert("", "end", values=("Scanning...", "", "", "", ""))
 
-    def stop_scan(self):
-        result = net_tool.stop_network_scan()
-        self.output_text.insert(tk.END, f"\n--- {result} ---\n")
+        threading.Thread(target=self.run_scan_task, args=(target, arguments), daemon=True).start()
+
+    def run_scan_task(self, target, arguments):
+        results = net_tool.run_network_scan(target, arguments=arguments)
+        self.after(0, self.update_ui, results)
+
+    def update_ui(self, results):
+        for item in self.results_tree.get_children():
+            self.results_tree.delete(item)
+
+        if results:
+            for host_data in results:
+                if host_data['status'] == 'up' or 'Error' in host_data.values():
+                    self.results_tree.insert("", "end", values=(
+                        host_data.get('ip', 'N/A'),
+                        host_data.get('hostname', 'N/A'),
+                        host_data.get('status', 'N/A'),
+                        host_data.get('mac', 'N/A'),
+                        host_data.get('vendor', 'N/A')
+                    ))
+        else:
+            self.results_tree.insert("", "end", values=("No hosts found.", "", "", "", ""))
+
         self.start_button.config(state="normal")
-        self.stop_button.config(state="disabled")
-        self.main_app.status_label.config(text="Nmap scan stopped by user.")
-
-    def run_scan_task(self, target, arguments, callback, progress_callback):
-        result = net_tool.run_network_scan(target, arguments=arguments, callback=callback, progress_callback=progress_callback)
-        def update_ui():
-            if not self.verbose_var.get():
-                self.output_text.delete("1.0", tk.END)
-                self.output_text.insert(tk.END, result)
-            self.start_button.config(state="normal")
-            self.stop_button.config(state="disabled")
-            self.progress_bar['value'] = 100
-            if "stopped by user" not in result:
-                self.main_app.status_label.config(text="Nmap scan complete.")
-        self.after(0, update_ui)
+        self.main_app.status_label.config(text="Nmap scan complete.")
 
 class MainApplication(tk.Window):
     """The main application window."""
@@ -635,7 +648,10 @@ class MainApplication(tk.Window):
 
         # Network Scan
         report_content.append("\n\n--- Network Scan ---\n")
-        report_content.append(self.network_scan_tab.output_text.get('1.0', tk.END).strip())
+        for item in self.network_scan_tab.results_tree.get_children():
+            values = self.network_scan_tab.results_tree.item(item, 'values')
+            if len(values) == 5: # Ensure the row has the correct number of values
+                report_content.append(f"IP: {values[0]}, Hostname: {values[1]}, Status: {values[2]}, MAC: {values[3]}, Vendor: {values[4]}")
 
         # Physical Layer
         report_content.append("\n\n--- Physical Layer ---\n")
@@ -652,7 +668,7 @@ class MainApplication(tk.Window):
                 title="Save Network Report"
             )
             if file_path:
-                with open(file_path, "w") as f:
+                with open(file_path, "w", encoding='utf-8') as f:
                     f.write("\n".join(report_content))
                 messagebox.showinfo("Success", f"Report saved to {file_path}")
         except Exception as e:

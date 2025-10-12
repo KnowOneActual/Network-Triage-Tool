@@ -80,7 +80,6 @@ class NetworkTriageToolkitBase:
         except Exception as e:
             return f"An error occurred: {e}"
 
-    # **THE FIX**: Re-add the discovery capture functions
     def start_discovery_capture(self, callback, timeout=60):
         """Starts a thread to capture LLDP or CDP packets."""
         if self.discovery_thread and self.discovery_thread.is_alive():
@@ -184,13 +183,13 @@ class NetworkTriageToolkitBase:
             st.download()
             st.upload(pre_allocate=False)
             results = st.results.dict()
-            packet_loss = results.get("packetLoss", 0)
+            packet_loss = results.get("packetLoss")
             return {
                 "Ping": f"{results.get('ping', 0):.2f} ms",
                 "Jitter": f"{results.get('client', {}).get('jitter', 0):.2f} ms",
                 "Download": f"{results.get('download', 0) / 1_000_000:.2f} Mbps",
                 "Upload": f"{results.get('upload', 0) / 1_000_000:.2f} Mbps",
-                "Packet Loss": f"{packet_loss:.1f}%",
+                "Packet Loss": f"{packet_loss if packet_loss is not None else 0:.1f}%",
                 "Server": results.get("server", {}).get("name", "N/A"),
                 "ISP": results.get("client", {}).get("isp", "N/A"),
                 "Result URL": st.results.share() or "N/A",
@@ -198,66 +197,43 @@ class NetworkTriageToolkitBase:
         except Exception as e:
             return {"Error": f"Speed test failed: {e}"}
 
-    def run_network_scan(self, target, arguments='-F', callback=None, progress_callback=None):
-        """Performs an Nmap scan using a direct subprocess for real-time feedback."""
+    def run_network_scan(self, target, arguments='-F', callback=None):
+        """Performs an Nmap scan and returns a structured list of hosts."""
         try:
-            subprocess.check_output(['nmap', '-V'])
-        except (subprocess.CalledProcessError, FileNotFoundError):
-            return "Error: Nmap not found. Please ensure it is installed and in your system's PATH."
+            import nmap
+        except ImportError:
+            return [{'ip': 'Error', 'hostname': 'python-nmap library not found.', 'status': 'Please run pip install python-nmap', 'mac': '', 'vendor': ''}]
+
         try:
-            args_list = arguments.split()
-            if progress_callback:
-                if '--stats-every' not in arguments:
-                    args_list.extend(['--stats-every', '2s'])
-                if '-v' not in arguments:
-                    args_list.append('-v')
-            command = ['nmap', *args_list, target]
-            self.nmap_process = subprocess.Popen(
-                command,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                bufsize=1,
-                universal_newlines=True
-            )
-            output = ""
-            if self.nmap_process and self.nmap_process.stdout:
-                for line in iter(self.nmap_process.stdout.readline, ''):
-                    if self.nmap_process is None or self.nmap_process.poll() is not None and not line:
-                        break
-                    output += line
-                    if callback:
-                        callback(line)
-                    if progress_callback and 'About' in line and '%' in line:
-                        match = re.search(r'([\d.]+)% done', line)
-                        if match:
-                            progress = float(match.group(1))
-                            progress_callback(progress)
-            if self.nmap_process:
-                self.nmap_process.wait()
-            self.nmap_process = None
-            return output
+            nm = nmap.PortScanner()
+            # The python-nmap library handles the XML output on its own.
+            nm.scan(hosts=target, arguments=arguments, sudo=True)
+            
+            results = []
+            for host in nm.all_hosts():
+                hostname = nm[host].hostname() if nm[host].hostname() else ''
+                status = nm[host].state()
+                mac = nm[host]['addresses'].get('mac', '')
+                # Get the vendor from the MAC address
+                vendor = nm[host]['vendor'].get(mac, '') if mac else ''
+                
+                results.append({'ip': host, 'hostname': hostname, 'status': status, 'mac': mac, 'vendor': vendor})
+            
+            if callback:
+                callback(results)
+            return results
+
+        except nmap.nmap.PortScannerError as e:
+            error_message = str(e)
+            if "nmap: command not found" in error_message:
+                return [{'ip': 'Error', 'hostname': 'Nmap not found.', 'status': "Please ensure it is installed and in your system's PATH.", 'mac': '', 'vendor': ''}]
+            return [{'ip': 'Error', 'hostname': 'An error occurred during the Nmap scan.', 'status': error_message, 'mac': '', 'vendor': ''}]
         except Exception as e:
-            self.nmap_process = None
-            return f"An error occurred during the Nmap scan: {e}"
+            return [{'ip': 'Error', 'hostname': 'An unexpected error occurred.', 'status': str(e), 'mac': '', 'vendor': ''}]
 
     def stop_network_scan(self):
-        """Stops a running Nmap scan."""
-        if self.nmap_process and self.nmap_process.poll() is None:
-            try:
-                parent = psutil.Process(self.nmap_process.pid)
-                for child in parent.children(recursive=True):
-                    child.terminate()
-                parent.terminate()
-                self.nmap_process.wait()
-                self.nmap_process = None
-                return "Scan stopped by user."
-            except psutil.NoSuchProcess:
-                self.nmap_process = None
-                return "Scan already completed."
-            except Exception as e:
-                return f"Error stopping scan: {e}"
-        return "No active scan to stop."
+        """Stops a running Nmap scan. (Note: less granular with python-nmap)"""
+        return "Scan stopping is not directly supported with this method. Scans will time out naturally."
 
 
 class RouterConnection:
