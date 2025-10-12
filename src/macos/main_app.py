@@ -481,6 +481,7 @@ class NetworkScanTab(ttk.Frame):
     def __init__(self, parent, main_app_instance):
         super().__init__(parent)
         self.main_app = main_app_instance
+        self.scan_results_data = {} # To store full scan data for each host
         self.create_widgets()
         self.prefill_target()
 
@@ -506,13 +507,17 @@ class NetworkScanTab(ttk.Frame):
         self.start_button = ttk.Button(control_frame, text="Start Scan", command=self.start_scan)
         self.start_button.grid(row=1, column=2, padx=(10, 5), pady=5, sticky="e")
         
+        # --- NEW: Add instructional label ---
+        info_label = ttk.Label(scan_frame, text="(Double-click a host in the results to see detailed port and service information)", font="-size 10 -slant italic")
+        info_label.pack(fill="x", padx=10, pady=(0, 5))
+        
         result_frame = ttk.Frame(scan_frame)
         result_frame.pack(padx=5, pady=5, fill="both", expand=True)
         
         columns = ("ip", "hostname", "status", "mac", "vendor")
         self.results_tree = ttk.Treeview(result_frame, columns=columns, show="headings")
         
-        self.results_tree.heading("ip", text="IP Address")
+        self.results_tree.heading("ip", text="IP Address", anchor=tk.W)
         self.results_tree.column("ip", width=120, anchor=tk.W)
         self.results_tree.heading("hostname", text="Hostname", anchor=tk.W)
         self.results_tree.column("hostname", width=150, anchor=tk.W)
@@ -521,13 +526,20 @@ class NetworkScanTab(ttk.Frame):
         self.results_tree.heading("mac", text="MAC Address", anchor=tk.W)
         self.results_tree.column("mac", width=150, anchor=tk.W)
         self.results_tree.heading("vendor", text="Vendor", anchor=tk.W)
-        self.results_tree.column("vendor", width=150, anchor=tk.W)
+        self.results_tree.column("vendor", width=180, anchor=tk.W)
         
         self.results_tree.pack(side="left", fill="both", expand=True)
 
         scrollbar = ttk.Scrollbar(result_frame, orient="vertical", command=self.results_tree.yview)
         self.results_tree.configure(yscrollcommand=scrollbar.set)
         scrollbar.pack(side="right", fill="y")
+        
+        self.results_tree.bind("<Double-1>", self.show_host_details)
+
+        # --- NEW: Add progress bar ---
+        self.progress_bar = ttk.Progressbar(scan_frame, mode="indeterminate")
+        self.progress_bar.pack(fill="x", padx=5, pady=(5,0), side="bottom")
+
 
     def prefill_target(self):
         try:
@@ -550,9 +562,11 @@ class NetworkScanTab(ttk.Frame):
 
         for item in self.results_tree.get_children():
             self.results_tree.delete(item)
+        self.scan_results_data.clear()
 
         self.start_button.config(state="disabled")
         self.main_app.status_label.config(text=f"Scanning {target} with Nmap...")
+        self.progress_bar.start(10) # Start the progress bar animation
         
         self.results_tree.insert("", "end", values=("Scanning...", "", "", "", ""))
 
@@ -563,11 +577,13 @@ class NetworkScanTab(ttk.Frame):
         self.after(0, self.update_ui, results)
 
     def update_ui(self, results):
+        self.progress_bar.stop() # Stop the progress bar animation
         for item in self.results_tree.get_children():
             self.results_tree.delete(item)
 
         if results:
             for host_data in results:
+                self.scan_results_data[host_data['ip']] = host_data
                 if host_data['status'] == 'up' or 'Error' in host_data.values():
                     self.results_tree.insert("", "end", values=(
                         host_data.get('ip', 'N/A'),
@@ -582,6 +598,58 @@ class NetworkScanTab(ttk.Frame):
         self.start_button.config(state="normal")
         self.main_app.status_label.config(text="Nmap scan complete.")
 
+    def show_host_details(self, event):
+        """Displays a new window with detailed information for the selected host."""
+        selected_item = self.results_tree.focus()
+        if not selected_item:
+            return
+        
+        item_values = self.results_tree.item(selected_item, 'values')
+        host_ip = item_values[0]
+        host_data = self.scan_results_data.get(host_ip)
+
+        if not host_data:
+            return
+
+        details_window = tk.Toplevel(self)
+        details_window.title(f"Details for {host_ip}")
+        details_window.geometry("500x400")
+
+        os_info = host_data['details'].get('os', 'N/A')
+        ttk.Label(details_window, text=f"Operating System: {os_info}", font=("-weight bold")).pack(anchor="w", padx=10, pady=5)
+
+        ports_frame = ttk.LabelFrame(details_window, text="Open Ports & Services")
+        ports_frame.pack(fill="both", expand=True, padx=10, pady=5)
+        
+        port_columns = ("port", "protocol", "state", "service", "product")
+        ports_tree = ttk.Treeview(ports_frame, columns=port_columns, show="headings")
+        
+        ports_tree.heading("port", text="Port", anchor=tk.W)
+        ports_tree.column("port", width=60, anchor=tk.W)
+        ports_tree.heading("protocol", text="Protocol", anchor=tk.W)
+        ports_tree.column("protocol", width=60, anchor=tk.W)
+        ports_tree.heading("state", text="State", anchor=tk.W)
+        ports_tree.column("state", width=80, anchor=tk.W)
+        ports_tree.heading("service", text="Service", anchor=tk.W)
+        ports_tree.column("service", width=120, anchor=tk.W)
+        ports_tree.heading("product", text="Product/Version", anchor=tk.W)
+        ports_tree.column("product", width=180, anchor=tk.W)
+        
+        ports_tree.pack(fill="both", expand=True)
+
+        ports_data = host_data['details'].get('ports', [])
+        if ports_data:
+            for port in ports_data:
+                product_version = f"{port.get('product', '')} {port.get('version', '')}".strip()
+                ports_tree.insert("", "end", values=(
+                    port.get('port', 'N/A'),
+                    port.get('protocol', 'N/A'),
+                    port.get('state', 'N/A'),
+                    port.get('name', 'N/A'),
+                    product_version if product_version else 'N/A'
+                ))
+        else:
+            ports_tree.insert("", "end", values=("No open ports found.", "", "", "", ""))
 class MainApplication(tk.Window):
     """The main application window."""
     def __init__(self):
@@ -632,7 +700,7 @@ class MainApplication(tk.Window):
         # Connection Details
         report_content.append("\n\n--- Connection Details ---\n")
         for key, label in self.connection_tab.detail_labels.items():
-            if label.winfo_ismapped(): # Only include visible labels
+            if label.winfo_ismapped():
                 report_content.append(f"{key}: {label.cget('text')}")
 
         # Performance
@@ -650,7 +718,7 @@ class MainApplication(tk.Window):
         report_content.append("\n\n--- Network Scan ---\n")
         for item in self.network_scan_tab.results_tree.get_children():
             values = self.network_scan_tab.results_tree.item(item, 'values')
-            if len(values) == 5: # Ensure the row has the correct number of values
+            if len(values) == 5:
                 report_content.append(f"IP: {values[0]}, Hostname: {values[1]}, Status: {values[2]}, MAC: {values[3]}, Vendor: {values[4]}")
 
         # Physical Layer
@@ -679,16 +747,12 @@ def main():
     app = MainApplication()
     app.mainloop()
 
-# This is the original, correct code for launching and getting admin rights
 if __name__ == "__main__":
     if platform.system() == "Darwin" and os.geteuid() != 0:
         try:
-            # Reconstruct the path to the project root from the script's location
             project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
             python_executable = sys.executable
-            # The command to run the module from the project root
             command_to_run = f"cd '{project_root}' && '{python_executable}' -m src.macos.main_app"
-            # Use AppleScript to ask for the password graphically
             applescript = f'do shell script "{command_to_run}" with administrator privileges'
             subprocess.Popen(['osascript', '-e', applescript])
             sys.exit(0)
@@ -698,5 +762,4 @@ if __name__ == "__main__":
             messagebox.showerror("Permissions Error", f"Could not relaunch with admin privileges.\n\nError: {e}")
             sys.exit(1)
     
-    # If it has permissions, or are not on macOS, run the app
     main()

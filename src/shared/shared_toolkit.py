@@ -198,26 +198,46 @@ class NetworkTriageToolkitBase:
             return {"Error": f"Speed test failed: {e}"}
 
     def run_network_scan(self, target, arguments='-F', callback=None):
-        """Performs an Nmap scan and returns a structured list of hosts."""
+        """Performs an Nmap scan and returns a structured list of hosts with detailed info."""
         try:
             import nmap
         except ImportError:
-            return [{'ip': 'Error', 'hostname': 'python-nmap library not found.', 'status': 'Please run pip install python-nmap', 'mac': '', 'vendor': ''}]
+            return [{'ip': 'Error', 'hostname': 'python-nmap library not found.', 'status': 'Please run pip install python-nmap', 'mac': '', 'vendor': '', 'details': {}}]
 
         try:
             nm = nmap.PortScanner()
-            # The python-nmap library handles the XML output on its own.
-            nm.scan(hosts=target, arguments=arguments, sudo=True)
+            nm.scan(hosts=target, arguments=arguments)
             
             results = []
             for host in nm.all_hosts():
-                hostname = nm[host].hostname() if nm[host].hostname() else ''
-                status = nm[host].state()
-                mac = nm[host]['addresses'].get('mac', '')
-                # Get the vendor from the MAC address
-                vendor = nm[host]['vendor'].get(mac, '') if mac else ''
+                host_details = {
+                    'ip': host,
+                    'hostname': nm[host].hostname() if nm[host].hostname() else '',
+                    'status': nm[host].state(),
+                    'mac': nm[host]['addresses'].get('mac', ''),
+                    'vendor': nm[host]['vendor'].get(nm[host]['addresses'].get('mac', ''), ''),
+                    'details': {} # Dictionary to hold detailed info
+                }
+
+                # Extract OS, port, and service details
+                if 'osmatch' in nm[host] and nm[host]['osmatch']:
+                    host_details['details']['os'] = nm[host]['osmatch'][0]['name']
                 
-                results.append({'ip': host, 'hostname': hostname, 'status': status, 'mac': mac, 'vendor': vendor})
+                host_details['details']['ports'] = []
+                for proto in nm[host].all_protocols():
+                    ports = nm[host][proto].keys()
+                    for port in ports:
+                        port_info = {
+                            'port': port,
+                            'protocol': proto,
+                            'state': nm[host][proto][port]['state'],
+                            'name': nm[host][proto][port]['name'],
+                            'product': nm[host][proto][port]['product'],
+                            'version': nm[host][proto][port]['version']
+                        }
+                        host_details['details']['ports'].append(port_info)
+
+                results.append(host_details)
             
             if callback:
                 callback(results)
@@ -226,13 +246,13 @@ class NetworkTriageToolkitBase:
         except nmap.nmap.PortScannerError as e:
             error_message = str(e)
             if "nmap: command not found" in error_message:
-                return [{'ip': 'Error', 'hostname': 'Nmap not found.', 'status': "Please ensure it is installed and in your system's PATH.", 'mac': '', 'vendor': ''}]
-            return [{'ip': 'Error', 'hostname': 'An error occurred during the Nmap scan.', 'status': error_message, 'mac': '', 'vendor': ''}]
+                return [{'ip': 'Error', 'hostname': 'Nmap not found.', 'status': "Please ensure it is installed and in your system's PATH.", 'mac': '', 'vendor': '', 'details': {}}]
+            return [{'ip': 'Error', 'hostname': 'An error occurred during the Nmap scan.', 'status': error_message, 'mac': '', 'vendor': '', 'details': {}}]
         except Exception as e:
-            return [{'ip': 'Error', 'hostname': 'An unexpected error occurred.', 'status': str(e), 'mac': '', 'vendor': ''}]
+            return [{'ip': 'Error', 'hostname': 'An unexpected error occurred.', 'status': str(e), 'mac': '', 'vendor': '', 'details': {}}]
 
     def stop_network_scan(self):
-        """Stops a running Nmap scan. (Note: less granular with python-nmap)"""
+        """Stops a running Nmap scan."""
         return "Scan stopping is not directly supported with this method. Scans will time out naturally."
 
 
