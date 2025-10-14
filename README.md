@@ -63,7 +63,7 @@ The Network Triage Tool consolidates essential diagnostic utilities into a singl
 
 ### Running the Application
 
-For the best experience, a simple, double-clickable application can be created using macOS's built-in Automator. This will launch the tool without a terminal window.
+A simple, double-clickable application can be created using macOS's built-in Automator. This will launch the tool without a terminal window.
 
 1.  **Open Automator** and create a new **Application**.
 2.  Add the **Run AppleScript** action.
@@ -86,7 +86,7 @@ For the best experience, a simple, double-clickable application can be created u
         do shell script commandToRun
     end run
     ```
-4.  **Save** the application as "**Network Triage Tool**" inside the cloned project folder.
+4.  **Save** the application as "**Network Triage Tool**" inside the cloned project folder. 
 5.  You can now **double-click** this new application to start the tool.
 
 #### Alternative: Terminal Launch
