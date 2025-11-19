@@ -1,3 +1,7 @@
+<p align="center">
+<img src="img/assets/readme/Network-Triage-Tool_logo_v2.webp" alt="alt text" width="150">
+</p>
+
 ### ⚠️ Current Status: Work in Progress ⚠️
 
 This should be considered **unstable**. While the basic functions described below are operational, features may change, break, or be incomplete.
