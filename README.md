@@ -1,5 +1,5 @@
 <p align="center">
-<img src="img/assets/readme/Network-Triage-Tool_logo_v2.webp" alt="alt text" width="150">
+<img src="img/assets/readme/Network-Triage-Tool_logo_v3.webp" alt="alt text" width="150">
 </p>
 
 ### ⚠️ Current Status: Work in Progress ⚠️
