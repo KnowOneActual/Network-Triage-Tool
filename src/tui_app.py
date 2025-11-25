@@ -1,6 +1,6 @@
 from textual import work
 from textual.app import App, ComposeResult
-from textual.widgets import Header, Footer, TabbedContent, TabPane, Static, Label, Input, Button, Log
+from textual.widgets import Header, Footer, Static, Label, Input, Button, Log, ContentSwitcher
 from textual.containers import Container, Horizontal
 from textual.binding import Binding
 from textual.reactive import reactive
@@ -8,7 +8,6 @@ from textual.reactive import reactive
 import sys
 import os
 
-# Ensure we can find the src module
 sys.path.append(os.getcwd())
 
 from src.macos.network_toolkit import NetworkTriageToolkit
@@ -16,8 +15,6 @@ from src.macos.network_toolkit import NetworkTriageToolkit
 net_tool = NetworkTriageToolkit()
 
 class InfoBox(Static):
-    """A custom widget to display a Title and a Value nicely."""
-    
     title_text = reactive("Label")
     value_text = reactive("Loading...")
 
@@ -32,19 +29,15 @@ class InfoBox(Static):
         yield Label(self.value_text, classes="label-value")
 
     def watch_title_text(self, new_val):
-        if not self.is_mounted:
-            return
+        if not self.is_mounted: return
         self.query_one(".label-title", Label).update(new_val)
 
     def watch_value_text(self, new_val):
-        if not self.is_mounted:
-            return
+        if not self.is_mounted: return
         self.query_one(".label-value", Label).update(new_val)
 
 
 class Dashboard(Container):
-    """The Dashboard Tab Content."""
-
     def compose(self) -> ComposeResult:
         yield InfoBox("Hostname", id="info_hostname")
         yield InfoBox("Operating System", id="info_os")
@@ -71,14 +64,11 @@ class Dashboard(Container):
 
 
 class PingTool(Container):
-    """A dedicated tool for Continuous Ping."""
-
     def compose(self) -> ComposeResult:
         with Horizontal(id="ping_controls"):
             yield Input(placeholder="Enter IP (e.g. 8.8.8.8)", id="ping_input")
-            yield Button("Start", id="start_ping_btn", variant="success")
-            yield Button("Stop", id="stop_ping_btn", variant="error", disabled=True)
-        
+            yield Button("▶ Start", id="start_ping_btn", variant="success")
+            yield Button("⏹ Stop", id="stop_ping_btn", variant="error", disabled=True)
         yield Log(id="ping_log", highlight=True)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -90,26 +80,18 @@ class PingTool(Container):
     def action_start_ping(self) -> None:
         host = self.query_one("#ping_input", Input).value
         if not host:
-            self.notify("Please enter a valid IP or Hostname", severity="error")
-            return
-
+            self.notify("Please enter a valid IP", severity="error"); return
         self.query_one("#start_ping_btn", Button).disabled = True
         self.query_one("#stop_ping_btn", Button).disabled = False
         self.query_one("#ping_input", Input).disabled = True
-        
-        log = self.query_one("#ping_log", Log)
-        log.clear()
-        log.write(f"--- Starting Ping to {host} ---\n")
-
-        # Starts the threaded worker automatically
+        self.query_one("#ping_log", Log).clear()
+        self.query_one("#ping_log", Log).write(f"--- Pinging {host} ---\n")
         self.start_ping_worker(host)
 
     def action_stop_ping(self) -> None:
         net_tool.stop_ping()
         self.workers.cancel_group(self, "ping_job")
-
-        self.query_one("#ping_log", Log).write("\n--- Ping Stopped ---\n")
-        
+        self.query_one("#ping_log", Log).write("\n--- Stopped ---\n")
         self.query_one("#start_ping_btn", Button).disabled = False
         self.query_one("#stop_ping_btn", Button).disabled = True
         self.query_one("#ping_input", Input).disabled = False
@@ -122,12 +104,9 @@ class PingTool(Container):
 
 
 class SpeedTestTool(Container):
-    """A tool to run Speedtest.net checks."""
-    
     def compose(self) -> ComposeResult:
-        yield Button("Run Speed Test", id="btn_speed", variant="primary")
+        yield Button("🚀 Run Speed Test", id="btn_speed", variant="primary")
         yield Label("", id="speed_status")
-        
         with Container(id="speed_results"):
             yield InfoBox("Download", id="spd_download")
             yield InfoBox("Upload", id="spd_upload")
@@ -141,36 +120,21 @@ class SpeedTestTool(Container):
 
     def start_test(self):
         self.query_one("#btn_speed", Button).disabled = True
-        self.query_one("#speed_status", Label).update("Initializing Speedtest...")
-        
-        for widget in self.query(InfoBox):
-            widget.value_text = "..."
-            
+        self.query_one("#speed_status", Label).update("Running test...")
+        for w in self.query(InfoBox): w.value_text = "..."
         self.run_speedtest_worker()
 
     @work(thread=True)
     def run_speedtest_worker(self):
-        self.app.call_from_thread(
-            self.query_one("#speed_status", Label).update, 
-            "Testing Download & Upload (this takes ~20s)..."
-        )
-        
         results = net_tool.run_speed_test()
-        
         self.app.call_from_thread(self.display_results, results)
 
     def display_results(self, results):
         self.query_one("#btn_speed", Button).disabled = False
-        self.query_one("#speed_status", Label).update("Test Complete.")
-
-        # DEBUG: Verify we actually got data by popping a notification
-        self.notify(f"DEBUG DATA: {results}", timeout=10)
-        
+        self.query_one("#speed_status", Label).update("Done.")
         if "Error" in results:
             self.notify(results["Error"], severity="error")
-            self.query_one("#speed_status", Label).update("Failed.")
             return
-
         self.query_one("#spd_download", InfoBox).value_text = results.get("Download", "N/A")
         self.query_one("#spd_upload", InfoBox).value_text = results.get("Upload", "N/A")
         self.query_one("#spd_ping", InfoBox).value_text = results.get("Ping", "N/A")
@@ -179,38 +143,63 @@ class SpeedTestTool(Container):
 
 
 class NetworkTriageApp(App):
-    """A Textual TUI for Network Triage."""
+    """A Textual TUI with Manual Button Navigation."""
 
     CSS_PATH = "triage.tcss"
 
     BINDINGS = [
         Binding("q", "quit", "Quit"),
-        Binding("d", "show_tab('dashboard')", "Dashboard"),
-        Binding("c", "show_tab('connection')", "Connection"),
-        Binding("s", "show_tab('speed')", "Speed Test"),
-        Binding("p", "show_tab('ping')", "Ping"),
+        Binding("d", "switch_tab('dashboard')", "Dashboard"),
+        Binding("c", "switch_tab('connection')", "Connection"),
+        Binding("s", "switch_tab('speed')", "Speed Test"),
+        Binding("p", "switch_tab('ping')", "Ping"),
     ]
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
         
-        with TabbedContent(initial="dashboard", id="main_tabs"):
-            with TabPane("Dashboard", id="dashboard"):
-                yield Dashboard()
-                
-            with TabPane("Connection", id="connection"):
-                yield Label("Interface details will go here")
-            
-            with TabPane("Speed Test", id="speed"):
-                yield SpeedTestTool()
+        # --- MANUAL TAB BAR ---
+        # No magic widgets. Just a row of buttons.
+        with Horizontal(id="nav_bar"):
+            yield Button("📊 Dashboard", id="tab_dashboard", classes="nav_btn")
+            yield Button("🔌 Connection", id="tab_connection", classes="nav_btn")
+            yield Button("🚀 Speed Test", id="tab_speed", classes="nav_btn")
+            yield Button("📡 Ping", id="tab_ping", classes="nav_btn")
 
-            with TabPane("Ping", id="ping"):
-                yield PingTool()
+        # --- CONTENT SWITCHER ---
+        # Holds the actual pages. We manually tell it which one to show.
+        with ContentSwitcher(initial="dashboard", id="content_box"):
+            yield Dashboard(id="dashboard")
+            yield Label("Interface Details Placeholder", id="connection")
+            yield SpeedTestTool(id="speed")
+            yield PingTool(id="ping")
 
         yield Footer()
 
-    def action_show_tab(self, tab: str) -> None:
-        self.query_one("#main_tabs").active = tab
+    def on_mount(self):
+        # Set initial active tab styling
+        self.query_one("#tab_dashboard").add_class("-active")
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Handle clicks on the nav bar."""
+        btn_id = event.button.id
+        if btn_id and btn_id.startswith("tab_"):
+            # Extract 'dashboard' from 'tab_dashboard'
+            target_id = btn_id.replace("tab_", "")
+            self.action_switch_tab(target_id)
+
+    def action_switch_tab(self, tab_id: str) -> None:
+        """Manually switch content and update button styles."""
+        # 1. Switch the content
+        self.query_one("#content_box", ContentSwitcher).current = tab_id
+        
+        # 2. Update button styles (visual feedback)
+        # Remove '-active' from ALL nav buttons
+        for btn in self.query(".nav_btn"):
+            btn.remove_class("-active")
+        
+        # Add '-active' to the specific button
+        self.query_one(f"#tab_{tab_id}", Button).add_class("-active")
 
 if __name__ == "__main__":
     app = NetworkTriageApp()

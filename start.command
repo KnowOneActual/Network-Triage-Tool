@@ -12,4 +12,4 @@ cd "$DIR"
 
 # Run the python module using the specific python from the virtual environment.
 # This ensures it can find 'src' and all installed libraries.
-"$PYTHON_EXEC" -m src.macos.main_app
+"$PYTHON_EXEC" src/tui_app.py

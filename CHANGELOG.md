@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.9.0] - 2025-11-24
 ### Added
+-   **Manual Navigation Bar:** Implemented a custom, button-based navigation bar to replace the standard tab widget. This resolves rendering/overlap issues and ensures consistent visibility across different terminal emulators.
+-   **Visual Polish:** Added emoji icons to navigation tabs (📊, 🔌, 🚀, 📡) and control buttons.
 -   **Textual TUI:** Replaced the desktop GUI with a modern, cross-platform Terminal User Interface (TUI) using the Textual framework. The app now runs entirely in the terminal with full mouse and keyboard support.
 -   **Async Workers:** Implemented non-blocking background workers (`@work` decorator) for **Continuous Ping** and **Speed Test**. This ensures the interface remains fully responsive and navigable while tests run.
 -   **High-Contrast Theme:** Added a custom CSS theme (`src/triage.tcss`) featuring high-contrast colors ("Safety" palette) to ensure visibility across different terminal emulators.
@@ -16,10 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -   **Speed Test Backend:** Updated the `speedtest-cli` integration to enforce HTTPS (`secure=True`). This resolves the `HTTP Error 403: Forbidden` issue caused by recent API changes.
 -   **Application Entry:** The main entry point has moved from `src/macos/main_app.py` to `src/tui_app.py`.
 -   **Tab Layout:** Replaced the `ttk.Notebook` widget with Textual's `TabbedContent` for a cleaner, CSS-styled navigation bar.
+-   **Launcher:** Updated `start.command` to launch the new TUI application (`src/tui_app.py`) instead of the old GUI.
 
 ### Fixed
 -   **UI Freezing:** Resolved the persistent "Not Responding" state during long-running tasks. You can now switch tabs and view the dashboard while a ping or speed test runs in the background.
 -   **Cross-Platform Compatibility:** By moving to a TUI, the application no longer suffers from macOS-specific windowing/permission crashes associated with Tkinter.
+-   **Layout Overlap:** Solved a critical CSS issue where the navigation bar would hide behind the header by implementing a simplified, flow-based layout structure.
 
 ### Removed
 -   **Tkinter Dependencies:** Removed `ttkbootstrap` and all `tkinter` imports, significantly reducing the complexity of the build environment.
