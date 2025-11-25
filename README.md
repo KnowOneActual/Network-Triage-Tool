@@ -4,12 +4,17 @@
 
 ### ⚠️ Current Status: Work in Progress ⚠️
 
+<<<<<<< HEAD
 # Following my testing, I have opted to pursue an alternative approach. I will discontinue the graphical user interface (GUI) in favor of the TUI. Since this represents a significant architectural transition, it will take time to implement properly. 
 
 
 This should be considered **unstable**. While the basic functions described below are operational, features may change, break, or be incomplete.
+=======
+**This should be considered **unstable**. While the basic functions described below are operational, features may change, break, or be incomplete.**
 
-# Following my testing, I have opted to pursue an alternative approach. I will discontinue the graphical user interface (GUI) in favor of the TUI. 
+# Following my testing, I have opted to pursue an alternative approach. I will discontinue the graphical user interface (GUI) in favor of the TUI. Since this represents a significant architectural transition, it will take time to implement properly. 
+>>>>>>> e092531 (fixed typo and added a little context)
+
 
 # Network Triage Tool (TUI)
 
