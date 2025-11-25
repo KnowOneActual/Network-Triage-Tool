@@ -179,7 +179,7 @@ class NetworkTriageToolkitBase:
     def run_speed_test(self):
         """Performs a network speed test and returns the results."""
         try:
-            st = speedtest.Speedtest()
+            st = speedtest.Speedtest(secure=True)
             st.get_best_server()
             st.download()
             st.upload(pre_allocate=False)

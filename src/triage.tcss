@@ -1,0 +1,139 @@
+/* src/triage.tcss - VISIBILITY FIX VERSION */
+
+Screen {
+    background: #121212; /* Very Dark Grey */
+    color: #ffffff;      /* White Text */
+}
+
+/* src/triage.tcss - LAYOUT FIX VERSION */
+
+Screen {
+    background: #121212;
+    color: #ffffff;
+}
+
+/* --- TAB BAR FIX --- */
+/* Target Tabs specifically inside the content wrapper */
+TabbedContent > Tabs {
+    /* REMOVED 'dock: top' - This was hiding it behind the header! */
+    background: #000000;
+    height: 3;
+    border-bottom: solid #007acc;
+}
+
+/* The individual tabs */
+Tab {
+    height: 100%;
+    background: #333333;
+    color: #aaaaaa;
+    border: none;
+    padding: 0 2;
+    content-align: center middle; 
+}
+
+/* The Active Tab */
+Tab.-active {
+    background: #007acc;
+    color: #ffffff;
+    text-style: bold;
+}
+
+/* Hover Effect */
+Tab:hover {
+    background: #444444;
+    color: #ffffff;
+}
+
+/* --- REST OF THE CSS (Keep this consistent) --- */
+
+Dashboard {
+    layout: grid;
+    grid-size: 2;
+    grid-gutter: 1;
+    padding: 1;
+}
+
+InfoBox {
+    background: #1e1e1e;
+    border: tall #007acc;
+    height: 100%;
+    padding: 1;
+    content-align: center middle;
+}
+
+.label-title {
+    color: #4ec9b0;
+    text-style: bold;
+    width: 100%;
+    text-align: center;
+}
+
+.label-value {
+    color: #ffffff;
+    text-style: bold;
+    background: #333333;
+    width: 100%;
+    text-align: center;
+    margin-top: 1;
+}
+
+SpeedTestTool {
+    layout: vertical;
+    padding: 1;
+}
+
+#speed_results {
+    layout: grid;
+    grid-size: 3;
+    grid-gutter: 1;
+    height: auto;
+    margin-top: 1;
+}
+
+#speed_status {
+    text-align: center;
+    color: #ce9178;
+    margin-bottom: 1;
+    width: 100%;
+}
+
+#ping_controls {
+    height: 3;
+    dock: top;
+    margin-bottom: 1;
+}
+
+#ping_input {
+    width: 1fr;
+    margin-right: 1;
+    background: #3c3c3c;
+    border: tall #007acc; 
+    color: #ffffff;
+}
+
+Log {
+    border: solid #007acc;
+    background: #000000;
+    color: #00ff00;
+    height: 1fr;
+}
+
+Button {
+    min-width: 10;
+}
+
+Header {
+    background: #007acc;
+    color: #ffffff;
+    dock: top; 
+}
+
+Footer {
+    background: #007acc;
+    color: #ffffff;
+    dock: bottom;
+}
+
+Label {
+    color: #ffffff;
+}

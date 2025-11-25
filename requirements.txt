@@ -6,5 +6,5 @@ scapy
 psutil
 requests
 speedtest-cli
-ttkbootstrap
+textual
 python-nmap
