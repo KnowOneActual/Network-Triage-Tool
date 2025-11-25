@@ -62,6 +62,73 @@ class Dashboard(Container):
         self.query_one("#info_gateway", InfoBox).value_text = ip_info.get("Gateway", "N/A")
         self.query_one("#info_public_ip", InfoBox).value_text = ip_info.get("Public IP", "N/A")
 
+class ConnectionTool(Container):
+    """A tool to display detailed network interface information."""
+
+    def compose(self) -> ComposeResult:
+        with Horizontal(classes="tool_header"):
+            yield Button("🔄 Refresh Connection Info", id="btn_refresh_conn", variant="default")
+            yield Label("", id="conn_status")
+
+        # Using a Scrollable container because this list can get long
+        with Container(id="conn_grid"):
+            # Standard Interface Info
+            yield InfoBox("Interface Name", id="iface_name")
+            yield InfoBox("Type", id="iface_type")
+            yield InfoBox("Status", id="iface_status")
+            yield InfoBox("IP Address", id="iface_ip")
+            yield InfoBox("MAC Address", id="iface_mac")
+            yield InfoBox("Subnet Mask", id="iface_mask")
+            yield InfoBox("Speed", id="iface_speed")
+            yield InfoBox("MTU", id="iface_mtu")
+            yield InfoBox("DNS Servers", id="iface_dns")
+            
+            # Wi-Fi Specific Info (Will display N/A for Ethernet)
+            yield InfoBox("Wi-Fi SSID", id="wifi_ssid")
+            yield InfoBox("Channel", id="wifi_channel")
+            yield InfoBox("Signal", id="wifi_signal")
+            yield InfoBox("Noise", id="wifi_noise")
+
+    def on_mount(self):
+        self.refresh_connection()
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "btn_refresh_conn":
+            self.refresh_connection()
+
+    @work(thread=True)
+    def refresh_connection(self):
+        self.app.call_from_thread(
+            self.query_one("#conn_status", Label).update, "Scanning interface..."
+        )
+        
+        # Fetch the heavy data
+        details = net_tool.get_connection_details()
+        
+        self.app.call_from_thread(self.update_ui, details)
+
+    def update_ui(self, details):
+        self.query_one("#conn_status", Label).update("Updated.")
+        
+        # Helper to safely get keys or show "N/A"
+        def set_val(widget_id, key):
+            self.query_one(f"#{widget_id}", InfoBox).value_text = details.get(key, "N/A")
+
+        set_val("iface_name", "Interface")
+        set_val("iface_type", "Connection Type")
+        set_val("iface_status", "Status")
+        set_val("iface_ip", "IP Address")
+        set_val("iface_mac", "MAC Address")
+        set_val("iface_mask", "Netmask")
+        set_val("iface_speed", "Speed")
+        set_val("iface_mtu", "MTU")
+        set_val("iface_dns", "DNS Servers")
+        
+        # Wi-Fi (Might be missing if Ethernet)
+        set_val("wifi_ssid", "SSID")
+        set_val("wifi_channel", "Channel")
+        set_val("wifi_signal", "Signal")
+        set_val("wifi_noise", "Noise")
 
 class PingTool(Container):
     def compose(self) -> ComposeResult:
@@ -170,7 +237,7 @@ class NetworkTriageApp(App):
         # Holds the actual pages. We manually tell it which one to show.
         with ContentSwitcher(initial="dashboard", id="content_box"):
             yield Dashboard(id="dashboard")
-            yield Label("Interface Details Placeholder", id="connection")
+            yield ConnectionTool(id="connection")
             yield SpeedTestTool(id="speed")
             yield PingTool(id="ping")
 

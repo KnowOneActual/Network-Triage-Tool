@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.9.0] - 2025-11-24
 ### Added
+-   **Connection Tool:** Ported the detailed connection statistics view to the TUI. It now displays real-time interface data (IP, MAC, Speed, MTU) and Wi-Fi specifics (SSID, Signal, Channel) in a responsive grid layout.
 -   **Manual Navigation Bar:** Implemented a custom, button-based navigation bar to replace the standard tab widget. This resolves rendering/overlap issues and ensures consistent visibility across different terminal emulators.
 -   **Visual Polish:** Added emoji icons to navigation tabs (📊, 🔌, 🚀, 📡) and control buttons.
 -   **Textual TUI:** Replaced the desktop GUI with a modern, cross-platform Terminal User Interface (TUI) using the Textual framework. The app now runs entirely in the terminal with full mouse and keyboard support.
