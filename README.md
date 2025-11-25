@@ -4,16 +4,89 @@
 
 ### ⚠️ Current Status: Work in Progress ⚠️
 
-<<<<<<< HEAD
 # Following my testing, I have opted to pursue an alternative approach. I will discontinue the graphical user interface (GUI) in favor of the TUI. Since this represents a significant architectural transition, it will take time to implement properly. 
 
-
-This should be considered **unstable**. While the basic functions described below are operational, features may change, break, or be incomplete.
-=======
 **This should be considered **unstable**. While the basic functions described below are operational, features may change, break, or be incomplete.**
 
-# Following my testing, I have opted to pursue an alternative approach. I will discontinue the graphical user interface (GUI) in favor of the TUI. Since this represents a significant architectural transition, it will take time to implement properly. 
->>>>>>> e092531 (fixed typo and added a little context)
+# Network Triage Tool (TUI)
+
+[![Status](https://img.shields.io/badge/status-active%20development-green)](https://github.com/knowoneactual/Network-Triage-Tool)
+[![Python Version](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![UI Framework](https://img.shields.io/badge/UI-Textual-orange)](https://textual.textualize.io/)
+
+A professional, cross-platform **Terminal User Interface (TUI)** designed for network professionals to diagnose and troubleshoot connectivity issues efficiently.
+
+Unlike the previous GUI version, this tool runs entirely in the terminal, making it lighter, faster, and fully capable of running over SSH sessions.
+
+## ✨ Features
+
+The application uses **Textual** to provide a modern, mouse-supportive terminal interface that never freezes.
+
+* **🖥️ Live Dashboard:** Real-time monitoring of System Info, Internal/Public IP, and Gateway status.
+* **🚀 Speed Test:** Integrated `speedtest-cli` (with HTTPS/403 fix) running on a background worker to prevent UI lockups.
+* **📡 Continuous Ping:** Non-blocking ping tool that scrolls results live while you navigate other tabs.
+* **⌨️ Keyboard First:** Fully navigable via keyboard shortcuts for rapid triage.
+* **🎨 High-Contrast Theme:** "Safety" color scheme designed for visibility in any terminal environment.
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+* Python 3.8+
+* A terminal with 256-color support (Standard on macOS/Linux/Windows Terminal)
+
+### Installation
+
+1.  **Clone the repository:**
+    ```bash
+    git clone [https://github.com/knowoneactual/Network-Triage-Tool.git](https://github.com/knowoneactual/Network-Triage-Tool.git)
+    cd Network-Triage-Tool
+    ```
+
+2.  **Create a virtual environment:**
+    ```bash
+    python3 -m venv .venv
+    source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+    ```
+
+3.  **Install dependencies:**
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+### Running the Tool
+
+Simply run the TUI app from your terminal.
+
+```bash
+python src/tui_app.py
+````
+
+*Note: Some features (like raw packet capture) may require `sudo` privileges depending on your OS.*
+
+### ⌨️ Keyboard Shortcuts
+
+| Key | Action |
+| :--- | :--- |
+| `d` | Switch to **Dashboard** |
+| `s` | Switch to **Speed Test** |
+| `p` | Switch to **Ping Tool** |
+| `c` | Switch to **Connection Details** |
+| `q` | **Quit** Application |
+
+## 🛠️ Tech Stack
+
+  * **UI Framework:** [Textual](https://github.com/Textualize/textual) (CSS-driven TUI)
+  * **Networking:** `scapy`, `netmiko`, `python-nmap`
+  * **System Info:** `psutil`, `requests`
+
+## 🤝 Contributing
+
+Contributions are welcome! Please open an issue or pull request for any bugs or feature additions.
+
+## 📄 License
+
+This project is licensed under the MIT License.
 
 
 # Network Triage Tool (TUI)
@@ -100,11 +173,7 @@ This project is licensed under the MIT [License](License).
 
 # Network Triage Tool
 
-[![Status](https://img.shields.io/badge/status-active%20development-green)](https://github.com/knowoneactual/Network-Triage-Tool)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Python Version](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
-
-
+# The old project descriptions are being systematically phased out.  
 A standalone GUI application designed to help network professionals and enthusiasts quickly diagnose and troubleshoot common network issues from their desktop.
 
 ## 🚧 Project Status
