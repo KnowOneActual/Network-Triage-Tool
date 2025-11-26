@@ -91,9 +91,11 @@ Contributions are welcome! Please open an issue or pull request for any bugs or 
 This project is licensed under the MIT [License.](License)
 
 
-# Network Triage Tool
 
-# The previous project description. This part of the project is being phased out systematically will not be updated!
+
+# Below is the previous project description. This part of the project is being phased out systematically and will not be updated! Only for reference. 
+
+# Network Triage Tool
 
 A standalone GUI application designed to help network professionals and enthusiasts quickly diagnose and troubleshoot common network issues from their desktop.
 
