@@ -62,7 +62,7 @@ Simply type the command anywhere in your terminal:
 
 ```bash
 network-triage
-    ```
+```
 
 *Note: Some features (like raw packet capture) may require `sudo` privileges depending on your OS.*
 
