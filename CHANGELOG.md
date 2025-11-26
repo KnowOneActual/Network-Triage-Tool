@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.2] - 2025-11-26
+### Refactored
+-   **Project Structure:** Completely restructured the codebase into a standard Python package layout (`src/network_triage/`). This eliminates import errors and prepares the tool for distribution.
+-   **Entry Point:** Renamed `src/tui_app.py` to `src/network_triage/app.py` and established a proper console script entry point.
+-   **Imports:** Removed fragile `sys.path` hacks in favor of robust relative imports (e.g., `from .macos import ...`).
+
+### Added
+-   **Distribution Support:** Added `pyproject.toml` to replace `requirements.txt`. The application is now installable via pip.
+-   **Command Line Interface:** Installing the package now creates a global `network-triage` command, removing the need to run Python scripts directly.
+
+## [0.9.1] - 2025-11-25
+### Added
+-   **Nmap Tool (TUI):** Fully integrated the Nmap scanner into the TUI. Users can now run scans, view results in a structured `DataTable`, and define custom arguments directly from the new "Nmap" tab.
+-   **Cross-Platform Architecture:** The application entry point (`src/tui_app.py`) now dynamically detects the operating system and loads the corresponding backend.
+-   **OS Stubs:** Added skeleton backends for Linux (`src/linux/`) and Windows (`src/windows/`). This allows the UI to launch on these platforms without crashing, paving the way for full implementation.
+
+### Fixed
+-   **Nmap Path Resolution:** Replaced the hardcoded Nmap path with dynamic detection using `shutil.which`. This resolves execution failures on Apple Silicon Macs (where Homebrew uses `/opt/homebrew/bin`) and other custom environments.
+
+
 ## [0.9.0] - 2025-11-24
 ### Added
 -   **Connection Tool:** Ported the detailed connection statistics view to the TUI. It now displays real-time interface data (IP, MAC, Speed, MTU) and Wi-Fi specifics (SSID, Signal, Channel) in a responsive grid layout.

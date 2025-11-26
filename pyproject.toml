@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "network-triage"
+version = "0.9.1"
+description = "A terminal-based network diagnostic tool."
+readme = "README.md"
+requires-python = ">=3.8"
+authors = [
+  { name = "Your Name", email = "you@example.com" },
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "netmiko",
+    "scapy",
+    "psutil",
+    "requests",
+    "speedtest-cli",
+    "textual",
+    "python-nmap"
+]
+
+[project.scripts]
+network-triage = "network_triage.app:run"
+
+[tool.setuptools.package-data]
+network_triage = ["*.tcss"]
+
+# --- THIS IS THE MISSING PIECE ---
+[tool.setuptools.packages.find]
+where = ["src"]

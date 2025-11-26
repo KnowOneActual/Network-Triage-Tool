@@ -9,20 +9,20 @@ This project is currently a **Work in Progress**, so there are plenty of opportu
 To start contributing, you'll need to get the project running locally.
 
 1.  **Fork and Clone** the repository to your local machine.
-2.  **Set up your environment** (Python 3.7+ required):
+2.  **Set up your environment:**
     ```bash
     # Create a virtual environment
     python3 -m venv .venv
     source .venv/bin/activate
 
-    # Install dependencies
-    pip install -r requirements.txt
+    # Install the package in editable mode (installs dependencies automatically)
+    pip install -e .
     ```
-3.  **Run the app** to make sure everything is working:
+
+3.  **Run the app:**
     ```bash
-    # macOS
-    python3 -m src.macos.main_app
-    ```
+    network-triage
+    ```    ```
 
 ## 🐛 Reporting Bugs & Feature Requests
 

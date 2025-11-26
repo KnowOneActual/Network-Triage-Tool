@@ -1,3 +1,22 @@
+Metadata-Version: 2.4
+Name: network-triage
+Version: 0.9.1
+Summary: A terminal-based network diagnostic tool.
+Author-email: Your Name <you@example.com>
+Classifier: Programming Language :: Python :: 3
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: netmiko
+Requires-Dist: scapy
+Requires-Dist: psutil
+Requires-Dist: requests
+Requires-Dist: speedtest-cli
+Requires-Dist: textual
+Requires-Dist: python-nmap
+Dynamic: license-file
+
 <p align="center">
 <img src="img/assets/readme/Network-Triage-Tool_logo_v3.webp" alt="alt text" width="150">
 </p>
@@ -40,7 +59,7 @@ The application uses **Textual** to provide a modern, mouse-supportive terminal 
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/knowoneactual/Network-Triage-Tool.git
+    git clone [https://github.com/knowoneactual/Network-Triage-Tool.git](https://github.com/knowoneactual/Network-Triage-Tool.git)
     cd Network-Triage-Tool
     ```
 
@@ -50,19 +69,18 @@ The application uses **Textual** to provide a modern, mouse-supportive terminal 
     source .venv/bin/activate  # On Windows: .venv\Scripts\activate
     ```
 
-3.  **Install in Editable Mode:**
-    This installs the dependencies and creates the `network-triage` command while allowing you to edit code live.
+3.  **Install dependencies:**
     ```bash
-    pip install -e .
+    pip install -r requirements.txt
     ```
 
 ### Running the Tool
 
-Simply type the command anywhere in your terminal:
+Simply run the TUI app from your terminal.
 
 ```bash
-network-triage
-    ```
+python src/tui_app.py
+````
 
 *Note: Some features (like raw packet capture) may require `sudo` privileges depending on your OS.*
 
