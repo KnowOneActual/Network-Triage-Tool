@@ -143,3 +143,23 @@ Log {
     color: #00ff00;
     content-align: left middle;
 }
+
+/* --- LLDP TOOL --- */
+LLDPTool {
+    layout: vertical;
+    padding: 1;
+}
+
+#lldp_log {
+    border: solid #007acc;
+    background: #000000;
+    color: #00ff00;
+    height: 1fr;
+    margin-top: 1;
+}
+
+#lldp_status {
+    content-align: left middle;
+    padding-left: 2;
+    color: #ce9178;
+}

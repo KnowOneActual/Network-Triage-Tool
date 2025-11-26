@@ -170,6 +170,79 @@ class PingTool(Container):
         net_tool.continuous_ping(host, write_to_log)
 
 
+class LLDPTool(Container):
+    """A tool to capture LLDP and CDP packets."""
+
+    def compose(self) -> ComposeResult:
+        with Horizontal(classes="tool_header"):
+            yield Button("Start Scan (60s)", id="btn_lldp_start", variant="success")
+            yield Button("Stop", id="btn_lldp_stop", variant="error", disabled=True)
+            yield Label("", id="lldp_status")
+        
+        yield Log(id="lldp_log", highlight=True)
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "btn_lldp_start":
+            self.action_start_scan()
+        elif event.button.id == "btn_lldp_stop":
+            self.action_stop_scan()
+
+    def action_start_scan(self) -> None:
+        self.query_one("#btn_lldp_start", Button).disabled = True
+        self.query_one("#btn_lldp_stop", Button).disabled = False
+        self.query_one("#lldp_status", Label).update("Listening for packets...")
+        
+        log = self.query_one("#lldp_log", Log)
+        log.clear()
+        log.write("--- Starting LLDP/CDP Capture (60s timeout) ---\n")
+        log.write("Note: This may require root/admin privileges to see packets.\n")
+
+        self.start_lldp_worker()
+
+    def action_stop_scan(self) -> None:
+        net_tool.stop_discovery_capture()
+        self.query_one("#lldp_status", Label).update("Stopped.")
+        self.query_one("#btn_lldp_start", Button).disabled = False
+        self.query_one("#btn_lldp_stop", Button).disabled = True
+        self.query_one("#lldp_log", Log).write("\n--- Scan Stopped ---\n")
+
+    @work(thread=True)
+    def start_lldp_worker(self):
+        self.scan_active = True # Track state
+        
+        def write_to_log(line):
+            # Check for permission errors
+            if "requires administrator privileges" in line:
+                self.app.call_from_thread(
+                    self.notify, 
+                    "Error: Root/Admin rights needed for packet capture.", 
+                    severity="error",
+                    timeout=5
+                )
+            self.app.call_from_thread(self.update_log, line)
+            
+        # Run the capture
+        net_tool.start_discovery_capture(write_to_log, timeout=60)
+        
+        # Only show "Scan Complete" if we didn't stop it manually
+        if self.scan_active:
+            self.app.call_from_thread(self.scan_finished)
+
+    def action_stop_scan(self) -> None:
+        self.scan_active = False # Flag that we stopped it manually
+        net_tool.stop_discovery_capture()
+        self.query_one("#lldp_status", Label).update("Stopped.")
+        self.query_one("#btn_lldp_start", Button).disabled = False
+        self.query_one("#btn_lldp_stop", Button).disabled = True
+        self.query_one("#lldp_log", Log).write("\n--- Scan Stopped ---\n")
+
+    def update_log(self, line):
+        self.query_one("#lldp_log", Log).write(line)
+
+    def scan_finished(self):
+        self.query_one("#btn_lldp_start", Button).disabled = False
+        self.query_one("#btn_lldp_stop", Button).disabled = True
+        self.query_one("#lldp_status", Label).update("Scan Complete.")
 class SpeedTestTool(Container):
     def compose(self) -> ComposeResult:
         yield Button("🚀 Run Speed Test", id="btn_speed", variant="primary")
@@ -220,6 +293,7 @@ class NetworkTriageApp(App):
         Binding("c", "switch_tab('connection')", "Connection"),
         Binding("s", "switch_tab('speed')", "Speed Test"),
         Binding("p", "switch_tab('ping')", "Ping"),
+        Binding("l", "switch_tab('lldp')", "LLDP Scan"),
     ]
 
     def compose(self) -> ComposeResult:
@@ -232,6 +306,7 @@ class NetworkTriageApp(App):
             yield Button("🔌 Connection", id="tab_connection", classes="nav_btn")
             yield Button("🚀 Speed Test", id="tab_speed", classes="nav_btn")
             yield Button("📡 Ping", id="tab_ping", classes="nav_btn")
+            yield Button("🔍 LLDP", id="tab_lldp", classes="nav_btn")
 
         # --- CONTENT SWITCHER ---
         # Holds the actual pages. We manually tell it which one to show.
@@ -240,6 +315,7 @@ class NetworkTriageApp(App):
             yield ConnectionTool(id="connection")
             yield SpeedTestTool(id="speed")
             yield PingTool(id="ping")
+            yield LLDPTool(id="lldp")
 
         yield Footer()
 
