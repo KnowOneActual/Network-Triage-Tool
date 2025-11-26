@@ -1,18 +1,32 @@
 from textual import work
 from textual.app import App, ComposeResult
-from textual.widgets import Header, Footer, Static, Label, Input, Button, Log, ContentSwitcher
+from textual.widgets import Header, Footer, Static, Label, Input, Button, Log, ContentSwitcher, DataTable
 from textual.containers import Container, Horizontal
 from textual.binding import Binding
 from textual.reactive import reactive
-
 import sys
 import os
+import platform 
 
-sys.path.append(os.getcwd())
+# ----------------------------------------------------------------------------
+# OS-Agnostic Import (Selects the correct toolkit based on your OS)
+# ----------------------------------------------------------------------------
+current_os = platform.system()
 
-from src.macos.network_toolkit import NetworkTriageToolkit
+if current_os == "Darwin":
+    # Note the "." before macos. This means "look in the current package"
+    from .macos.network_toolkit import NetworkTriageToolkit
+elif current_os == "Linux":
+    from .linux.network_toolkit import NetworkTriageToolkit
+elif current_os == "Windows":
+    from .windows.network_toolkit import NetworkTriageToolkit
+else:
+    print(f"Unsupported OS: {current_os}")
+    sys.exit(1)
 
 net_tool = NetworkTriageToolkit()
+# ----------------------------------------------------------------------------
+
 
 class InfoBox(Static):
     title_text = reactive("Label")
@@ -70,9 +84,7 @@ class ConnectionTool(Container):
             yield Button("🔄 Refresh Connection Info", id="btn_refresh_conn", variant="default")
             yield Label("", id="conn_status")
 
-        # Using a Scrollable container because this list can get long
         with Container(id="conn_grid"):
-            # Standard Interface Info
             yield InfoBox("Interface Name", id="iface_name")
             yield InfoBox("Type", id="iface_type")
             yield InfoBox("Status", id="iface_status")
@@ -83,7 +95,6 @@ class ConnectionTool(Container):
             yield InfoBox("MTU", id="iface_mtu")
             yield InfoBox("DNS Servers", id="iface_dns")
             
-            # Wi-Fi Specific Info (Will display N/A for Ethernet)
             yield InfoBox("Wi-Fi SSID", id="wifi_ssid")
             yield InfoBox("Channel", id="wifi_channel")
             yield InfoBox("Signal", id="wifi_signal")
@@ -101,16 +112,11 @@ class ConnectionTool(Container):
         self.app.call_from_thread(
             self.query_one("#conn_status", Label).update, "Scanning interface..."
         )
-        
-        # Fetch the heavy data
         details = net_tool.get_connection_details()
-        
         self.app.call_from_thread(self.update_ui, details)
 
     def update_ui(self, details):
         self.query_one("#conn_status", Label).update("Updated.")
-        
-        # Helper to safely get keys or show "N/A"
         def set_val(widget_id, key):
             self.query_one(f"#{widget_id}", InfoBox).value_text = details.get(key, "N/A")
 
@@ -123,8 +129,6 @@ class ConnectionTool(Container):
         set_val("iface_speed", "Speed")
         set_val("iface_mtu", "MTU")
         set_val("iface_dns", "DNS Servers")
-        
-        # Wi-Fi (Might be missing if Ethernet)
         set_val("wifi_ssid", "SSID")
         set_val("wifi_channel", "Channel")
         set_val("wifi_signal", "Signal")
@@ -171,8 +175,6 @@ class PingTool(Container):
 
 
 class LLDPTool(Container):
-    """A tool to capture LLDP and CDP packets."""
-
     def compose(self) -> ComposeResult:
         with Horizontal(classes="tool_header"):
             yield Button("Start Scan (60s)", id="btn_lldp_start", variant="success")
@@ -200,6 +202,7 @@ class LLDPTool(Container):
         self.start_lldp_worker()
 
     def action_stop_scan(self) -> None:
+        self.scan_active = False 
         net_tool.stop_discovery_capture()
         self.query_one("#lldp_status", Label).update("Stopped.")
         self.query_one("#btn_lldp_start", Button).disabled = False
@@ -208,10 +211,8 @@ class LLDPTool(Container):
 
     @work(thread=True)
     def start_lldp_worker(self):
-        self.scan_active = True # Track state
-        
+        self.scan_active = True 
         def write_to_log(line):
-            # Check for permission errors
             if "requires administrator privileges" in line:
                 self.app.call_from_thread(
                     self.notify, 
@@ -221,20 +222,10 @@ class LLDPTool(Container):
                 )
             self.app.call_from_thread(self.update_log, line)
             
-        # Run the capture
         net_tool.start_discovery_capture(write_to_log, timeout=60)
         
-        # Only show "Scan Complete" if we didn't stop it manually
         if self.scan_active:
             self.app.call_from_thread(self.scan_finished)
-
-    def action_stop_scan(self) -> None:
-        self.scan_active = False # Flag that we stopped it manually
-        net_tool.stop_discovery_capture()
-        self.query_one("#lldp_status", Label).update("Stopped.")
-        self.query_one("#btn_lldp_start", Button).disabled = False
-        self.query_one("#btn_lldp_stop", Button).disabled = True
-        self.query_one("#lldp_log", Log).write("\n--- Scan Stopped ---\n")
 
     def update_log(self, line):
         self.query_one("#lldp_log", Log).write(line)
@@ -243,6 +234,7 @@ class LLDPTool(Container):
         self.query_one("#btn_lldp_start", Button).disabled = False
         self.query_one("#btn_lldp_stop", Button).disabled = True
         self.query_one("#lldp_status", Label).update("Scan Complete.")
+
 class SpeedTestTool(Container):
     def compose(self) -> ComposeResult:
         yield Button("🚀 Run Speed Test", id="btn_speed", variant="primary")
@@ -282,6 +274,67 @@ class SpeedTestTool(Container):
         self.query_one("#spd_server", InfoBox).value_text = results.get("Server", "N/A")
 
 
+class NmapTool(Container):
+    def compose(self) -> ComposeResult:
+        with Horizontal(classes="tool_header"):
+            yield Input(placeholder="Target IP/Subnet (e.g. 192.168.1.0/24)", id="nmap_input", classes="input_field")
+            yield Input(placeholder="Args", value="-F", id="nmap_args", classes="input_short")
+            yield Button("Start Scan", id="btn_nmap_start", variant="success")
+        
+        # This DataTable will hold the results
+        yield DataTable(id="nmap_table")
+
+    def on_mount(self):
+        table = self.query_one(DataTable)
+        table.add_columns("IP Address", "Hostname", "Status", "MAC Address", "Vendor")
+        table.cursor_type = "row"
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "btn_nmap_start":
+            self.action_start_scan()
+
+    def action_start_scan(self):
+        target = self.query_one("#nmap_input", Input).value
+        args = self.query_one("#nmap_args", Input).value
+        
+        if not target:
+            self.notify("Please enter a target.", severity="error")
+            return
+
+        self.query_one("#btn_nmap_start", Button).disabled = True
+        self.query_one(DataTable).clear()
+        self.notify(f"Starting Nmap scan on {target}...")
+        
+        self.run_scan_worker(target, args)
+
+    @work(thread=True)
+    def run_scan_worker(self, target, args):
+        results = net_tool.run_network_scan(target, args)
+        self.app.call_from_thread(self.display_results, results)
+
+    def display_results(self, results):
+        self.query_one("#btn_nmap_start", Button).disabled = False
+        table = self.query_one(DataTable)
+        
+        if not results:
+            self.notify("No hosts found.", severity="warning")
+            return
+
+        for host in results:
+            if host.get('ip') == 'Error':
+                self.notify(f"Scan Error: {host.get('status')}", severity="error")
+                continue
+
+            table.add_row(
+                host.get('ip', 'N/A'),
+                host.get('hostname', ''),
+                host.get('status', 'up'),
+                host.get('mac', ''),
+                host.get('vendor', '')
+            )
+        self.notify("Scan Complete.")
+
+
 class NetworkTriageApp(App):
     """A Textual TUI with Manual Button Navigation."""
 
@@ -294,56 +347,49 @@ class NetworkTriageApp(App):
         Binding("s", "switch_tab('speed')", "Speed Test"),
         Binding("p", "switch_tab('ping')", "Ping"),
         Binding("l", "switch_tab('lldp')", "LLDP Scan"),
+        Binding("n", "switch_tab('nmap')", "Nmap Scan"),
     ]
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
         
-        # --- MANUAL TAB BAR ---
-        # No magic widgets. Just a row of buttons.
         with Horizontal(id="nav_bar"):
             yield Button("📊 Dashboard", id="tab_dashboard", classes="nav_btn")
             yield Button("🔌 Connection", id="tab_connection", classes="nav_btn")
             yield Button("🚀 Speed Test", id="tab_speed", classes="nav_btn")
             yield Button("📡 Ping", id="tab_ping", classes="nav_btn")
             yield Button("🔍 LLDP", id="tab_lldp", classes="nav_btn")
+            yield Button("🌐 Nmap", id="tab_nmap", classes="nav_btn")
 
-        # --- CONTENT SWITCHER ---
-        # Holds the actual pages. We manually tell it which one to show.
         with ContentSwitcher(initial="dashboard", id="content_box"):
             yield Dashboard(id="dashboard")
             yield ConnectionTool(id="connection")
             yield SpeedTestTool(id="speed")
             yield PingTool(id="ping")
             yield LLDPTool(id="lldp")
+            yield NmapTool(id="nmap")
 
         yield Footer()
 
     def on_mount(self):
-        # Set initial active tab styling
         self.query_one("#tab_dashboard").add_class("-active")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        """Handle clicks on the nav bar."""
         btn_id = event.button.id
         if btn_id and btn_id.startswith("tab_"):
-            # Extract 'dashboard' from 'tab_dashboard'
             target_id = btn_id.replace("tab_", "")
             self.action_switch_tab(target_id)
 
     def action_switch_tab(self, tab_id: str) -> None:
-        """Manually switch content and update button styles."""
-        # 1. Switch the content
         self.query_one("#content_box", ContentSwitcher).current = tab_id
-        
-        # 2. Update button styles (visual feedback)
-        # Remove '-active' from ALL nav buttons
         for btn in self.query(".nav_btn"):
             btn.remove_class("-active")
-        
-        # Add '-active' to the specific button
         self.query_one(f"#tab_{tab_id}", Button).add_class("-active")
 
-if __name__ == "__main__":
+def run():
+    """Entry point for the console script."""
     app = NetworkTriageApp()
     app.run()
+
+if __name__ == "__main__":
+    run()

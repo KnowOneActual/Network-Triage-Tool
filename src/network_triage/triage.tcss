@@ -163,3 +163,40 @@ LLDPTool {
     padding-left: 2;
     color: #ce9178;
 }
+
+/* ... existing styles ... */
+
+/* --- NMAP TOOL --- */
+#nmap_input {
+    width: 3fr;
+    margin-right: 1;
+    background: #3c3c3c;
+    border: tall #007acc; 
+    color: #ffffff;
+}
+
+#nmap_args {
+    width: 1fr;
+    margin-right: 1;
+    background: #3c3c3c;
+    border: tall #007acc; 
+    color: #ffffff;
+}
+
+#nmap_table {
+    height: 1fr;
+    border: solid #007acc;
+    background: #000000;
+    margin-top: 1;
+}
+
+DataTable > .datatable--header {
+    background: #007acc;
+    color: #ffffff;
+    text-style: bold;
+}
+
+DataTable > .datatable--cursor {
+    background: #333333;
+    color: #ffffff;
+}

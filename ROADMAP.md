@@ -49,7 +49,8 @@ Porting "Network Scan" and "Physical Layer" (LLDP).
   * **Tech**:
       * **Nmap**: Use a `ProgressBar` widget.
       * **Scapy**: Since this requires `sudo`, we need to handle permission errors gracefully with a nice notification toast, not a crash.
-
+      
+      
 ### Phase 6: Visual Polish (CSS)
 
 We stop coding Python and start coding `.tcss` (Textual CSS).
