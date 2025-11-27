@@ -1,6 +1,6 @@
 from textual import work
 from textual.app import App, ComposeResult
-from textual.widgets import Header, Footer, Static, Label, Input, Button, Log, ContentSwitcher, DataTable, Select, TextArea
+from textual.widgets import Header, Footer, Static, Label, Input, Button, Log, ContentSwitcher, DataTable, Select, TextArea, ProgressBar
 from textual.containers import Container, Horizontal, Vertical
 from textual.binding import Binding
 from textual.reactive import reactive
@@ -31,7 +31,7 @@ net_tool = NetworkTriageToolkit()
 
 class InfoBox(Static):
     title_text = reactive("Label")
-    value_text = reactive("Loading...")
+    value_text = reactive("Waiting to run ...")
 
     def __init__(self, title, initial_value="", id=None):
         super().__init__(id=id)
@@ -206,7 +206,7 @@ class LLDPTool(Container):
         log = self.query_one("#lldp_log", Log)
         log.clear()
         log.write("--- Starting LLDP/CDP Capture (60s timeout) ---\n")
-        log.write("Note: This may require root/admin privileges to see packets.\n")
+        # log.write("Note: This may require root/admin privileges to see packets.\n")
 
         self.start_lldp_worker()
 
@@ -247,7 +247,10 @@ class LLDPTool(Container):
 class SpeedTestTool(Container):
     def compose(self) -> ComposeResult:
         yield Button("🚀 Run Speed Test", id="btn_speed", variant="primary")
+        # Indeterminate progress bar (total=None means it pulses)
+        yield ProgressBar(id="speed_progress", total=None, show_eta=False, classes="hidden")
         yield Label("", id="speed_status")
+        
         with Container(id="speed_results"):
             yield InfoBox("Download", id="spd_download")
             yield InfoBox("Upload", id="spd_upload")
@@ -261,7 +264,12 @@ class SpeedTestTool(Container):
 
     def start_test(self):
         self.query_one("#btn_speed", Button).disabled = True
-        self.query_one("#speed_status", Label).update("Running test...")
+        self.query_one("#speed_status", Label).update("Running test (this may take 20-30s)...")
+        
+        # Show and start animation
+        bar = self.query_one("#speed_progress", ProgressBar)
+        bar.remove_class("hidden")
+        
         for w in self.query(InfoBox): w.value_text = "..."
         self.run_speedtest_worker()
 
@@ -272,15 +280,25 @@ class SpeedTestTool(Container):
 
     def display_results(self, results):
         self.query_one("#btn_speed", Button).disabled = False
+        
+        # Hide animation
+        bar = self.query_one("#speed_progress", ProgressBar)
+        bar.add_class("hidden")
+
         self.query_one("#speed_status", Label).update("Done.")
         if "Error" in results:
             self.notify(results["Error"], severity="error")
             return
-        self.query_one("#spd_download", InfoBox).value_text = results.get("Download", "N/A")
-        self.query_one("#spd_upload", InfoBox).value_text = results.get("Upload", "N/A")
-        self.query_one("#spd_ping", InfoBox).value_text = results.get("Ping", "N/A")
-        self.query_one("#spd_isp", InfoBox).value_text = results.get("ISP", "N/A")
-        self.query_one("#spd_server", InfoBox).value_text = results.get("Server", "N/A")
+        
+        # Helper to set values
+        def set_val(uid, key):
+            self.query_one(f"#{uid}", InfoBox).value_text = results.get(key, "N/A")
+
+        set_val("spd_download", "Download")
+        set_val("spd_upload", "Upload")
+        set_val("spd_ping", "Ping")
+        set_val("spd_isp", "ISP")
+        set_val("spd_server", "Server")
 
 
 class NmapTool(Container):
@@ -288,7 +306,6 @@ class NmapTool(Container):
         Binding("escape", "cancel_input", "Exit Input"),
     ]
     
-    # Store results here for the Report Generator to find
     scan_data = []
 
     def compose(self) -> ComposeResult:
@@ -311,6 +328,8 @@ class NmapTool(Container):
             
             yield Button("Start Scan", id="btn_nmap_start", variant="success")
         
+        # Progress bar between header and table
+        yield ProgressBar(id="nmap_progress", total=None, show_eta=False, classes="hidden")
         yield DataTable(id="nmap_table")
 
     def on_mount(self):
@@ -337,6 +356,16 @@ class NmapTool(Container):
 
     def on_input_submitted(self, event: Input.Submitted):
         self.action_start_scan()
+        
+    def on_data_table_row_selected(self, event: DataTable.RowSelected):
+        """When a row is clicked, copy the IP Address (Column 0)."""
+        table = self.query_one(DataTable)
+        row_data = table.get_row(event.row_key)
+        ip_addr = row_data[0]
+        
+        if ip_addr and ip_addr != "N/A":
+            self.app.copy_to_clipboard(ip_addr)
+            self.notify(f"Copied IP: {ip_addr}", title="Clipboard", severity="information")
 
     @work(thread=True)
     def detect_subnet_worker(self):
@@ -365,7 +394,12 @@ class NmapTool(Container):
 
         self.query_one("#btn_nmap_start", Button).disabled = True
         self.query_one(DataTable).clear()
-        self.scan_data = [] # Clear old data
+        self.scan_data = [] 
+        
+        # Start Progress Bar
+        bar = self.query_one("#nmap_progress", ProgressBar)
+        bar.remove_class("hidden")
+        
         self.notify(f"Starting scan: nmap {args} {target}")
         self.run_scan_worker(target, args)
 
@@ -376,9 +410,12 @@ class NmapTool(Container):
 
     def display_results(self, results):
         self.query_one("#btn_nmap_start", Button).disabled = False
-        table = self.query_one(DataTable)
         
-        # Save for report
+        # Stop Progress Bar
+        bar = self.query_one("#nmap_progress", ProgressBar)
+        bar.add_class("hidden")
+        
+        table = self.query_one(DataTable)
         self.scan_data = results
         
         if not results:

@@ -49,14 +49,15 @@ This document tracks the remaining tasks to bring the Network Triage Tool (TUI) 
 *Goal: Make the tool feel professional and responsive.*
 
 - [x] **Clipboard Actions:**
-    - Clicking an IP address (Dashboard/Connection/Nmap) copies it to the clipboard.
+    - Clicking an IP address (Dashboard/Connection) copies it to the clipboard.
+- [x] **Status Bar / Activity Indicator:**
+    - Added indeterminate `ProgressBar` to Nmap and Speed Test to show activity during long processes.
 - [ ] **Input History:**
     - Pressing `Up/Down` in IP input fields cycles through previously used addresses.
 - [ ] **Error Handling (Toasts):**
     - Replace console logs with UI Toasts for common errors (e.g., "Sudo required", "Invalid IP").
-- [ ] **Tab Badges / Status Indicators:**
+- [ ] **Tab Badges:**
     - Add a visual indicator (dot/color change) to a tab if a background task (like a long scan) finishes while the user is on a different tab.
-- [ ] **Status bar or percent count down** to indicate that process is functioning and not stalled.
 
 ---
 **Completed:**

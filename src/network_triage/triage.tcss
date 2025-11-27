@@ -384,3 +384,17 @@ NotesTool {
 
 #port_host { width: 3fr; margin-right: 1; }
 #port_num { width: 1fr; margin-right: 1; }
+
+/* PROGRESS BAR STYLING */
+ProgressBar {
+    height: 1;
+    margin-top: 1;
+    margin-bottom: 1;
+    width: 100%;
+    color: #ce9178; /* Match your orange accent */
+}
+
+/* Hide the percentage text since we are doing indeterminate pulsing */
+ProgressBar > .progressbar--percentage {
+    display: none;
+}
