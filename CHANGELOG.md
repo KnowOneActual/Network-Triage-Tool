@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.1] - 2025-11-26
+### Added
+-   **Activity Indicators:** Added indeterminate `ProgressBar` widgets to the **Nmap** and **Speed Test** tools. These pulsing orange bars provide visual feedback during long-running background tasks, confirming that the application is active and working.
+
 ## [0.10.0] - 2025-11-26
 ### Added
 -   **Utility Drawer:** Added a new "Utils" tab containing three essential tools:
