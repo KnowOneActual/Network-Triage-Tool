@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.0] - 2025-11-26
+### Added
+-   **Utility Drawer:** Added a new "Utils" tab containing three essential tools:
+    -   **Traceroute:** Visual traceroute with progress logging.
+    -   **DNS Lookup:** Quick domain-to-IP resolution.
+    -   **Port Checker:** Test connectivity to specific host ports.
+-   **Reporting System:**
+    -   **Save Report:** Implemented global `Ctrl+S` hotkey to export all session data (Dashboard, Connection, Speed, Nmap, Notes) to a text file.
+    -   **Notes Tab:** Added a dedicated scratchpad for engineer observations.
+-   **Nmap Polish:**
+    -   **Smart Defaults:** The target field now auto-detects and pre-fills the local subnet.
+    -   **Scan Presets:** Added a dropdown for common scan types (Fast, Intense, Ping).
+    -   **Custom Args:** "Hidden" input field that reveals itself only when "Custom" is selected.
+-   **Quality of Life:**
+    -   **Keyboard Support:** Pressing `Enter` in any input field now triggers the associated action (Scan, Ping, Resolve, etc.).
+    -   **Sub-Navigation:** Implemented internal navigation bars for the Utility tools to keep the interface clean.
+
 ## [0.9.2] - 2025-11-26
 ### Refactored
 -   **Project Structure:** Completely restructured the codebase into a standard Python package layout (`src/network_triage/`). This eliminates import errors and prepares the tool for distribution.

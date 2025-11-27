@@ -23,11 +23,13 @@ Unlike the previous GUI version, this tool runs entirely in the terminal, making
 The application uses **Textual** to provide a modern, mouse-supportive terminal interface that never freezes.
 
 * **🖥️ Live Dashboard:** Real-time monitoring of System Info, Internal/Public IP, and Gateway status.
-* **🚀 Speed Test:** Integrated `speedtest-cli` (with HTTPS/403 fix) running on a background worker to prevent UI lockups.
-* **📡 Continuous Ping:** Non-blocking ping tool that scrolls results live while you navigate other tabs.
-* **⌨️ Keyboard First:** Fully navigable via keyboard shortcuts for rapid triage.
-* **🎨 High-Contrast Theme:** "Safety" color scheme designed for visibility in any terminal environment.
-* **🌐 Nmap Scanner:** Built-in network scanner that visualizes host details (IP, Status, Vendor) in a sortable table.
+* **🌐 Nmap Scanner:** Built-in scanner with preset modes (Fast, Intense), custom argument support, and auto-detection of local subnets.
+* **📝 Reporting:** Integrated "Notes" tab and a **Save Report** feature (`Ctrl+S`) that exports a full diagnostic report to a text file.
+* **🛠️ Utility Drawer:** Handy toolbox containing **Traceroute**, **DNS Lookup**, and **Port Checker**.
+* **🚀 Speed Test:** Integrated `speedtest-cli` running on a background worker to prevent UI lockups.
+* **📡 Continuous Ping:** Non-blocking ping tool that scrolls results live.
+* **🔍 LLDP/CDP:** Packet capture tool to identify connected switches and ports.
+* **⌨️ Keyboard First:** fully navigable via shortcuts, with `Enter` key support for all actions.
 
 ## 🚀 Getting Started
 

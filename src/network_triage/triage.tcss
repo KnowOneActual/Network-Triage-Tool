@@ -81,6 +81,12 @@ InfoBox {
     content-align: center middle;
 }
 
+/* NEW: Visual feedback when hovering over data */
+InfoBox:hover {
+    background: #333333;
+    border: tall #ce9178; /* Orange border on hover */
+}
+
 Label, .label-value, .label-title { color: #ffffff; }
 
 #speed_results {
@@ -200,3 +206,181 @@ DataTable > .datatable--cursor {
     background: #333333;
     color: #ffffff;
 }
+
+/* --- NMAP TOOL --- */
+
+/* 1. The Container Bar */
+.tool_header {
+    height: 3;
+    dock: top;
+    margin-bottom: 1;
+    /* Use layout: horizontal to force left-to-right flow */
+    layout: horizontal; 
+}
+
+/* 2. The Target Input (Flexible width) */
+#nmap_input {
+    width: 2fr; /* Takes up 2 shares of available space */
+    margin-right: 1;
+    background: #3c3c3c;
+    border: tall #007acc; 
+    color: #ffffff;
+}
+
+/* 3. The Dropdown (Fixed width, Styled to look clickable) */
+#nmap_select {
+    width: 24;      /* Fixed width */
+    margin-right: 1;
+    border: tall #007acc;
+    background: #333333;
+    color: #ffffff;
+}
+
+/* Style the internal parts of the dropdown to fix the "Black Box" look */
+Select > SelectCurrent {
+    border: none;
+    background: #333333;
+    color: #ffffff;
+}
+
+Select > SelectOverlay {
+    border: tall #007acc;
+    background: #1e1e1e;
+    color: #ffffff;
+}
+
+/* 4. The Custom Args Input (Only appears when needed) */
+#nmap_custom_args {
+    width: 1fr; /* Takes up 1 share of space */
+    margin-right: 1;
+    background: #3c3c3c;
+    border: tall #ce9178; /* Orange border to show it's special */
+    color: #ffffff;
+}
+
+/* 5. The Start Button */
+#btn_nmap_start {
+    min-width: 15;
+}
+
+/* 6. The Results Table */
+#nmap_table {
+    height: 1fr;
+    border: solid #007acc;
+    background: #000000;
+    margin-top: 1;
+}
+
+DataTable > .datatable--header {
+    background: #007acc;
+    color: #ffffff;
+    text-style: bold;
+}
+
+DataTable > .datatable--cursor {
+    background: #333333;
+    color: #ffffff;
+}
+
+/* UTILITY */
+.hidden {
+    display: none;
+}
+
+/* --- NOTES TOOL --- */
+NotesTool {
+    padding: 1;
+}
+
+#notes_area {
+    width: 100%;
+    height: 1fr;
+    border: tall #007acc;
+    background: #1e1e1e;
+    color: #ffffff;
+}
+
+#notes_header {
+    height: auto;
+    dock: top;
+    margin-bottom: 1;
+    color: #ce9178;
+    text-style: italic;
+}
+
+
+/* --- UTILITY TOOL --- */
+/* The Sub-Navigation Bar inside Utilities */
+#util_nav {
+    height: 3;
+    dock: top;
+    background: #1e1e1e;
+    border-bottom: solid #007acc;
+    align: center middle;
+}
+
+.util_btn {
+    height: 1;
+    background: #333333;
+    color: #888888;
+    border: none;
+    margin: 1 1;
+    min-width: 12;
+}
+
+.util_btn.-active {
+    background: #ce9178; /* Orange to distinguish from main nav */
+    color: #000000;
+    text-style: bold;
+}
+
+/* Tool Layouts */
+.util_container {
+    padding: 1;
+    layout: vertical;
+}
+
+#trace_log {
+    height: 1fr;
+    border: solid #ce9178;
+    background: #000000;
+    color: #ce9178;
+    margin-top: 1;
+}
+
+.result_box {
+    margin-top: 1;
+    border: tall #ce9178;
+    padding: 1;
+    background: #1e1e1e;
+    text-align: center;
+}
+
+/* Port Checker Grid */
+#port_form {
+    layout: horizontal;
+    height: 3;
+}
+
+#trace_input {
+    width: 1fr;
+    margin-right: 1;
+    background: #3c3c3c;
+    border: tall #ce9178;
+    color: #ffffff;
+}
+
+#dns_input {
+    width: 1fr;
+    margin-right: 1;
+    background: #3c3c3c;
+    border: tall #ce9178;
+    color: #ffffff;
+}
+
+#btn_trace, #btn_dns {
+    min-width: 15;
+}
+
+#port_host { width: 3fr; margin-right: 1; }
+#port_num { width: 1fr; margin-right: 1; }
