@@ -4,12 +4,17 @@ This test suite verifies that the application gracefully handles common
 error conditions and provides useful error messages to users.
 """
 
+import sys
 import pytest
 import subprocess
 from unittest.mock import Mock, patch, MagicMock
+from pathlib import Path
+
+# Add src to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 # Test exception handling
-from src.network_triage.exceptions import (
+from network_triage.exceptions import (
     NetworkTriageException,
     NetworkCommandError,
     NetworkTimeoutError,
@@ -20,7 +25,7 @@ from src.network_triage.exceptions import (
 )
 
 # Test utility functions
-from src.network_triage.utils import (
+from network_triage.utils import (
     retry,
     safe_subprocess_run,
     safe_socket_operation,
@@ -227,12 +232,12 @@ class TestFormatErrorMessage:
 class TestMacOSToolkit:
     """Test macOS-specific toolkit error handling."""
     
-    @patch('src.network_triage.utils.safe_subprocess_run')
+    @patch('network_triage.utils.safe_subprocess_run')
     def test_get_system_info_with_error(self, mock_subprocess):
         """Test get_system_info handles errors gracefully."""
         mock_subprocess.side_effect = CommandNotFoundError("sw_vers not found")
         
-        from src.network_triage.macos.network_toolkit import NetworkTriageToolkit
+        from network_triage.macos.network_toolkit import NetworkTriageToolkit
         toolkit = NetworkTriageToolkit()
         result = toolkit.get_system_info()
         
@@ -241,12 +246,12 @@ class TestMacOSToolkit:
         assert "Hostname" in result
         assert result["OS"] != "N/A"  # Should have Darwin version fallback
     
-    @patch('src.network_triage.utils.safe_http_request')
+    @patch('network_triage.utils.safe_http_request')
     def test_get_ip_info_handles_network_failure(self, mock_request):
         """Test get_ip_info handles network failures."""
         mock_request.side_effect = NetworkConnectivityError("No internet")
         
-        from src.network_triage.macos.network_toolkit import NetworkTriageToolkit
+        from network_triage.macos.network_toolkit import NetworkTriageToolkit
         toolkit = NetworkTriageToolkit()
         result = toolkit.get_ip_info()
         
