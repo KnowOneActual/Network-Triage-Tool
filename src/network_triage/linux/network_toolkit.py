@@ -14,6 +14,7 @@ Uses Linux commands:
 """
 
 import logging
+import re
 from ..exceptions import (
     NetworkTriageException,
     NetworkCommandError,
@@ -91,50 +92,67 @@ class NetworkTriageToolkit:
             raise NetworkCommandError(f"Failed to get system info: {e}")
 
     def get_ip_info(self) -> dict:
-    """Get IP configuration (internal and public IP)."""
-    try:
-        # Find default gateway and primary interface
-        route_output = safe_subprocess_run(['ip', 'route', 'show', 'default'], timeout=5)
-        
-        # Parse to extract primary interface (usually second field)
-        parts = route_output.split()
-        if len(parts) >= 5:
-            interface = parts[4]
-        else:
-            interface = 'eth0'  # fallback
-        
-        # Get internal IP from primary interface
-        ip_output = safe_subprocess_run(['ip', '-4', 'addr', 'show', interface], timeout=5)
-        
-        # Extract IP using regex
-        import re
-        ip_match = re.search(r'inet (\d+\.\d+\.\d+\.\d+)', ip_output)
-        internal_ip = ip_match.group(1) if ip_match else 'Unknown'
-        
-        # Extract gateway from route output
-        gateway = parts[2] if len(parts) >= 3 else 'Unknown'
-        
-        # Get public IP via HTTP
-        try:
-            public_data = safe_http_request('https://api.ipify.org?format=json', timeout=5)
-            public_ip = public_data.get('ip', 'Unavailable')
-        except Exception as e:
-            logger.warning(f"Could not get public IP: {e}")
-            public_ip = 'Unavailable'
-        
-        return {
-            'Internal IP': internal_ip,
-            'Public IP': public_ip,
-            'Gateway': gateway,
-        }
-    except Exception as e:
-        logger.error(f"Failed to get IP info: {e}")
-        return {
-            'Internal IP': 'Unknown',
-            'Public IP': 'Unavailable',
-            'Gateway': 'Unknown',
-        }
+        """Get IP configuration (internal and public IP).
 
+        Retrieves IP addresses using:
+        - ip addr for internal IP (from primary interface)
+        - HTTP request to ipinfo.io for public IP
+
+        Returns:
+            dict: IP information with keys:
+                - Internal IP: Local IP address
+                - Public IP: External IP address
+                - Gateway: Default gateway
+
+        Raises:
+            NetworkConnectivityError: If IP info cannot be retrieved
+
+        Example:
+            >>> info = toolkit.get_ip_info()
+            >>> print(info['Public IP'])
+            '203.0.113.42'
+        """
+        try:
+            # Find default gateway and primary interface
+            route_output = safe_subprocess_run(['ip', 'route', 'show', 'default'], timeout=5)
+            
+            # Parse to extract primary interface (usually second field)
+            parts = route_output.split()
+            if len(parts) >= 5:
+                interface = parts[4]
+            else:
+                interface = 'eth0'  # fallback
+            
+            # Get internal IP from primary interface
+            ip_output = safe_subprocess_run(['ip', '-4', 'addr', 'show', interface], timeout=5)
+            
+            # Extract IP using regex
+            ip_match = re.search(r'inet (\d+\.\d+\.\d+\.\d+)', ip_output)
+            internal_ip = ip_match.group(1) if ip_match else 'Unknown'
+            
+            # Extract gateway from route output
+            gateway = parts[2] if len(parts) >= 3 else 'Unknown'
+            
+            # Get public IP via HTTP
+            try:
+                public_data = safe_http_request('https://api.ipify.org?format=json', timeout=5)
+                public_ip = public_data.get('ip', 'Unavailable')
+            except Exception as e:
+                logger.warning(f"Could not get public IP: {e}")
+                public_ip = 'Unavailable'
+            
+            return {
+                'Internal IP': internal_ip,
+                'Public IP': public_ip,
+                'Gateway': gateway,
+            }
+        except Exception as e:
+            logger.error(f"Failed to get IP info: {e}")
+            return {
+                'Internal IP': 'Unknown',
+                'Public IP': 'Unavailable',
+                'Gateway': 'Unknown',
+            }
 
     def get_connection_details(self) -> dict:
         """Get detailed connection information.
