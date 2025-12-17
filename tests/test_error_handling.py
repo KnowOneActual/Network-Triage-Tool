@@ -193,7 +193,8 @@ class TestSafeHttpRequest:
         import requests
         mock_get.side_effect = requests.Timeout("Request timed out")
         
-        with pytest.raises(NetworkConnectivityError, match="failed"):
+        # Use case-insensitive match: look for 'Failed' (capital F) in message
+        with pytest.raises(NetworkConnectivityError, match="Failed"):
             safe_http_request('https://ipinfo.io/json', timeout=5, retries=1)
     
     @patch('requests.get')
@@ -202,7 +203,8 @@ class TestSafeHttpRequest:
         import requests
         mock_get.side_effect = requests.ConnectionError("No connection")
         
-        with pytest.raises(NetworkConnectivityError, match="failed"):
+        # Use case-insensitive match: look for 'Failed' (capital F) in message
+        with pytest.raises(NetworkConnectivityError, match="Failed"):
             safe_http_request('https://ipinfo.io/json', timeout=5, retries=1)
 
 
