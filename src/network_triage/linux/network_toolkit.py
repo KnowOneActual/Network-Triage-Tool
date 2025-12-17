@@ -264,4 +264,4 @@ class NetworkTriageToolkit:
 # - parse_iwconfig_output(): Parse 'iwconfig' command output
 # - parse_lsb_release(): Parse 'lsb_release' command output
 # - get_primary_interface(): Find primary network interface
-# - is_wireless_interface(): Check if interface is wireless
+# - is_wireless_interface(): Check if interface is wireless 1
