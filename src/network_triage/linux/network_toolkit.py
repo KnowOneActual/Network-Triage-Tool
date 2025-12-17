@@ -64,37 +64,31 @@ class NetworkTriageToolkit:
             >>> print(info['OS'])
             'Ubuntu 22.04.1 LTS'
         """
-        # TODO: Implement using:
-        # - lsb_release -ds for distro
-        # - lsb_release -rs for version
-        # - hostname for hostname
-        # - uname -r for kernel
-        # - uname -m for architecture
-      try:                    ← ADD THIS (replace the 'pass' line)
-        # Get distro info
-        distro = safe_subprocess_run(['lsb_release', '-ds'], timeout=5)
-        kernel = safe_subprocess_run(['uname', '-r'], timeout=5)
-        hostname = safe_subprocess_run(['hostname'], timeout=5)
-        arch = safe_subprocess_run(['uname', '-m'], timeout=5)
-        
-        return {
-            'OS': distro.strip(),
-            'Hostname': hostname.strip(),
-            'Kernel': kernel.strip(),
-            'Arch': arch.strip(),
-        }
-    except CommandNotFoundError as e:
-        logger.warning(f"System info command not found: {e}")
-        # Graceful fallback
-        return {
-            'OS': 'Linux',
-            'Hostname': 'Unknown',
-            'Kernel': 'Unknown',
-            'Arch': 'Unknown',
-        }
-    except Exception as e:
-        logger.error(f"Failed to get system info: {e}")
-        raise NetworkCommandError(f"Failed to get system info: {e}")
+        try:
+            # Get distro info
+            distro = safe_subprocess_run(['lsb_release', '-ds'], timeout=5)
+            kernel = safe_subprocess_run(['uname', '-r'], timeout=5)
+            hostname = safe_subprocess_run(['hostname'], timeout=5)
+            arch = safe_subprocess_run(['uname', '-m'], timeout=5)
+            
+            return {
+                'OS': distro.strip(),
+                'Hostname': hostname.strip(),
+                'Kernel': kernel.strip(),
+                'Arch': arch.strip(),
+            }
+        except CommandNotFoundError as e:
+            logger.warning(f"System info command not found: {e}")
+            # Graceful fallback
+            return {
+                'OS': 'Linux',
+                'Hostname': 'Unknown',
+                'Kernel': 'Unknown',
+                'Arch': 'Unknown',
+            }
+        except Exception as e:
+            logger.error(f"Failed to get system info: {e}")
+            raise NetworkCommandError(f"Failed to get system info: {e}")
 
     def get_ip_info(self) -> dict:
         """Get IP configuration (internal and public IP).
