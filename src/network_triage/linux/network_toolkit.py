@@ -1,4 +1,4 @@
-"""Linux network toolkit - Phase 2 implementation.
+"""Linux network toolkit - Phase 2 implementation..
 
 Provides Linux-specific implementations of network diagnostics
 using the same interface as the macOS toolkit for cross-platform
