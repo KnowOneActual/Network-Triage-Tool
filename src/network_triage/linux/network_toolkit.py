@@ -403,11 +403,80 @@ class NetworkTriageToolkit:
             >>> print(f"Hops: {len(result['Hops'])}")
             'Hops: 12'
         """
-        # TODO: Implement using:
-        # - traceroute command
-        # - Parse output for hops
-        # - Extract IP, hostname, and latency
-        pass
+        try:
+            # Run traceroute command with timeout
+            traceroute_output = safe_subprocess_run(['traceroute', '-m', '30', destination], timeout=30)
+            
+            hops = []
+            lines = traceroute_output.split('\n')
+            
+            # Parse traceroute output
+            # Format: " 1  gateway (192.168.1.1)  2.345 ms  2.312 ms  2.456 ms"
+            for line in lines:
+                line = line.strip()
+                if not line or line.startswith('traceroute'):
+                    continue
+                
+                # Try to parse hop line
+                # Look for lines that start with a number (hop count)
+                parts = line.split()
+                if parts and parts[0].isdigit():
+                    hop_num = int(parts[0])
+                    
+                    # Initialize hop info
+                    hop_info = {'Hop': hop_num}
+                    
+                    # Extract IP address and hostname
+                    # Format: "192.168.1.1 (gateway.local)" or just "*" if no response
+                    if '*' in line:
+                        hop_info['Status'] = 'No response'
+                    else:
+                        # Try to extract hostname and IP
+                        hostname_ip_match = re.search(r'([\w\-\.]+)\s+\(([\d\.]+)\)', line)
+                        if hostname_ip_match:
+                            hop_info['Hostname'] = hostname_ip_match.group(1)
+                            hop_info['IP'] = hostname_ip_match.group(2)
+                        else:
+                            # Just IP
+                            ip_match = re.search(r'(\d+\.\d+\.\d+\.\d+)', line)
+                            if ip_match:
+                                hop_info['IP'] = ip_match.group(1)
+                        
+                        # Extract latencies (in ms)
+                        latencies = re.findall(r'([\d\.]+)\s+ms', line)
+                        if latencies:
+                            hop_info['Latencies'] = [float(lat) for lat in latencies]
+                            hop_info['Avg Latency'] = sum(hop_info['Latencies']) / len(hop_info['Latencies'])
+                        else:
+                            hop_info['Status'] = 'Unknown response format'
+                    
+                    hops.append(hop_info)
+            
+            return {
+                'Destination': destination,
+                'Hops': hops,
+                'Success': len(hops) > 0,
+                'Message': f'Traceroute completed with {len(hops)} hops',
+            }
+        except CommandNotFoundError:
+            logger.error("traceroute command not found")
+            raise NetworkCommandError("traceroute command not installed. Please install traceroute package.")
+        except NetworkTimeoutError:
+            logger.warning(f"Traceroute to {destination} timed out")
+            return {
+                'Destination': destination,
+                'Hops': [],
+                'Success': False,
+                'Message': f'Traceroute to {destination} timed out',
+            }
+        except Exception as e:
+            logger.error(f"Failed to run traceroute: {e}")
+            return {
+                'Destination': destination,
+                'Hops': [],
+                'Success': False,
+                'Message': f'Traceroute failed: {e}',
+            }
 
 
 # TODO: Helper functions for Linux-specific parsing
