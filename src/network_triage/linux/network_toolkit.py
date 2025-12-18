@@ -184,13 +184,97 @@ class NetworkTriageToolkit:
             >>> print(details['Interface'])
             'eth0'
         """
-        # TODO: Implement using:
-        # - ip link show for MAC and MTU
-        # - ip addr show for IP addresses
-        # - ethtool for speed
-        # - ip route for gateway
-        # - iwconfig for wireless info (if applicable)
-        pass
+        try:
+            # Get primary interface
+            route_output = safe_subprocess_run(['ip', 'route', 'show', 'default'], timeout=5)
+            parts = route_output.split()
+            interface = parts[4] if len(parts) >= 5 else 'eth0'
+            
+            # Get IP and netmask
+            addr_output = safe_subprocess_run(['ip', '-4', 'addr', 'show', interface], timeout=5)
+            ip_match = re.search(r'inet (\d+\.\d+\.\d+\.\d+)/(\d+)', addr_output)
+            ip_addr = ip_match.group(1) if ip_match else 'Unknown'
+            netmask_bits = ip_match.group(2) if ip_match else '24'
+            
+            # Convert netmask bits to dotted notation
+            def bits_to_netmask(bits):
+                try:
+                    bits = int(bits)
+                    mask = (0xffffffff >> (32 - bits)) << (32 - bits)
+                    return '.'.join([str((mask >> (i << 3)) & 0xff) for i in range(4)[::-1]])
+                except:
+                    return '255.255.255.0'
+            
+            netmask = bits_to_netmask(netmask_bits)
+            
+            # Get MAC address and MTU
+            link_output = safe_subprocess_run(['ip', 'link', 'show', interface], timeout=5)
+            mac_match = re.search(r'link/ether ([0-9a-f:]+)', link_output)
+            mac_addr = mac_match.group(1) if mac_match else 'Unknown'
+            
+            mtu_match = re.search(r'mtu (\d+)', link_output)
+            mtu = mtu_match.group(1) if mtu_match else 'Unknown'
+            
+            # Get gateway
+            gateway = parts[2] if len(parts) >= 3 else 'Unknown'
+            
+            # Get speed using ethtool
+            try:
+                ethtool_output = safe_subprocess_run(['ethtool', interface], timeout=5)
+                speed_match = re.search(r'Speed: (\d+Mb/s)', ethtool_output)
+                speed = speed_match.group(1) if speed_match else 'Unknown'
+            except CommandNotFoundError:
+                speed = 'Unknown (ethtool not installed)'
+            except Exception as e:
+                logger.warning(f"Could not get speed: {e}")
+                speed = 'Unknown'
+            
+            # Check if wireless and get WiFi details
+            wifi_details = {}
+            try:
+                iwconfig_output = safe_subprocess_run(['iwconfig', interface], timeout=5)
+                # Check if it's a wireless interface (iwconfig succeeds and doesn't show "no wireless")
+                if 'no wireless extensions' not in iwconfig_output.lower():
+                    # Extract SSID
+                    ssid_match = re.search(r'ESSID:"([^"]+)"', iwconfig_output)
+                    if ssid_match:
+                        wifi_details['SSID'] = ssid_match.group(1)
+                    
+                    # Extract signal strength
+                    signal_match = re.search(r'Signal level[=:]([^\s]+)', iwconfig_output)
+                    if signal_match:
+                        wifi_details['Signal Strength'] = signal_match.group(1)
+            except CommandNotFoundError:
+                pass  # iwconfig not installed, skip wireless info
+            except Exception as e:
+                logger.debug(f"Could not get WiFi details: {e}")
+            
+            result = {
+                'Interface': interface,
+                'IP Address': ip_addr,
+                'Netmask': netmask,
+                'MAC Address': mac_addr,
+                'Speed': speed,
+                'MTU': mtu,
+                'Gateway': gateway,
+            }
+            
+            # Add WiFi details if available
+            if wifi_details:
+                result.update(wifi_details)
+            
+            return result
+        except Exception as e:
+            logger.error(f"Failed to get connection details: {e}")
+            return {
+                'Interface': 'Unknown',
+                'IP Address': 'Unknown',
+                'MAC Address': 'Unknown',
+                'Netmask': 'Unknown',
+                'Speed': 'Unknown',
+                'MTU': 'Unknown',
+                'Gateway': 'Unknown',
+            }
 
     def network_adapter_info(self) -> dict:
         """Get network adapter information.
@@ -264,4 +348,4 @@ class NetworkTriageToolkit:
 # - parse_iwconfig_output(): Parse 'iwconfig' command output
 # - parse_lsb_release(): Parse 'lsb_release' command output
 # - get_primary_interface(): Find primary network interface
-# - is_wireless_interface(): Check if interface is wireless 1
+# - is_wireless_interface(): Check if interface is wireless
