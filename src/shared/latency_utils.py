@@ -141,7 +141,10 @@ def ping_statistics(
         # Parse ping output for RTT values
         rtt_values = _parse_ping_output(stdout, system)
 
+        # If no RTT values but ping succeeded, calculate packet loss and return
         if not rtt_values:
+            result.packets_received = 0
+            result.packet_loss_percent = ((count - 0) / count) * 100  # 100% loss
             result.status = LatencyStatus.UNREACHABLE
             result.error_message = "No response from host"
             return result
@@ -186,10 +189,10 @@ def _parse_ping_output(output: str, system: str) -> List[float]:
 
     if system == 'Windows':
         # Windows format: "time=15ms"
-        pattern = r'time=([\d.]+)ms'
+        pattern = r'time=([\.\d]+)ms'
     else:
         # Linux/macOS format: "time=15.123 ms"
-        pattern = r'time=([\d.]+)\s*ms'
+        pattern = r'time=([\.\d]+)\s*ms'
 
     matches = re.findall(pattern, output)
     rtt_values = [float(m) for m in matches]
