@@ -1,4 +1,4 @@
-"""Linux network toolkit - Phase 2 implementation..
+"""Linux network toolkit - Phase 2 implementation.
 
 Provides Linux-specific implementations of network diagnostics
 using the same interface as the macOS toolkit for cross-platform
@@ -241,7 +241,7 @@ class NetworkTriageToolkit:
                         wifi_details['SSID'] = ssid_match.group(1)
                     
                     # Extract signal strength
-                    signal_match = re.search(r'Signal level[=:]([^\s]+)', iwconfig_output)
+                    signal_match = re.search(r'Signal level[=:](^\s]+)', iwconfig_output)
                     if signal_match:
                         wifi_details['Signal Strength'] = signal_match.group(1)
             except CommandNotFoundError:
@@ -301,11 +301,79 @@ class NetworkTriageToolkit:
             >>> print(adapters['eth0']['Status'])
             'up'
         """
-        # TODO: Implement using:
-        # - ip link show for all interfaces
-        # - ip addr show for addresses per interface
-        # - ethtool for detailed info
-        pass
+        try:
+            adapters = {}
+            
+            # Get all interfaces using 'ip link show'
+            link_output = safe_subprocess_run(['ip', 'link', 'show'], timeout=5)
+            
+            # Parse each interface line (format: "<number>: <name>: <flags>...")
+            for line in link_output.split('\n'):
+                # Look for interface lines (start with digit)
+                if line and line[0].isdigit():
+                    # Extract interface name and status
+                    match = re.match(r'\d+: ([^:]+):', line)
+                    if match:
+                        iface_name = match.group(1)
+                        
+                        # Determine if interface is up or down
+                        status = 'up' if 'UP' in line else 'down'
+                        
+                        # Determine interface type
+                        iface_type = 'unknown'
+                        if 'loopback' in line.lower():
+                            iface_type = 'loopback'
+                        elif 'link/ether' in line.lower():
+                            iface_type = 'ethernet'
+                        
+                        # Get MAC address and MTU for this interface
+                        try:
+                            iface_link_output = safe_subprocess_run(['ip', 'link', 'show', iface_name], timeout=5)
+                            mac_match = re.search(r'link/ether ([0-9a-f:]+)', iface_link_output)
+                            mac = mac_match.group(1) if mac_match else 'N/A'
+                            
+                            mtu_match = re.search(r'mtu (\d+)', iface_link_output)
+                            mtu = mtu_match.group(1) if mtu_match else 'Unknown'
+                        except Exception as e:
+                            logger.debug(f"Could not get details for {iface_name}: {e}")
+                            mac = 'N/A'
+                            mtu = 'Unknown'
+                        
+                        # Get IP address for this interface
+                        ip_addr = None
+                        try:
+                            addr_output = safe_subprocess_run(['ip', '-4', 'addr', 'show', iface_name], timeout=5)
+                            ip_match = re.search(r'inet (\d+\.\d+\.\d+\.\d+)', addr_output)
+                            if ip_match:
+                                ip_addr = ip_match.group(1)
+                        except Exception as e:
+                            logger.debug(f"Could not get IP for {iface_name}: {e}")
+                        
+                        # Check if wireless
+                        try:
+                            iwconfig_output = safe_subprocess_run(['iwconfig', iface_name], timeout=5)
+                            if 'no wireless extensions' not in iwconfig_output.lower():
+                                iface_type = 'wireless'
+                        except CommandNotFoundError:
+                            pass  # iwconfig not available
+                        except Exception:
+                            pass  # Interface not wireless
+                        
+                        # Store adapter info
+                        adapters[iface_name] = {
+                            'Status': status,
+                            'Type': iface_type,
+                            'MAC': mac,
+                            'MTU': mtu,
+                        }
+                        
+                        if ip_addr:
+                            adapters[iface_name]['IP'] = ip_addr
+            
+            return adapters if adapters else {'error': 'No interfaces found'}
+        except Exception as e:
+            logger.error(f"Failed to get network adapter info: {e}")
+            return {'error': f'Failed to get adapter info: {e}'}
 
     def traceroute_test(self, destination: str = "8.8.8.8") -> dict:
         """Perform a traceroute test to a destination.
