@@ -151,24 +151,25 @@ class TestPortUtils(unittest.TestCase):
         self.assertEqual(result.service_name, 'SSH')
         self.assertGreaterEqual(result.response_time_ms, 0)
 
-    @patch('shared.port_utils.socket')
-    def test_check_port_closed(self, mock_socket):
+    @patch('shared.port_utils.socket.socket')
+    def test_check_port_closed(self, mock_socket_class):
         """Test port check - port is closed."""
         mock_sock_instance = MagicMock()
-        mock_socket.socket.return_value = mock_sock_instance
+        mock_socket_class.return_value = mock_sock_instance
         mock_sock_instance.connect.side_effect = ConnectionRefusedError()
 
         result = check_port_open('localhost', 54321)
 
         self.assertEqual(result.status, PortStatus.CLOSED)
 
-    @patch('shared.port_utils.socket')
-    def test_check_port_timeout(self, mock_socket):
+    @patch('shared.port_utils.socket.socket')
+    def test_check_port_timeout(self, mock_socket_class):
         """Test port check - timeout (filtered port)."""
         mock_sock_instance = MagicMock()
-        mock_socket.socket.return_value = mock_sock_instance
-        mock_sock_instance.connect.side_effect = Exception("Socket timeout")
-        mock_sock_instance.timeout = Exception
+        mock_socket_class.return_value = mock_sock_instance
+        # Use socket.timeout exception for proper timeout handling
+        import socket
+        mock_sock_instance.connect.side_effect = socket.timeout("Connection timeout")
 
         result = check_port_open('10.255.255.1', 22, timeout=1)
 
@@ -291,6 +292,7 @@ PING google.com (142.250.185.46) 56(84) bytes of data.
     @patch('shared.latency_utils.subprocess.Popen')
     def test_ping_statistics_no_response(self, mock_popen):
         """Test ping with no response."""
+        # Ping output with no response - no RTT values extracted
         ping_output = """
 PING invalid.local (127.0.0.1) 56(84) bytes of data.
 
@@ -306,6 +308,10 @@ PING invalid.local (127.0.0.1) 56(84) bytes of data.
             stats = ping_statistics('invalid.local', count=10)
 
         self.assertEqual(stats.status, LatencyStatus.UNREACHABLE)
+        # When no RTT values are received, packet_loss is calculated as (sent - received) / sent * 100
+        self.assertEqual(stats.packets_sent, 10)
+        self.assertEqual(stats.packets_received, 0)
+        # Verify 100% loss calculation
         self.assertEqual(stats.packet_loss_percent, 100)
 
     @patch('shared.latency_utils.subprocess.Popen')
