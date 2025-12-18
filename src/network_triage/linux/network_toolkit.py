@@ -376,48 +376,100 @@ class NetworkTriageToolkit:
             return {'error': f'Failed to get adapter info: {e}'}
 
     def traceroute_test(self, destination: str = "8.8.8.8") -> dict:
-    ...
-    try:
-        traceroute_output = safe_subprocess_run(
-            ['traceroute', '-m', '30', destination],
-            timeout=30,
-        )
-        # parse output, build hops, etc.
-        ...
-        return {
-            'Destination': destination,
-            'Hops': hops,
-            'Success': len(hops) > 0,
-            'Message': f'Traceroute completed with {len(hops)} hops',
-        }
+        """Perform a traceroute test to a destination.
 
-    except CommandNotFoundError:
-        logger.error("traceroute command not found")
-        # CI-friendly graceful fallback:
-        return {
-            'Destination': destination,
-            'Hops': [],
-            'Success': False,
-            'Message': "traceroute command not installed. Please install traceroute package.",
-        }
+        Traces the network path to a destination host, showing each hop
+        and round-trip times.
 
-    except NetworkTimeoutError:
-        logger.warning(f"Traceroute to {destination} timed out")
-        return {
-            'Destination': destination,
-            'Hops': [],
-            'Success': False,
-            'Message': f'Traceroute to {destination} timed out',
-        }
+        Uses command:
+        - traceroute for path tracing
 
-    except Exception as e:
-        logger.error(f"Failed to run traceroute: {e}")
-        return {
-            'Destination': destination,
-            'Hops': [],
-            'Success': False,
-            'Message': f'Traceroute failed: {e}',
-        }
+        Args:
+            destination: Target hostname or IP address (default: 8.8.8.8 Google DNS)
+
+        Returns:
+            dict: Traceroute results with keys:
+                - Destination: Target host
+                - Hops: List of hops with IP, hostname, and latency
+                - Success: Whether traceroute completed
+                - Message: Status or error message
+        """
+        try:
+            traceroute_output = safe_subprocess_run(
+                ["traceroute", "-m", "30", destination],
+                timeout=30,
+            )
+
+            hops: list[dict] = []
+            for line in traceroute_output.split("\n"):
+                line = line.strip()
+                if not line or line.startswith("traceroute"):
+                    continue
+
+                parts = line.split()
+                if not parts or not parts[0].isdigit():
+                    continue
+
+                hop_num = int(parts[0])
+                hop_info: dict = {"Hop": hop_num}
+
+                if "*" in line:
+                    hop_info["Status"] = "No response"
+                else:
+                    hostname_ip_match = re.search(r"([\\w\\-.]+)\\s+\\(([\\d.]+)\\)", line)
+                    if hostname_ip_match:
+                        hop_info["Hostname"] = hostname_ip_match.group(1)
+                        hop_info["IP"] = hostname_ip_match.group(2)
+                    else:
+                        ip_match = re.search(r"(\\d+\\.\\d+\\.\\d+\\.\\d+)", line)
+                        if ip_match:
+                            hop_info["IP"] = ip_match.group(1)
+
+                    latencies = re.findall(r"([\\d.]+)\\s+ms", line)
+                    if latencies:
+                        hop_info["Latencies"] = [float(lat) for lat in latencies]
+                        hop_info["Avg Latency"] = sum(hop_info["Latencies"]) / len(
+                            hop_info["Latencies"]
+                        )
+                    else:
+                        hop_info["Status"] = "Unknown response format"
+
+                hops.append(hop_info)
+
+            return {
+                "Destination": destination,
+                "Hops": hops,
+                "Success": len(hops) > 0,
+                "Message": f"Traceroute completed with {len(hops)} hops",
+            }
+
+        except CommandNotFoundError:
+            logger.error("traceroute command not found")
+            return {
+                "Destination": destination,
+                "Hops": [],
+                "Success": False,
+                "Message": "traceroute command not installed. Please install traceroute package.",
+            }
+
+        except NetworkTimeoutError:
+            logger.warning("Traceroute to %s timed out", destination)
+            return {
+                "Destination": destination,
+                "Hops": [],
+                "Success": False,
+                "Message": f"Traceroute to {destination} timed out",
+            }
+
+        except Exception as exc:  # pragma: no cover - defensive
+            logger.error("Failed to run traceroute: %s", exc)
+            return {
+                "Destination": destination,
+                "Hops": [],
+                "Success": False,
+                "Message": f"Traceroute failed: {exc}",
+            }
+
 
 
 
