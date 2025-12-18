@@ -69,3 +69,22 @@ Finally, we make it installable.
   * **Tasks**:
       * Add a `pyproject.toml`.
       * Define a generic entry point so typing `network-triage` in the terminal launches the TUI.
+      
+      
+## Completed
+
+- Phase 2: Linux Network Toolkit
+  - Implemented:
+    - `get_system_info`
+    - `get_ip_info`
+    - `get_connection_details`
+    - `network_adapter_info`
+    - `traceroute_test` with structured hop parsing and graceful fallback when `traceroute` is missing.
+  - CI: All 56 tests passing on Linux runners.
+
+## Upcoming
+
+- Phase 3: Advanced diagnostics
+  - DNS resolution tests (A/AAAA lookups, reverse DNS).
+  - Port connectivity checks (TCP probe to common services).
+  - Optional packet loss / jitter metrics (e.g., via `ping` or `mtr` where available).      
