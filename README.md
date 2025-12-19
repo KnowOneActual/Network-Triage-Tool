@@ -31,7 +31,7 @@ Unlike the previous GUI version, this tool runs entirely in the terminal, making
 ### Phase 3 Highlights
 
 | Component | Details |
-|-----------|---------|
+|-----------|---------||
 | **DNS Utilities** | `resolve_hostname()`, `validate_dns_server()`, `check_dns_propagation()` |
 | **Port Utilities** | `check_port_open()`, `check_multiple_ports()`, `scan_common_ports()`, `summarize_port_scan()` |
 | **Latency Utilities** | `ping_statistics()` with jitter, `mtr_style_trace()` with per-hop RTT |
@@ -40,7 +40,7 @@ Unlike the previous GUI version, this tool runs entirely in the terminal, making
 | **Code Quality** | 100% type hints, comprehensive error handling, ~94% coverage |
 | **Documentation** | 18KB+ API reference + 14 guide documents |
 
-See [RELEASE-NOTES-PHASE3.md](RELEASE-NOTES-PHASE3.md) for full details.
+See [Release Notes - Phase 3](docs/releases/phase3.md) for full details.
 
 ## ✨ Features
 
@@ -157,7 +157,7 @@ print(f"Average latency: {stats.avg_ms:.2f}ms")
 print(f"Jitter: {stats.stddev_ms:.2f}ms")
 ```
 
-See [PHASE3-QUICK-START.md](PHASE3-QUICK-START.md) for more examples.
+See [Quick Start Guide](docs/getting-started/quick-start.md) for more examples.
 
 ## 🔧 Advanced Diagnostics (Phase 3)
 
