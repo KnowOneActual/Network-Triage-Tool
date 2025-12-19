@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.2] - 2025-12-19
+
+### Added
+- **Documentation Guides:** Created `docs/guides/README.md` index for all technical guides
+- **Documentation Archive:** Created `docs/archive/README.md` to document archived materials
+
+### Changed
+- **API Documentation Location:** Moved `docs/PHASE3_DIAGNOSTICS.md` to `docs/guides/phase3-diagnostics-api.md` for better categorization
+- **Historical Documents Archived:** 
+  - Moved `docs/Postmortem_Pyinstaller.md` to `docs/archive/`
+  - Moved `docs/Postmortem_TUI_Migration.md` to `docs/archive/`
+  - Moved `docs/TODO.md` to `docs/archive/`
+- **Documentation Index Updated:** Fixed 38+ internal links in `docs/README.md` to reflect new file locations
+
+### Removed
+- **Empty File Cleanup:** Deleted empty `docs/index.md` file (0 bytes)
+
+### Improved
+- **Guide Discoverability:** Technical guides now have their own index and are properly categorized
+- **Archive Context:** Archived documents include explanatory README for historical reference
+- **Link Integrity:** All documentation cross-references verified and working
+
+---
+
 ## [0.3.1] - 2025-12-19
 
 ### Changed
@@ -52,6 +76,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Documentation structure follows common open source conventions
 - Improved maintainability and contributor experience
 
+---
 
 ## [0.3.0] - 2025-12-19
 
