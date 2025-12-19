@@ -220,19 +220,12 @@ See [PHASE3-QUICK-START.md](PHASE3-QUICK-START.md) for more examples.
 
 ## 📚 Documentation
 
-### Getting Started
-- **[INSTALLATION-GUIDE.md](INSTALLATION-GUIDE.md)** - Setup and usage
-- **[PHASE3-QUICK-START.md](PHASE3-QUICK-START.md)** - Code examples
-
-### API Reference
-- **[docs/PHASE3_DIAGNOSTICS.md](docs/PHASE3_DIAGNOSTICS.md)** - Complete API reference (18KB+)
-
-### Project Documentation
-- **[RELEASE-NOTES-PHASE3.md](RELEASE-NOTES-PHASE3.md)** - What's new in v0.3.0
-- **[PHASE4-INTEGRATION-ROADMAP.md](PHASE4-INTEGRATION-ROADMAP.md)** - Next phase planning
-- **[CHANGELOG.md](CHANGELOG.md)** - Version history
-- **[ERROR_HANDLING_GUIDE.md](ERROR_HANDLING_GUIDE.md)** - Error handling patterns
-- **[DOCUMENTATION-INDEX.md](DOCUMENTATION-INDEX.md)** - Complete documentation map
+[quick-start.md](docs/getting-started/quick-start.md)
+[installation.md](docs/getting-started/installation.md)
+[phase3.md](docs/releases/phase3.md)
+[phase4-integration.md](docs/planning/phase4-integration.md)
+[README.md](docs/README.md)
+[error-handling.md](docs/guides/error-handling.md)
 
 ## 🤝 Contributing
 
