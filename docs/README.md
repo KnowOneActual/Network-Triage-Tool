@@ -19,7 +19,7 @@ Start here if you're new to the Network Triage Tool:
 1. **[README.md](../README.md)** - Understand what the tool does and its key features
 2. **[Installation Guide](getting-started/installation.md)** - Install on your platform (Windows, macOS, Linux)
 3. **[Phase 3 Quick Start](getting-started/quick-start.md)** - Run your first diagnostics in under 5 minutes
-4. **[Phase 3 Diagnostics API](PHASE3_DIAGNOSTICS.md)** - Explore the full API reference
+4. **[Phase 3 Diagnostics API](guides/phase3-diagnostics-api.md)** - Explore the full API reference
 
 ### Existing Users
 
@@ -54,14 +54,14 @@ Contributing to the project:
 | Document | Description | Audience |
 |----------|-------------|----------|
 | [Phase 3 Quick Start](getting-started/quick-start.md) | Practical examples for DNS, port, and latency utilities | All users |
-| [Phase 3 Diagnostics API](PHASE3_DIAGNOSTICS.md) | Complete API reference with detailed function signatures | Advanced users |
+| [Phase 3 Diagnostics API](guides/phase3-diagnostics-api.md) | Complete API reference with detailed function signatures | Advanced users |
 | [README.md](../README.md) | Feature overview and keyboard shortcuts | All users |
 
 ### API Reference
 
 | Document | Description | Modules Covered |
 |----------|-------------|-----------------||
-| [Phase 3 Diagnostics API](PHASE3_DIAGNOSTICS.md) | Comprehensive API documentation (18KB+) | dns_utils, port_utils, latency_utils |
+| [Phase 3 Diagnostics API](guides/phase3-diagnostics-api.md) | Comprehensive API documentation (18KB+) | dns_utils, port_utils, latency_utils |
 | [Phase 3 Quick Start](getting-started/quick-start.md) | Quick reference with code examples | All Phase 3 modules |
 | Source code docstrings | Inline documentation | All modules |
 
@@ -111,7 +111,7 @@ Contributing to the project:
 
 ### Phase 3: Advanced Diagnostics (Current)
 - **[Phase 3 Quick Start](getting-started/quick-start.md)** - Quick start guide
-- **[Phase 3 Diagnostics API](PHASE3_DIAGNOSTICS.md)** - Complete API reference
+- **[Phase 3 Diagnostics API](guides/phase3-diagnostics-api.md)** - Complete API reference
 - **[Release Notes - Phase 3](releases/phase3.md)** - Release notes and metrics
 - **[Phase 3 Tests](../tests/test_phase3_diagnostics.py)** - Test suite
 - **[Changelog](../CHANGELOG.md)** - v0.3.0 changelog
@@ -224,7 +224,7 @@ When contributing code changes:
 
 1. Update relevant documentation files
 2. Add examples to [Phase 3 Quick Start](getting-started/quick-start.md) if introducing new features
-3. Update API reference in [Phase 3 Diagnostics API](PHASE3_DIAGNOSTICS.md)
+3. Update API reference in [Phase 3 Diagnostics API](guides/phase3-diagnostics-api.md)
 4. Add entry to [Changelog](../CHANGELOG.md)
 5. Update [README.md](../README.md) if user-facing features change
 
