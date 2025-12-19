@@ -5,6 +5,54 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2025-12-19
+
+### Changed
+
+#### Documentation Reorganization
+- **Restructured Documentation Hierarchy:** Reorganized all documentation into a professional, scalable folder structure within `docs/`
+  - Created `docs/getting-started/` for installation and quick start guides
+  - Created `docs/guides/` for technical guides (error handling, diagnostics)
+  - Created `docs/planning/` for roadmap and future planning documents
+  - Created `docs/releases/` for release notes and version history
+  - Moved `DOCUMENTATION-INDEX.md` to `docs/README.md` for better GitHub integration
+
+- **File Relocations:**
+  - `INSTALLATION-GUIDE.md` → `docs/getting-started/installation.md`
+  - `PHASE3-QUICK-START.md` → `docs/getting-started/quick-start.md`
+  - `RELEASE-NOTES-PHASE3.md` → `docs/releases/phase3.md`
+  - `PHASE4-INTEGRATION-ROADMAP.md` → `docs/planning/phase4-integration.md`
+  - `ROADMAP.md` → `docs/planning/roadmap.md`
+  - `ERROR_HANDLING_GUIDE.md` → `docs/guides/error-handling.md`
+  - `DOCUMENTATION-INDEX.md` → `docs/README.md`
+
+- **Archive Legacy Files:** Created `archive/` folder for deprecated files
+  - Moved legacy GUI application (`Network-Triage.app/`)
+  - Archived `PHASE3_PR_SUMMARY.md`, `warp.md`, `__init__.py`, `start.command`
+
+- **Updated All Documentation Links:** 
+  - Updated all references in main `README.md` to point to new documentation locations
+  - Added descriptive link text for better navigation
+  - Organized documentation section with clear categories (Getting Started, API Reference, Project Documentation)
+
+### Improved
+- **Root Directory Cleanup:** Reduced root directory from 18 files to 8 essential files
+  - Cleaner first impression for new users and contributors
+  - Easier to navigate and find important files
+  - Professional appearance following open source best practices
+
+- **Better Documentation Discoverability:**
+  - `docs/README.md` now serves as documentation index (auto-displayed by GitHub)
+  - Logical grouping by purpose (getting-started, guides, planning, releases)
+  - Scalable structure supports future documentation growth
+
+### Technical Details
+- All file moves preserved git history using `git mv`
+- No breaking changes - all links updated and verified
+- Documentation structure follows common open source conventions
+- Improved maintainability and contributor experience
+
+
 ## [0.3.0] - 2025-12-19
 
 ### Added
