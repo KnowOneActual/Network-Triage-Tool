@@ -18,6 +18,8 @@ All widgets follow these patterns:
 
 from .base import BaseWidget, AsyncOperationMixin
 from .components import ResultsWidget, ProgressWidget, StatusIndicator
+from .dns_resolver_widget import DNSResolverWidget
+from .port_scanner_widget import PortScannerWidget
 
 __all__ = [
     "BaseWidget",
@@ -25,4 +27,6 @@ __all__ = [
     "ResultsWidget",
     "ProgressWidget",
     "StatusIndicator",
+    "DNSResolverWidget",
+    "PortScannerWidget",
 ]
