@@ -92,7 +92,7 @@ The application uses **Textual** to provide a modern, mouse-supportive terminal 
 
 ### Running the Tool
 
-Simply type the command anywhere in your terminal:
+Simply type the command in your terminal:
 
 ```bash
 network-triage
