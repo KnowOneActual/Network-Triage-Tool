@@ -5,6 +5,7 @@ from .components import ResultsWidget, ResultColumn
 from textual.app import ComposeResult
 from textual.widgets import Input, Button, Label, Select
 from textual.containers import Horizontal, Vertical
+from src.shared.dns_utils import resolve_hostname as resolve_dns_hostname, DNSStatus
 
 
 class DNSResolverWidget(BaseWidget):
@@ -34,12 +35,9 @@ class DNSResolverWidget(BaseWidget):
                 [
                     ("A Records (IPv4)", "A"),
                     ("AAAA Records (IPv6)", "AAAA"),
-                    ("CNAME", "CNAME"),
-                    ("MX", "MX"),
-                    ("NS", "NS"),
-                    ("TXT", "TXT"),
-                    ("SOA", "SOA"),
-                    ("PTR", "PTR"),
+                    ("Both (A + AAAA)", "BOTH"),
+                    ("Reverse DNS (PTR)", "PTR"),
+                    ("All Records", "ALL"),
                 ],
                 id="query-type-select",
                 value="A"
@@ -49,7 +47,7 @@ class DNSResolverWidget(BaseWidget):
             yield Label("DNS Server (optional):")
             yield Input(
                 id="dns-server-input",
-                placeholder="8.8.8.8 or leave blank for system DNS",
+                placeholder="Leave blank for system DNS",
                 tooltip="Optional: specify custom DNS server"
             )
             
@@ -65,7 +63,7 @@ class DNSResolverWidget(BaseWidget):
         columns = [
             ResultColumn("Type", "type", width=10),
             ResultColumn("Value", "value", width=40),
-            ResultColumn("TTL", "ttl", width=10),
+            ResultColumn("Time (ms)", "time", width=12),
         ]
         self.results_widget = ResultsWidget(columns=columns)
         yield self.results_widget
@@ -76,14 +74,12 @@ class DNSResolverWidget(BaseWidget):
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button presses."""
         if event.button.id == "resolve-btn":
-            # Note: In a real app, you'd make this async
-            # For now, we just validate and show it's ready
             self.resolve_hostname()
         elif event.button.id == "clear-btn":
             self.clear_results()
     
     def resolve_hostname(self) -> None:
-        """Resolve the hostname."""
+        """Resolve the hostname using Phase 3 DNS utilities."""
         try:
             # Get hostname from input
             hostname_input = self.query_one("#hostname-input", Input)
@@ -99,42 +95,98 @@ class DNSResolverWidget(BaseWidget):
             query_type_select = self.query_one("#query-type-select", Select)
             query_type = query_type_select.value or "A"
             
-            # Get optional DNS server
-            dns_server_input = self.query_one("#dns-server-input", Input)
-            dns_server = dns_server_input.value.strip() or None
-            
-            # Show loading state (from BaseWidget!)
-            self.show_loading(f"Resolving {hostname} ({query_type})...")
+            # Show loading state
+            self.show_loading(f"Resolving {hostname}...")
             self.set_status(f"Resolving {hostname}...")
             
-            # TODO: Implement actual DNS resolution
-            # This would be done with await in an async method:
-            #
-            # from src.shared.dns_utils import resolve_hostname as dns_resolve
-            #
-            # async def resolve_async(self):
-            #     result = await self.run_in_thread(
-            #         dns_resolve,
-            #         hostname,
-            #         query_type=query_type,
-            #         dns_server=dns_server
-            #     )
-            #
-            #     if result.success:
-            #         self.results_widget.clear_results()
-            #         for record in result.records:
-            #             self.results_widget.add_row(
-            #                 type=record.type,
-            #                 value=record.value,
-            #                 ttl=record.ttl
-            #             )
-            #         self.display_success(f"Resolved {hostname}")
-            #     else:
-            #         self.display_error(f"Failed to resolve: {result.error}")
+            # Clear previous results
+            self.results_widget.clear_results()
             
-            # For now, just show it's ready
-            self.display_success(f"Ready to resolve {hostname}")
-            self.set_status(f"Ready to resolve {hostname}")
+            # Perform DNS resolution using Phase 3 utility
+            # This is synchronous, so it works in the main thread
+            result = resolve_dns_hostname(
+                hostname,
+                timeout=5,
+                include_reverse_dns=True
+            )
+            
+            # Check if resolution was successful
+            if result.status == DNSStatus.NOT_FOUND:
+                self.display_error(f"Could not resolve {hostname}")
+                self.set_status(f"Failed to resolve {hostname}")
+                return
+            
+            if result.status == DNSStatus.TIMEOUT:
+                self.display_error(f"DNS resolution timeout")
+                self.set_status("Timeout - no response from DNS server")
+                return
+            
+            if result.status == DNSStatus.ERROR:
+                self.display_error(f"Error: {result.error_message}")
+                self.set_status(f"Error: {result.error_message}")
+                return
+            
+            # Display results based on query type
+            record_count = 0
+            
+            # Add A records (IPv4)
+            if query_type in ["A", "BOTH", "ALL"]:
+                if result.ipv4_addresses:
+                    for ip in result.ipv4_addresses:
+                        # Find the record with this IP to get timing
+                        record = next(
+                            (r for r in result.records if r.value == ip and r.record_type == "A"),
+                            None
+                        )
+                        self.results_widget.add_row(
+                            type="A",
+                            value=ip,
+                            time=f"{record.query_time_ms:.2f}" if record else "N/A"
+                        )
+                        record_count += 1
+            
+            # Add AAAA records (IPv6)
+            if query_type in ["AAAA", "BOTH", "ALL"]:
+                if result.ipv6_addresses:
+                    for ip in result.ipv6_addresses:
+                        # Find the record with this IP to get timing
+                        record = next(
+                            (r for r in result.records if r.value == ip and r.record_type == "AAAA"),
+                            None
+                        )
+                        self.results_widget.add_row(
+                            type="AAAA",
+                            value=ip,
+                            time=f"{record.query_time_ms:.2f}" if record else "N/A"
+                        )
+                        record_count += 1
+            
+            # Add PTR record (Reverse DNS)
+            if query_type in ["PTR", "ALL"]:
+                if result.reverse_dns:
+                    record = next(
+                        (r for r in result.records if r.record_type == "PTR"),
+                        None
+                    )
+                    self.results_widget.add_row(
+                        type="PTR",
+                        value=result.reverse_dns,
+                        time=f"{record.query_time_ms:.2f}" if record else "N/A"
+                    )
+                    record_count += 1
+            
+            # Show success message
+            if record_count > 0:
+                self.display_success(
+                    f"Resolved {hostname} - Found {record_count} record(s) "
+                    f"in {result.lookup_time_ms:.2f}ms"
+                )
+                self.set_status(
+                    f"✓ Resolved {hostname} - {record_count} records found"
+                )
+            else:
+                self.display_error(f"No records found for {hostname}")
+                self.set_status(f"No records found for {hostname}")
         
         except Exception as e:
             self.display_error(f"Error: {str(e)}")
