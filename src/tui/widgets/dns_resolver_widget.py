@@ -5,7 +5,13 @@ from .components import ResultsWidget, ResultColumn
 from textual.app import ComposeResult
 from textual.widgets import Input, Button, Label, Select
 from textual.containers import Horizontal, Vertical
-from src.shared.dns_utils import resolve_hostname as resolve_dns_hostname, DNSStatus
+
+# Import DNS utilities - use relative import from shared module
+try:
+    from ..shared.dns_utils import resolve_hostname as resolve_dns_hostname, DNSStatus
+except ImportError:
+    # Fallback for different import contexts
+    from shared.dns_utils import resolve_hostname as resolve_dns_hostname, DNSStatus
 
 
 class DNSResolverWidget(BaseWidget):
