@@ -19,24 +19,20 @@ from textual.app import ComposeResult
 from textual.widgets import Static
 
 # Import widgets to test
-sys_path_setup = pytest.fixture(scope="session", autouse=True)
-try:
-    from src.tui.widgets.base import (
-        BaseWidget,
-        AsyncOperationMixin,
-        OperationResult,
-        WidgetTemplate,
-    )
-    from src.tui.widgets.components import (
-        ResultsWidget,
-        ResultColumn,
-        ProgressWidget,
-        StatusIndicator,
-        ErrorDisplay,
-        SummaryWidget,
-    )
-except ImportError:
-    pytest.skip("TUI widgets not available", allow_module_level=True)
+from src.tui.widgets.base import (
+    BaseWidget,
+    AsyncOperationMixin,
+    OperationResult,
+    WidgetTemplate,
+)
+from src.tui.widgets.components import (
+    ResultsWidget,
+    ResultColumn,
+    ProgressWidget,
+    StatusIndicator,
+    ErrorDisplay,
+    SummaryWidget,
+)
 
 
 class TestOperationResult:
