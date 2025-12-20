@@ -181,7 +181,7 @@ class TestDNSResolution:
     
     def test_dns_status_enum_available(self):
         """Test that DNSStatus enum from Phase 3 is available."""
-        from src.shared.dns_utils import DNSStatus
+        from shared.dns_utils import DNSStatus
         
         # Check that the enum has the expected values
         assert hasattr(DNSStatus, 'SUCCESS')
@@ -191,7 +191,7 @@ class TestDNSResolution:
     
     def test_dns_record_structure(self):
         """Test that DNSRecord dataclass has expected fields."""
-        from src.shared.dns_utils import DNSRecord, DNSStatus
+        from shared.dns_utils import DNSRecord, DNSStatus
         
         # Create a test record
         record = DNSRecord(
@@ -209,7 +209,7 @@ class TestDNSResolution:
     
     def test_dns_lookup_result_structure(self):
         """Test that DNSLookupResult dataclass has expected fields."""
-        from src.shared.dns_utils import DNSLookupResult, DNSStatus
+        from shared.dns_utils import DNSLookupResult, DNSStatus
         
         # Create a test result
         result = DNSLookupResult(
