@@ -138,38 +138,77 @@ Build a comprehensive, professional-grade Network Triage Tool with:
 - [x] Integration tests (3 tests)
 - [x] DNS resolution tests (6 tests)
 
-**Status:** COMPLETE - Production ready, ready to merge
+**Status:** COMPLETE - Production ready, merged to main
 
-**Total Phase 4 Progress:**
+### Phase 4.3: Port Scanner Widget ✅ COMPLETE
+
+**Implementation:**
+- [x] Complete Textual widget class (348 lines)
+- [x] Proper BaseWidget inheritance
+- [x] Host input field with validation
+- [x] 4-mode scan type selector (Common, Single, Multiple, Range)
+- [x] Port input field with intelligent parsing
+- [x] Configurable timeout (1-30 seconds)
+- [x] Scan and Clear buttons with proper event handling
+- [x] Results table (Port, Service, Status, Time columns)
+- [x] Color-coded status display (Green=OPEN, Red=CLOSED, Yellow=FILTERED)
+- [x] Loading state and progress indication
+- [x] Summary statistics (Total/Open/Closed/Filtered/Avg Response)
+
+**Features:**
+- [x] Common services scan (30 pre-configured ports)
+- [x] Single port scanning
+- [x] Multiple comma-separated ports
+- [x] Port range scanning (e.g., 1-1024)
+- [x] Concurrent TCP scanning (10 workers, non-blocking)
+- [x] Service name mapping for 30+ common ports
+- [x] Response time measurement (milliseconds)
+- [x] Comprehensive error handling with context-specific messages
+- [x] Port input validation (1-65535, max 5000 per range)
+- [x] Separated parsing logic from UI display (critical fix)
+
+**Architecture:**
+- [x] `parse_ports_input()` returns None/list without UI calls
+- [x] `scan_ports()` displays errors to user
+- [x] Validation errors logged for debugging
+- [x] No duplication, follows widget pattern
+
+**Testing:**
+- [x] 49 comprehensive tests (100% passing)
+- [x] Widget structure tests (4 tests)
+- [x] UI method tests (6 tests)
+- [x] Port parsing logic tests (14 tests) - Critical
+- [x] Foundation feature tests (5 tests)
+- [x] Integration tests (4 tests)
+- [x] Edge case tests (5 tests)
+- [x] Docstring tests (4 tests)
+
+**Documentation:**
+- [x] REAL_WORLD_USAGE.md - Real-world TUI usage scenarios
+- [x] TESTING_IN_REAL_APP.md - How to test in actual TUI application
+- [x] Complete code documentation
+- [x] User flow diagrams
+
+**Status:** COMPLETE - Production ready, merged to main
+
+**Phase 4 Progress So Far:**
 - Phase 4.1: 36 tests ✅
 - Phase 4.2: 21 tests ✅
-- **TOTAL: 57 tests (100% passing)**
+- Phase 4.3: 49 tests ✅
+- **TOTAL: 106 tests (100% passing) 🎉**
 
-### Phase 4.3: Port Scanner Widget 🔜 PLANNED
-
-**Similar to DNS widget but for port scanning:**
-- [ ] Host input field
-- [ ] Port input (single, range, or presets)
-- [ ] Common ports selector
-- [ ] Scan button with progress
-- [ ] Results table (Port, Status, Service)
-- [ ] Concurrent scanning feedback
-- [ ] ~20+ tests
-
-**Estimated Timeline:** 1-2 weeks (following Phase 4.2 pattern)
-
-### Phase 4.4: Latency Analyzer Widget 🔜 PLANNED
+### Phase 4.4: Latency Analyzer Widget 🔜 NEXT
 
 **Ping and traceroute in one widget:**
 - [ ] Target input field
-- [ ] Ping count selector
+- [ ] Ping count selector (4, 8, 16, 32)
 - [ ] Traceroute option toggle
-- [ ] Results with statistics
-- [ ] Per-hop latency table
-- [ ] Jitter and packet loss display
-- [ ] ~20+ tests
+- [ ] Execute button with progress
+- [ ] Results with ping statistics (min/max/avg/jitter/loss)
+- [ ] Per-hop latency table for traceroute
+- [ ] ~20+ tests following Phase 4.3 pattern
 
-**Estimated Timeline:** 1-2 weeks
+**Estimated Timeline:** 1-2 weeks (following Port Scanner pattern)
 
 ### Phase 4.5: Results History & Export 🔜 PLANNED
 
@@ -187,12 +226,12 @@ Build a comprehensive, professional-grade Network Triage Tool with:
 ### Phase 4 Completion Criteria
 - [x] Phase 4.1 Foundation: COMPLETE
 - [x] Phase 4.2 DNS Widget: COMPLETE
-- [ ] Phase 4.3 Port Scanner Widget: PENDING
-- [ ] Phase 4.4 Latency Analyzer Widget: PENDING
+- [x] Phase 4.3 Port Scanner Widget: COMPLETE
+- [ ] Phase 4.4 Latency Analyzer Widget: NEXT
 - [ ] Phase 4.5 Results History & Export: PENDING
 - [ ] v0.4.0 final release: PENDING
 
-**Estimated Phase 4 Completion:** 4-6 weeks from Phase 4.2 start
+**Projected Phase 4 Completion:** 2-3 weeks from now
 
 ---
 
@@ -235,56 +274,61 @@ Build a comprehensive, professional-grade Network Triage Tool with:
 | Phase 1: Error Handling | ✅ COMPLETE | 22 | Shipped in v0.1.0+ |
 | Phase 2: TUI Framework | ✅ COMPLETE | N/A | Shipped in v0.2.0+ |
 | Phase 3: Diagnostics | ✅ COMPLETE | 22 | Shipped in v0.3.0 |
-| Phase 4.1: Foundation | ✅ COMPLETE | 36 | Ready for v0.4.0 |
-| Phase 4.2: DNS Widget | ✅ COMPLETE | 21 | Ready to merge |
-| Phase 4.3: Port Widget | 🔜 PLANNED | TBD | Next up |
-| Phase 4.4: Latency Widget | 🔜 PLANNED | TBD | After Port |
-| Phase 4.5: History/Export | 🔜 PLANNED | TBD | Phase 4 finale |
+| Phase 4.1: Foundation | ✅ COMPLETE | 36 | In v0.4.0 |
+| Phase 4.2: DNS Widget | ✅ COMPLETE | 21 | In v0.4.0 |
+| Phase 4.3: Port Scanner | ✅ COMPLETE | 49 | In v0.4.0 🆕 |
+| Phase 4.4: Latency Widget | 🔜 IN PROGRESS | TBD | Next |
+| Phase 4.5: History/Export | 🔜 PLANNED | TBD | After Latency |
 | Phase 5: Advanced | 🎯 FUTURE | N/A | After v0.4.0 |
 
-**Total Tests:** 57/57 passing (100%)
+**Total Tests:** 106/106 passing (100%) 🎉
 
 ---
 
 ## Development Velocity
 
-**Current Pace:**
+**Phase 4 Pace:**
 - Phase 4.1 (Foundation): ~2 hours
 - Phase 4.2 (DNS Widget): ~1 hour
+- Phase 4.3 (Port Scanner): ~1.5 hours (includes test fix)
 
-**Projected Timeline for Phase 4:**
-- Phase 4.3 (Port Widget): ~1-2 hours
-- Phase 4.4 (Latency Widget): ~1-2 hours  
+**Average:** ~1.5 hours per widget
+
+**Projected Timeline for Remaining Phase 4:**
+- Phase 4.4 (Latency Widget): ~1-2 hours
 - Phase 4.5 (History/Export): ~2-3 hours
-- v0.4.0 Release: 1-2 weeks
+- v0.4.0 Release & Documentation: 1-2 hours
+- **Total Remaining:** 4-7 hours = ~1 week
 
 **Key Success Factors:**
-1. Foundation is solid (Phase 4.1 proves pattern works)
-2. Components are reusable (copy pattern from Phase 4.2)
-3. Tests are comprehensive (57 tests verify all functionality)
-4. Documentation is clear (guides help contributors)
+1. ✅ Foundation is solid (Phase 4.1 proves pattern works)
+2. ✅ Components are reusable (copied pattern from Phase 4.2 to 4.3)
+3. ✅ Tests are comprehensive (106 tests verify all functionality)
+4. ✅ Documentation is clear (guides help contributors)
+5. ✅ Test failures are learning opportunities (Phase 4.3 test fix)
 
 ---
 
 ## Next Steps
 
 ### Immediate (This Week)
-1. Merge Phase 4.2 DNS Widget to main
-2. Update documentation
-3. Create v0.4.0-beta release
-4. Begin Phase 4.3 Port Scanner Widget
+1. ✅ Complete Phase 4.3 Port Scanner Widget
+2. ✅ Fix Phase 4.3 test failures
+3. ✅ Document real-world usage and testing
+4. 🔜 Update CHANGELOG, ROADMAP, README (TODAY)
+5. 🔜 Begin Phase 4.4 Latency Analyzer Widget
 
-### Short Term (Next 2-3 Weeks)
-1. Complete Phase 4.3 Port Scanner
-2. Complete Phase 4.4 Latency Analyzer
-3. Complete Phase 4.5 History/Export
+### Short Term (Next 1-2 Weeks)
+1. Complete Phase 4.4 Latency Analyzer
+2. Complete Phase 4.5 History/Export
+3. Create comprehensive v0.4.0 release notes
 4. Release v0.4.0 final
 
-### Medium Term (Weeks 4-6)
-1. Gather user feedback
+### Medium Term (Weeks 3-4)
+1. Gather user feedback on Phase 4 widgets
 2. Bug fixes and polish
 3. Performance optimization
-4. Begin planning Phase 5
+4. Begin planning Phase 5 features
 
 ---
 
@@ -311,6 +355,17 @@ Each Phase 4 widget follows this proven pattern:
 - Zero code duplication (inheritance)
 - ~50-250 lines of code per widget
 - Production-ready from day one
+
+### Lessons Learned
+
+**Phase 4.3 Test Failure Fix:**
+- ✅ Separated concerns: parsing logic from UI display
+- ✅ Made `parse_ports_input()` pure function (no side effects)
+- ✅ Moved error display to caller (`scan_ports()`)
+- ✅ Better testability: functions easier to test in isolation
+- ✅ Better maintainability: clear responsibility boundaries
+
+**Key Insight:** UI methods should NOT call other UI methods. Let business logic be business logic.
 
 ---
 
