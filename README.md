@@ -2,34 +2,50 @@
 <img src="img/assets/readme/Network-Triage-Tool_logo_v3.webp" alt="alt text" width="150">
 </p>
 
-### ✅ Status: Production Ready (v0.3.0) - Phase 3 Complete
+### ✅ Status: In Development (v0.4.0 - Phase 4.2) - Phase 3 Complete
 
 # Network Triage Tool (TUI)
 
-[![Status](https://img.shields.io/badge/status-production%20ready-brightgreen)](https://github.com/knowoneactual/Network-Triage-Tool)
-[![Version](https://img.shields.io/badge/version-0.3.0-blue)](https://github.com/knowoneactual/Network-Triage-Tool/releases/tag/v0.3.0)
+[![Status](https://img.shields.io/badge/status-development-yellow)](https://github.com/knowoneactual/Network-Triage-Tool)
+[![Version](https://img.shields.io/badge/version-0.4.0--phase4.2-blue)](https://github.com/knowoneactual/Network-Triage-Tool/releases)
 [![Python Version](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![UI Framework](https://img.shields.io/badge/UI-Textual-orange)](https://textual.textualize.io/)
-[![Tests](https://img.shields.io/badge/tests-22%2F22%20passing-success)](./tests/test_phase3_diagnostics.py)
+[![Tests](https://img.shields.io/badge/tests-57%2F57%20passing-success)](./tests/)
 [![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-blue)](https://github.com/knowoneactual/Network-Triage-Tool/actions)
 
 A cross-platform **Terminal User Interface (TUI)** designed for network professionals to diagnose and troubleshoot connectivity issues efficiently.
 
-Unlike the previous GUI version, this tool runs entirely in the terminal, making it lighter, faster, and fully capable of running over SSH sessions. **Now with comprehensive advanced diagnostics for DNS, ports, and latency measurement.**
+Unlike the previous GUI version, this tool runs entirely in the terminal, making it lighter, faster, and fully capable of running over SSH sessions. **Now with comprehensive advanced diagnostics for DNS, ports, and latency measurement, plus integrated TUI widgets.**
 
-## 🎯 Phase 3: Advanced Diagnostics Complete ✅
+## 🎯 Phase 4: TUI Widget Integration (In Progress)
 
-**Release [v0.3.0](https://github.com/knowoneactual/Network-Triage-Tool/releases/tag/v0.3.0) (Dec 19, 2025) introduces comprehensive network diagnostics utilities:**
+### ✅ Phase 4.2: DNS Resolver Widget (Dec 19, 2025) - COMPLETE
 
-- ✅ **DNS Utilities:** Hostname resolution (A/AAAA/PTR), DNS server validation, multi-provider propagation checking
-- ✅ **Port Utilities:** Single/concurrent port scanning, 30+ common service ports, result summarization
-- ✅ **Latency Utilities:** Comprehensive ping with jitter, MTR-style traceroute with per-hop latency
-- ✅ **Production Ready:** 22 tests (100% pass) on Windows, Linux, macOS with Python 3.11, 3.12, 3.13
-- ✅ **Zero Dependencies:** Uses only Python standard library - no external packages required
-- ✅ **Cross-Platform:** Tested and verified on Ubuntu, macOS, and Windows via CI/CD
+**New DNS Resolver Widget:**
+- ✅ Complete Textual widget with full DNS resolution integration
+- ✅ Hostname input field with validation
+- ✅ Query type selector (A, AAAA, BOTH, PTR, ALL records)
+- ✅ Optional DNS server input for custom resolvers
+- ✅ Results table with Type, Value, and Query Time columns
+- ✅ Real-time loading state and progress tracking
+- ✅ Comprehensive error handling (NOT_FOUND, TIMEOUT, ERROR)
+- ✅ User-friendly error and success messages
+- ✅ Full integration with Phase 3 DNS utilities
+- ✅ **21 comprehensive tests (100% passing)**
 
+**Phase 4.1 Foundation (Already Complete):**
+- ✅ BaseWidget with error handling, progress tracking, status management
+- ✅ AsyncOperationMixin with caching capabilities
+- ✅ 5 Reusable Components (ResultsWidget, InputWidget, etc.)
+- ✅ **36 comprehensive tests (100% passing)**
 
-See [Release Notes - Phase 3](docs/releases/phase3.md) for full details.
+**Total Phase 4 Status: 57/57 tests passing (100%)**
+
+### 🚀 Phase 4.3+: Additional Widgets (Planned)
+- [ ] Port Scanner widget
+- [ ] Latency Analyzer widget  
+- [ ] Results history and export
+- [ ] v0.4.0 final release
 
 ## ✨ Features
 
@@ -44,7 +60,8 @@ The application uses **Textual** to provide a modern, mouse-supportive terminal 
 * **🔍 LLDP/CDP:** Packet capture tool to identify connected switches and ports.
 * **⌨️ Keyboard First:** Fully navigable via shortcuts, with `Enter` key support for all actions.
 * **🛡️ Robust Error Handling:** Automatic retries, timeout protection, and graceful degradation on all network operations.
-* **🔬 Advanced Diagnostics (NEW):** Comprehensive DNS, port scanning, and latency measurement utilities.
+* **🔬 Advanced Diagnostics:** Comprehensive DNS, port scanning, and latency measurement utilities (Phase 3).
+* **🎨 TUI Widgets:** Integrated widgets for DNS resolution (Phase 4.2) with Foundation-based architecture for rapid feature development.
 
 ## 🚀 Getting Started
 
@@ -100,19 +117,20 @@ network-triage
   * **UI Framework:** [Textual](https://github.com/Textualize/textual) (CSS-driven TUI)
   * **Networking:** `scapy`, `netmiko`, `python-nmap`
   * **System Info:** `psutil`, `requests`
-  * **Testing:** `pytest`, `pytest-mock` (22 comprehensive tests)
+  * **Testing:** `pytest`, `pytest-mock` (57 comprehensive tests)
   * **Advanced Diagnostics:** Pure Python stdlib (Phase 3)
 
 ## 📊 Quality Metrics
 
 | Metric | Value |
 |--------|-------|
-| **Test Coverage** | 22/22 tests passing (100%) |
+| **Test Coverage** | 57/57 tests passing (100%) |
 | **Platform Support** | Ubuntu, macOS, Windows (CI/CD verified) |
 | **Python Versions** | 3.11, 3.12, 3.13 (all tested) |
 | **Code Quality** | 100% type hints, ~94% coverage |
 | **Dependencies** | Zero external (Phase 3 uses stdlib only) |
-| **Execution Time** | 0.10s (Phase 3 tests) |
+| **Widget Tests** | Phase 4.1: 36 tests, Phase 4.2: 21 tests |
+| **Execution Time** | 0.41s (Phase 4.2 tests) |
 
 ## 📚 Phase 3 Usage
 
@@ -173,6 +191,28 @@ See [Quick Start Guide](docs/getting-started/quick-start.md) for more examples.
 - Cross-platform support (Windows/Linux/macOS)
 - Automatic tool detection and graceful fallback
 
+## 🎨 Phase 4 TUI Widgets
+
+### Phase 4.2: DNS Resolver Widget (COMPLETE)
+
+Integrated DNS resolution directly into the TUI with:
+- Full hostname input validation
+- Query type selection (A, AAAA, BOTH, PTR, ALL)
+- Custom DNS server support
+- Real-time loading and progress feedback
+- Results displayed in structured table format
+- Comprehensive error handling and user messages
+- Foundation-based architecture for rapid expansion
+
+### Architecture
+
+Phase 4 widgets are built on a solid foundation:
+- **BaseWidget:** Error handling, progress tracking, status management
+- **AsyncOperationMixin:** Built-in caching and async operation support
+- **Reusable Components:** ResultsWidget, InputWidget, StatusWidget for rapid development
+
+This architecture eliminates code duplication and enables shipping new widgets in 1-2 hours.
+
 ## 📈 Roadmap
 
 ### ✅ Phase 1: macOS Stabilization (Complete)
@@ -194,12 +234,42 @@ See [Quick Start Guide](docs/getting-started/quick-start.md) for more examples.
 - [x] Full API documentation (18KB+)
 - [x] Zero external dependencies
 
-### 🚀 Phase 4: TUI Integration (Planned)
-- [ ] DNS Resolver widget
-- [ ] Port Scanner widget
-- [ ] Latency Analyzer widget
-- [ ] Results history and export
-- [ ] v0.4.0 release
+### 🚀 Phase 4: TUI Widget Integration (In Progress - v0.4.0)
+
+**Phase 4.1: Foundation** ✅ COMPLETE
+- [x] BaseWidget with error handling, progress tracking
+- [x] AsyncOperationMixin with caching
+- [x] Reusable components (ResultsWidget, InputWidget, etc.)
+- [x] 36 comprehensive tests
+
+**Phase 4.2: DNS Resolver Widget** ✅ COMPLETE
+- [x] Complete Textual widget implementation
+- [x] Full Phase 3 DNS utilities integration
+- [x] Hostname input validation
+- [x] Query type selector (5 options)
+- [x] Results table display
+- [x] Error handling and status messages
+- [x] 21 comprehensive tests
+- [x] Production ready
+
+**Phase 4.3: Port Scanner Widget** (Planned)
+- [ ] Port input and validation
+- [ ] Common ports selector
+- [ ] Concurrent scanning with progress
+- [ ] Results with service mapping
+- [ ] 20+ tests
+
+**Phase 4.4: Latency Analyzer Widget** (Planned)
+- [ ] Ping statistics with jitter
+- [ ] Traceroute with per-hop latency
+- [ ] MTR-style analysis
+- [ ] 20+ tests
+
+**Phase 4.5: Results History & Export** (Planned)
+- [ ] Session result caching
+- [ ] CSV/JSON export
+- [ ] Comparison views
+- [ ] Report generation
 
 ### 🎯 Phase 5+: Advanced Features (Future)
 - [ ] Data visualization and charts
@@ -214,14 +284,14 @@ See [Quick Start Guide](docs/getting-started/quick-start.md) for more examples.
 - **[Quick Start Guide](docs/getting-started/quick-start.md)** - Get started in 5 minutes
 
 ### API Reference
-- **[docs/PHASE3_DIAGNOSTICS.md](docs/PHASE3_DIAGNOSTICS.md)** - Complete API reference (18KB+)
+- **[Phase 3 Diagnostics API](docs/guides/phase3-diagnostics-api.md)** - Complete API reference (18KB+)
 
 ### Project Documentation
 - **[Release Notes - Phase 3](docs/releases/phase3.md)** - What's new in v0.3.0
-- **[Phase 4 Integration Roadmap](docs/planning/phase4-integration.md)** - Next phase planning
+- **[Phase 4 Integration Roadmap](docs/planning/phase4-integration.md)** - Phase 4 planning and architecture
 - **[Documentation Index](docs/README.md)** - Complete documentation map
 - **[Error Handling Guide](docs/guides/error-handling.md)** - Error handling patterns
-- **[CHANGELOG.md](CHANGELOG.md)** - Version history
+- **[CHANGELOG.md](CHANGELOG.md)** - Version history with all phases
 
 ## 🤝 Contributing
 
