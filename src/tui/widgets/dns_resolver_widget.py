@@ -103,9 +103,26 @@ class DNSResolverWidget(BaseWidget):
             self.show_loading(f"Resolving {hostname} ({query_type})...")
             self.set_status(f"Resolving {hostname}...")
             
-            # TODO: Implement actual DNS resolution here
-            # For now, we'll just show that the method works
-            # result = await self.run_in_thread(resolve_hostname, hostname, query_type, dns_server)
+from src.shared.dns_utils import resolve_hostname as dns_resolve
+
+result = await self.run_in_thread(
+    dns_resolve,
+    hostname,
+    query_type=query_type
+)
+
+if result.success:
+    self.results_widget.clear_results()
+    for record in result.records:
+        self.results_widget.add_row(
+            type=record.type,
+            value=record.value,
+            ttl=record.ttl
+        )
+    self.display_success(f"Resolved {hostname}")
+else:
+    self.display_error(f"Failed: {result.error}")
+
             
             # Update status
             self.display_success(f"Ready to resolve {hostname}")
