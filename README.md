@@ -2,15 +2,15 @@
 <img src="img/assets/readme/Network-Triage-Tool_logo_v3.webp" alt="alt text" width="150">
 </p>
 
-### ✅ Status: In Development (v0.4.0 - Phase 4.2) - Phase 3 Complete
+### ✅ Status: In Development (v0.4.0 - Phase 4.3) - Phase 3 Complete
 
 # Network Triage Tool (TUI)
 
 [![Status](https://img.shields.io/badge/status-development-yellow)](https://github.com/knowoneactual/Network-Triage-Tool)
-[![Version](https://img.shields.io/badge/version-0.4.0--phase4.2-blue)](https://github.com/knowoneactual/Network-Triage-Tool/releases)
+[![Version](https://img.shields.io/badge/version-0.4.0--phase4.3-blue)](https://github.com/knowoneactual/Network-Triage-Tool/releases)
 [![Python Version](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![UI Framework](https://img.shields.io/badge/UI-Textual-orange)](https://textual.textualize.io/)
-[![Tests](https://img.shields.io/badge/tests-57%2F57%20passing-success)](./tests/)
+[![Tests](https://img.shields.io/badge/tests-106%2F106%20passing-success)](./tests/)
 [![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-blue)](https://github.com/knowoneactual/Network-Triage-Tool/actions)
 
 A cross-platform **Terminal User Interface (TUI)** designed for network professionals to diagnose and troubleshoot connectivity issues efficiently.
@@ -19,18 +19,32 @@ Unlike the previous GUI version, this tool runs entirely in the terminal, making
 
 ## 🎯 Phase 4: TUI Widget Integration (In Progress)
 
-### ✅ Phase 4.2: DNS Resolver Widget (Dec 19, 2025) - COMPLETE
+### ✅ Phase 4.3: Port Scanner Widget (Dec 20, 2025) - COMPLETE
 
-**New DNS Resolver Widget:**
-- ✅ Complete Textual widget with full DNS resolution integration
-- ✅ Hostname input field with validation
-- ✅ Query type selector (A, AAAA, BOTH, PTR, ALL records)
-- ✅ Optional DNS server input for custom resolvers
-- ✅ Results table with Type, Value, and Query Time columns
+**New Port Scanner Widget:**
+- ✅ Complete Textual widget with full port scanning integration
+- ✅ Target host input field with validation
+- ✅ 4 scan mode selector (Common Services, Single Port, Multiple Ports, Port Range)
+- ✅ Port input parsing with intelligent validation
+- ✅ Configurable timeout (1-30 seconds)
+- ✅ Results table with Port, Service, Status, and Time columns
+- ✅ Color-coded status display (Green=OPEN, Red=CLOSED, Yellow=FILTERED)
+- ✅ Service name mapping for 30+ common ports
 - ✅ Real-time loading state and progress tracking
-- ✅ Comprehensive error handling (NOT_FOUND, TIMEOUT, ERROR)
-- ✅ User-friendly error and success messages
-- ✅ Full integration with Phase 3 DNS utilities
+- ✅ Summary statistics (Total/Open/Closed/Filtered/Avg Response Time)
+- ✅ Concurrent TCP scanning (10 workers, non-blocking)
+- ✅ Comprehensive error handling with context-specific messages
+- ✅ Full integration with Phase 3 port utilities
+- ✅ **49 comprehensive tests (100% passing)**
+- ✅ Complete documentation with real-world usage examples
+
+**Phase 4.2 DNS Resolver Widget (Already Complete):**
+- ✅ Hostname input validation
+- ✅ Query type selector (A, AAAA, BOTH, PTR, ALL records)
+- ✅ Optional DNS server input
+- ✅ Results table with Type, Value, and Query Time
+- ✅ Real-time loading and progress tracking
+- ✅ Comprehensive error handling
 - ✅ **21 comprehensive tests (100% passing)**
 
 **Phase 4.1 Foundation (Already Complete):**
@@ -39,11 +53,10 @@ Unlike the previous GUI version, this tool runs entirely in the terminal, making
 - ✅ 5 Reusable Components (ResultsWidget, InputWidget, etc.)
 - ✅ **36 comprehensive tests (100% passing)**
 
-**Total Phase 4 Status: 57/57 tests passing (100%)**
+**Total Phase 4 Status: 106/106 tests passing (100%) 🎉**
 
-### 🚀 Phase 4.3+: Additional Widgets (Planned)
-- [ ] Port Scanner widget
-- [ ] Latency Analyzer widget  
+### 🚀 Phase 4.4+: Additional Widgets (Planned)
+- [ ] Latency Analyzer widget (ping + traceroute)
 - [ ] Results history and export
 - [ ] v0.4.0 final release
 
@@ -61,7 +74,7 @@ The application uses **Textual** to provide a modern, mouse-supportive terminal 
 * **⌨️ Keyboard First:** Fully navigable via shortcuts, with `Enter` key support for all actions.
 * **🛡️ Robust Error Handling:** Automatic retries, timeout protection, and graceful degradation on all network operations.
 * **🔬 Advanced Diagnostics:** Comprehensive DNS, port scanning, and latency measurement utilities (Phase 3).
-* **🎨 TUI Widgets:** Integrated widgets for DNS resolution (Phase 4.2) with Foundation-based architecture for rapid feature development.
+* **🎨 TUI Widgets:** Integrated widgets for DNS resolution (Phase 4.2) and port scanning (Phase 4.3) with Foundation-based architecture for rapid feature development.
 
 ## 🚀 Getting Started
 
@@ -117,20 +130,20 @@ network-triage
   * **UI Framework:** [Textual](https://github.com/Textualize/textual) (CSS-driven TUI)
   * **Networking:** `scapy`, `netmiko`, `python-nmap`
   * **System Info:** `psutil`, `requests`
-  * **Testing:** `pytest`, `pytest-mock` (57 comprehensive tests)
+  * **Testing:** `pytest`, `pytest-mock` (106 comprehensive tests)
   * **Advanced Diagnostics:** Pure Python stdlib (Phase 3)
 
 ## 📊 Quality Metrics
 
 | Metric | Value |
 |--------|-------|
-| **Test Coverage** | 57/57 tests passing (100%) |
+| **Test Coverage** | 106/106 tests passing (100%) |
 | **Platform Support** | Ubuntu, macOS, Windows (CI/CD verified) |
 | **Python Versions** | 3.11, 3.12, 3.13 (all tested) |
 | **Code Quality** | 100% type hints, ~94% coverage |
 | **Dependencies** | Zero external (Phase 3 uses stdlib only) |
-| **Widget Tests** | Phase 4.1: 36 tests, Phase 4.2: 21 tests |
-| **Execution Time** | 0.41s (Phase 4.2 tests) |
+| **Widget Tests** | Phase 4.1: 36, Phase 4.2: 21, Phase 4.3: 49 |
+| **Execution Time** | 0.41s (Full test suite) |
 
 ## 📚 Phase 3 Usage
 
@@ -193,6 +206,20 @@ See [Quick Start Guide](docs/getting-started/quick-start.md) for more examples.
 
 ## 🎨 Phase 4 TUI Widgets
 
+### Phase 4.3: Port Scanner Widget (COMPLETE)
+
+Integrated port scanning directly into the TUI with:
+- Full host input validation
+- 4 scan mode options (Common Services, Single, Multiple, Range)
+- Intelligent port parsing and validation
+- Concurrent TCP scanning (non-blocking)
+- Color-coded results (Green/Red/Yellow status)
+- Service name mapping for common ports
+- Real-time loading and progress feedback
+- Results displayed in structured table format
+- Comprehensive error handling with context-specific messages
+- Full Phase 3 port utilities integration
+
 ### Phase 4.2: DNS Resolver Widget (COMPLETE)
 
 Integrated DNS resolution directly into the TUI with:
@@ -202,7 +229,7 @@ Integrated DNS resolution directly into the TUI with:
 - Real-time loading and progress feedback
 - Results displayed in structured table format
 - Comprehensive error handling and user messages
-- Foundation-based architecture for rapid expansion
+- Full Phase 3 DNS utilities integration
 
 ### Architecture
 
@@ -252,20 +279,24 @@ This architecture eliminates code duplication and enables shipping new widgets i
 - [x] 21 comprehensive tests
 - [x] Production ready
 
-**Phase 4.3: Port Scanner Widget** (Planned)
-- [ ] Port input and validation
-- [ ] Common ports selector
-- [ ] Concurrent scanning with progress
-- [ ] Results with service mapping
-- [ ] 20+ tests
+**Phase 4.3: Port Scanner Widget** ✅ COMPLETE
+- [x] Complete Textual widget implementation
+- [x] Full Phase 3 port utilities integration
+- [x] 4 scan mode options
+- [x] Port input validation (1-65535)
+- [x] Concurrent scanning (non-blocking)
+- [x] Results table with service mapping
+- [x] 49 comprehensive tests
+- [x] Complete documentation and examples
+- [x] Production ready
 
-**Phase 4.4: Latency Analyzer Widget** (Planned)
-- [ ] Ping statistics with jitter
+**Phase 4.4: Latency Analyzer Widget** (Planned - 1-2 weeks)
+- [ ] Ping statistics display
 - [ ] Traceroute with per-hop latency
 - [ ] MTR-style analysis
 - [ ] 20+ tests
 
-**Phase 4.5: Results History & Export** (Planned)
+**Phase 4.5: Results History & Export** (Planned - 2-3 weeks)
 - [ ] Session result caching
 - [ ] CSV/JSON export
 - [ ] Comparison views
