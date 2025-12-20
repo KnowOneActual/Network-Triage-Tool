@@ -7,6 +7,9 @@ from textual.widgets import Input, Button, Label, Select
 from textual.containers import Horizontal, Vertical
 from typing import List, Optional
 import re
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Import port utilities - use relative import from shared module
 try:
@@ -123,6 +126,9 @@ class PortScannerWidget(BaseWidget):
         """
         Parse port input based on scan mode.
         
+        Returns None if invalid, or a list of valid port numbers.
+        Does NOT call display_error - caller should handle None return.
+        
         Args:
             port_input: Raw port input string
             mode: Scan mode (single, multiple, range)
@@ -138,35 +144,48 @@ class PortScannerWidget(BaseWidget):
                 if 1 <= port <= 65535:
                     return [port]
                 else:
-                    self.display_error(f"Port must be between 1 and 65535")
+                    logger.warning(f"Port {port} out of range (1-65535)")
                     return None
             except ValueError:
-                self.display_error(f"Invalid port number: {port_input}")
+                logger.warning(f"Invalid port number: {port_input}")
                 return None
         
         elif mode == "multiple":
             try:
+                if not port_input:
+                    logger.warning("Empty port input")
+                    return None
+                
                 ports = []
                 for port_str in port_input.split(","):
-                    port = int(port_str.strip())
+                    port_str = port_str.strip()
+                    if not port_str:
+                        continue
+                    port = int(port_str)
                     if 1 <= port <= 65535:
                         ports.append(port)
                     else:
-                        self.display_error(f"Port {port} is invalid (must be 1-65535)")
+                        logger.warning(f"Port {port} out of range (1-65535)")
                         return None
+                
                 if not ports:
-                    self.display_error("No valid ports provided")
+                    logger.warning("No valid ports provided")
                     return None
+                
                 return sorted(list(set(ports)))  # Remove duplicates and sort
-            except ValueError:
-                self.display_error(f"Invalid port format: {port_input}")
+            except ValueError as e:
+                logger.warning(f"Invalid port format: {port_input} - {e}")
                 return None
         
         elif mode == "range":
             # Parse range like "1-1024"
+            if not port_input:
+                logger.warning("Empty range input")
+                return None
+            
             match = re.match(r"^(\d+)\s*-\s*(\d+)$", port_input)
             if not match:
-                self.display_error("Invalid range format. Use: start-end (e.g. 1-1024)")
+                logger.warning(f"Invalid range format: {port_input}")
                 return None
             
             try:
@@ -174,7 +193,7 @@ class PortScannerWidget(BaseWidget):
                 end = int(match.group(2))
                 
                 if not (1 <= start <= 65535 and 1 <= end <= 65535):
-                    self.display_error("Ports must be between 1 and 65535")
+                    logger.warning(f"Range ports out of bounds: {start}-{end}")
                     return None
                 
                 if start > end:
@@ -183,14 +202,15 @@ class PortScannerWidget(BaseWidget):
                 # Limit range to prevent excessive scanning
                 port_count = end - start + 1
                 if port_count > 5000:
-                    self.display_error(f"Range too large ({port_count} ports). Max 5000.")
+                    logger.warning(f"Range too large: {port_count} ports (max 5000)")
                     return None
                 
                 return list(range(start, end + 1))
-            except ValueError:
-                self.display_error("Invalid port range")
+            except ValueError as e:
+                logger.warning(f"Error parsing range: {e}")
                 return None
         
+        logger.warning(f"Unknown mode: {mode}")
         return None
     
     def scan_ports(self) -> None:
@@ -247,6 +267,13 @@ class PortScannerWidget(BaseWidget):
                 
                 parsed_ports = self.parse_ports_input(port_str, scan_mode)
                 if parsed_ports is None:
+                    # Provide specific error message based on mode
+                    if scan_mode == "single":
+                        self.display_error("Invalid port number (must be 1-65535)")
+                    elif scan_mode == "multiple":
+                        self.display_error("Invalid ports: use comma-separated numbers (1-65535)")
+                    elif scan_mode == "range":
+                        self.display_error("Invalid range: use format 'start-end' (e.g. 1-1024)")
                     return
                 
                 ports_to_scan = parsed_ports
