@@ -281,19 +281,18 @@ class TestResultsWidget:
         assert hasattr(ResultsWidget, 'get_summary')
 
     def test_result_column_creation(self):
-        """Test ResultColumn can be created."""
+        """Test ResultColumn can be created with correct attributes."""
         col = ResultColumn("Name", "name", width=20)
-        assert col.label == "Name"
-        assert col.field_name == "name"
+        assert col.name == "Name"
+        assert col.key == "name"
         assert col.width == 20
 
     def test_result_column_default_width(self):
         """Test ResultColumn default width."""
         col = ResultColumn("Status", "status")
-        assert col.label == "Status"
-        assert col.field_name == "status"
-        # Default width should be set
-        assert col.width > 0
+        assert col.name == "Status"
+        assert col.key == "status"
+        assert col.width is None  # Default is None
 
     def test_results_widget_mock_data(self):
         """Test results widget method signatures work with mocks."""
