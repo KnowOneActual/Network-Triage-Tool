@@ -10,6 +10,8 @@ Tests for:
 - Result caching
 """
 
+import sys
+from pathlib import Path
 import asyncio
 import pytest
 from datetime import datetime
@@ -18,14 +20,19 @@ from unittest.mock import Mock, patch, MagicMock
 from textual.app import ComposeResult
 from textual.widgets import Static
 
+# Add src to path for imports (same as conftest but explicit)
+src_path = Path(__file__).parent.parent / "src"
+if str(src_path) not in sys.path:
+    sys.path.insert(0, str(src_path))
+
 # Import widgets to test
-from src.tui.widgets.base import (
+from tui.widgets.base import (
     BaseWidget,
     AsyncOperationMixin,
     OperationResult,
     WidgetTemplate,
 )
-from src.tui.widgets.components import (
+from tui.widgets.components import (
     ResultsWidget,
     ResultColumn,
     ProgressWidget,
