@@ -5,7 +5,7 @@
 > ### Status: Stalled at (v0.4.0 - Phase 4.3). I am taking some time to reevaluate the project's direction in light of the helpful feedback I've received. I also want to extend my gratitude for your support with the Network Triage Tool (TUI). Thank you for your patience and encouragement! 
 
 
-[![Status](https://img.shields.io/badge/status-development-yellow)](https://github.com/knowoneactual/Network-Triage-Tool)
+[![Status](https://img.shields.io/badge/status-stalled-red)](https://github.com/knowoneactual/Network-Triage-Tool)
 [![Version](https://img.shields.io/badge/version-0.4.0--phase4.3-blue)](https://github.com/knowoneactual/Network-Triage-Tool/releases)
 [![Python Version](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![UI Framework](https://img.shields.io/badge/UI-Textual-orange)](https://textual.textualize.io/)
