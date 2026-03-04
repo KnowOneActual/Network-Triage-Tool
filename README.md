@@ -3,7 +3,7 @@
 </p>
 
 > [!IMPORTANT]
-> ### Status: Refactoring at (v0.4.0 - Phase 4.3). I am taking some time to reevaluate the project's direction in light of the helpful feedback I've received. I also want to extend my gratitude for your support with the Network Triage Tool (TUI). Thank you for your patience and encouragement! 
+> ### Status: Refactoring at (v0.4.0 - Phase 4.3). I starting refactoring this project's direction in light of the helpful feedback I've received. Started with linting and securty. I also want to extend my gratitude for your support with the Network Triage Tool (TUI). Thank you for your patience and encouragement! 
 >
 
 [![Status](https://img.shields.io/badge/status-Refactoring-red)](https://github.com/knowoneactual/Network-Triage-Tool)
