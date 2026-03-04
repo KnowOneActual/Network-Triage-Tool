@@ -4,7 +4,7 @@
 
 > [!IMPORTANT]
 > ### 🚀 Professional Roadmap Update (March 2026)
-> Professional-grade linting, security scanning, and type checking are now integrated into the CI pipeline. Development is active on a new roadmap focused on high-utility triage tools. Current focus: **Phase 4.4: Live Path Analyzer (MTR-style)**. Thanks for the incredible support!
+> Professional-grade linting, security scanning, and type checking are now integrated into the CI pipeline. Development is active on a new roadmap focused on high-utility tools. Current focus: **Phase 4.4: Live Path Analyzer (MTR-style)**. Thanks for the incredible support and feedback!
 >
 
 [![Status](https://img.shields.io/badge/status-Active-green)](https://github.com/knowoneactual/Network-Triage-Tool)
@@ -138,7 +138,7 @@ network-triage
 
 ## 🛡️ Code Quality & Security
 
-High engineering standards are maintained through automated CI/CD scans:
+High standards are maintained through automated CI/CD scans:
 
 - **Linting & Formatting:** [Ruff](https://github.com/astral-sh/ruff) for near-instant linting and PEP 8 compliance.
 - **Type Checking:** [Mypy](http://mypy-lang.org/) for static type verification and catching subtle bugs.
@@ -347,8 +347,7 @@ To report bugs or request features, please **[open an issue](https://github.com/
 
 ## 📄 License
 
-This project is licensed under the MIT License. You are free to use, copy, modify, and distribute the software. See the [LICENSE](LICENSE) file for details.
-
+This project is licensed under the [MIT License](License). You are free to use, copy, modify, and distribute the software.
 ---
 
 ## 🚧 Legacy Documentation
