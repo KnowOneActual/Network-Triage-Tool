@@ -3,10 +3,11 @@
 </p>
 
 > [!IMPORTANT]
-> ### Status: Refactoring at (v0.4.0 - Phase 4.3). I starting refactoring this project's direction in light of the helpful feedback I've received. Started with linting and securty. I also want to extend my gratitude for your support with the Network Triage Tool (TUI). Thank you for your patience and encouragement! 
+> ### 🚀 Professional Roadmap Update (March 2026)
+> We have successfully integrated professional-grade linting, security scanning, and type checking into our CI pipeline. We are now executing on a new roadmap focused on high-utility triage tools. Our current focus is **Phase 4.4: Live Path Analyzer (MTR-style)**. Thank you for your incredible support!
 >
 
-[![Status](https://img.shields.io/badge/status-Refactoring-red)](https://github.com/knowoneactual/Network-Triage-Tool)
+[![Status](https://img.shields.io/badge/status-Active-green)](https://github.com/knowoneactual/Network-Triage-Tool)
 [![Version](https://img.shields.io/badge/version-0.4.0--phase4.3-blue)](https://github.com/knowoneactual/Network-Triage-Tool/releases)
 [![Python Version](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![UI Framework](https://img.shields.io/badge/UI-Textual-orange)](https://textual.textualize.io/)
