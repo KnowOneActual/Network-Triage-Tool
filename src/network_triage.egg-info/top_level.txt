@@ -1,3 +1,0 @@
-network_triage
-shared
-tui
