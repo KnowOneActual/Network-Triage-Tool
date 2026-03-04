@@ -1,15 +1,14 @@
+import os
+import platform
+import subprocess
+import sys
+import threading
+import webbrowser
+from tkinter import filedialog, messagebox, scrolledtext
+
 import ttkbootstrap as tk
 from ttkbootstrap import ttk
-from tkinter import scrolledtext, messagebox, filedialog
 from ttkbootstrap.tooltip import ToolTip
-import webbrowser
-import platform
-import os
-import sys
-import subprocess
-import time
-import threading
-
 
 from .network_toolkit import NetworkTriageToolkit, RouterConnection
 
@@ -114,7 +113,7 @@ class ConnectionDetails(ttk.Frame):
             label_value = ttk.Label(self.wifi_frame, text="Loading...")
             label_value.grid(row=i, column=1, sticky="w", padx=5, pady=2)
             self.detail_labels[point] = label_value
-        
+
         ssid_note = ttk.Label(
             self.wifi_frame,
             text="Note: If SSID shows '<redacted>', please add it to the User Notes on the Dashboard.",
@@ -201,7 +200,7 @@ class PerformanceTab(ttk.Frame):
     def update_ui(self, results):
         self.progress.stop()
         self.progress['value'] = 100
-        
+
         if "Error" in results:
             self.status_label.config(text=results["Error"])
             self.main_app.status_label.config(text="Speed test failed.")
@@ -508,7 +507,7 @@ class NetworkScanTab(ttk.Frame):
 
         self.start_button = ttk.Button(control_frame, text="Start Scan", command=self.start_scan)
         self.start_button.grid(row=1, column=2, padx=(10, 5), pady=5, sticky="e")
-        
+
         # --- NEW: Custom arguments entry (initially hidden) ---
         self.custom_args_label = ttk.Label(control_frame, text="Arguments:")
         self.custom_args_entry = ttk.Entry(control_frame)
@@ -516,13 +515,13 @@ class NetworkScanTab(ttk.Frame):
 
         info_label = ttk.Label(scan_frame, text="(Double-click a host in the results to see detailed port and service information)", font="-size 10 -slant italic")
         info_label.pack(fill="x", padx=10, pady=(0, 5))
-        
+
         result_frame = ttk.Frame(scan_frame)
         result_frame.pack(padx=5, pady=5, fill="both", expand=True)
-        
+
         columns = ("ip", "hostname", "status", "mac", "vendor")
         self.results_tree = ttk.Treeview(result_frame, columns=columns, show="headings")
-        
+
         self.results_tree.heading("ip", text="IP Address", anchor=tk.W)
         self.results_tree.column("ip", width=120, anchor=tk.W)
         self.results_tree.heading("hostname", text="Hostname", anchor=tk.W)
@@ -533,13 +532,13 @@ class NetworkScanTab(ttk.Frame):
         self.results_tree.column("mac", width=150, anchor=tk.W)
         self.results_tree.heading("vendor", text="Vendor", anchor=tk.W)
         self.results_tree.column("vendor", width=180, anchor=tk.W)
-        
+
         self.results_tree.pack(side="left", fill="both", expand=True)
 
         scrollbar = ttk.Scrollbar(result_frame, orient="vertical", command=self.results_tree.yview)
         self.results_tree.configure(yscrollcommand=scrollbar.set)
         scrollbar.pack(side="right", fill="y")
-        
+
         self.results_tree.bind("<Double-1>", self.show_host_details)
 
         bottom_frame = ttk.Frame(scan_frame)
@@ -576,7 +575,7 @@ class NetworkScanTab(ttk.Frame):
         if not target:
             messagebox.showerror("Error", "Please enter a target.")
             return
-        
+
         # --- NEW: Logic to handle custom arguments ---
         scan_choice = self.scan_type.get()
         if scan_choice == "Custom":
@@ -596,7 +595,7 @@ class NetworkScanTab(ttk.Frame):
         self.export_button.config(state="disabled") # Disable export during scan
         self.main_app.status_label.config(text=f"Scanning {target} with Nmap...")
         self.progress_bar.start(10)
-        
+
         self.results_tree.insert("", "end", values=("Scanning...", "", "", "", ""))
 
         threading.Thread(target=self.run_scan_task, args=(target, arguments), daemon=True).start()
@@ -632,7 +631,7 @@ class NetworkScanTab(ttk.Frame):
     def show_host_details(self, event):
         selected_item = self.results_tree.focus()
         if not selected_item: return
-        
+
         item_values = self.results_tree.item(selected_item, 'values')
         host_ip = item_values[0]
         host_data = self.scan_results_data.get(host_ip)
@@ -647,10 +646,10 @@ class NetworkScanTab(ttk.Frame):
 
         ports_frame = ttk.LabelFrame(details_window, text="Open Ports & Services")
         ports_frame.pack(fill="both", expand=True, padx=10, pady=5)
-        
+
         port_columns = ("port", "protocol", "state", "service", "product")
         ports_tree = ttk.Treeview(ports_frame, columns=port_columns, show="headings")
-        
+
         ports_tree.heading("port", text="Port", anchor=tk.W); ports_tree.column("port", width=60, anchor=tk.W)
         ports_tree.heading("protocol", text="Protocol", anchor=tk.W); ports_tree.column("protocol", width=60, anchor=tk.W)
         ports_tree.heading("state", text="State", anchor=tk.W); ports_tree.column("state", width=80, anchor=tk.W)
@@ -669,7 +668,7 @@ class NetworkScanTab(ttk.Frame):
                 ))
         else:
             ports_tree.insert("", "end", values=("No open ports found.", "", "", "", ""))
-    
+
     # --- NEW: Function to export the results table to a CSV file ---
     def export_to_csv(self):
         try:
@@ -805,5 +804,5 @@ if __name__ == "__main__":
             root.withdraw()
             messagebox.showerror("Permissions Error", f"Could not relaunch with admin privileges.\n\nError: {e}")
             sys.exit(1)
-    
+
     main()

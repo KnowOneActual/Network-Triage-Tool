@@ -1,5 +1,6 @@
-import speedtest
 import pprint
+
+import speedtest
 
 
 def run_speedtest_debug():

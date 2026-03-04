@@ -8,13 +8,12 @@ Author: Network-Triage-Tool Contributors
 License: MIT
 """
 
+import concurrent.futures
 import socket
 import time
-from typing import Dict, List, Any, Optional
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from enum import Enum
-import concurrent.futures
-import threading
+from typing import Any
 
 
 class PortStatus(Enum):
@@ -66,12 +65,12 @@ class PortCheckResult:
     host: str
     port: int
     status: PortStatus
-    service_name: Optional[str]
+    service_name: str | None
     response_time_ms: float
-    error_message: Optional[str] = None
-    banner: Optional[str] = None  # Service banner if available
+    error_message: str | None = None
+    banner: str | None = None  # Service banner if available
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary, excluding None values."""
         result = asdict(self)
         result['status'] = self.status.value
@@ -131,10 +130,10 @@ def check_port_open(
                 try:
                     banner = sock.recv(1024).decode('utf-8', errors='ignore').strip()
                     result.banner = banner[:100]  # Limit to 100 chars
-                except (socket.timeout, socket.error):
+                except (TimeoutError, OSError):
                     pass  # Banner grab optional
 
-        except socket.timeout:
+        except TimeoutError:
             # Timeout indicates filtered (likely firewall)
             result.status = PortStatus.FILTERED
             result.error_message = f"Connection timeout after {timeout}s"
@@ -175,10 +174,10 @@ def check_port_open(
 
 def check_multiple_ports(
     host: str,
-    ports: List[int],
+    ports: list[int],
     timeout: int = 3,
     max_workers: int = 10
-) -> List[PortCheckResult]:
+) -> list[PortCheckResult]:
     """
     Check multiple ports concurrently.
 
@@ -227,7 +226,7 @@ def scan_common_ports(
     host: str,
     timeout: int = 3,
     max_workers: int = 10
-) -> List[PortCheckResult]:
+) -> list[PortCheckResult]:
     """
     Scan all common service ports.
 
@@ -254,7 +253,7 @@ def scan_port_range(
     end_port: int = 1024,
     timeout: int = 2,
     max_workers: int = 20
-) -> List[PortCheckResult]:
+) -> list[PortCheckResult]:
     """
     Scan a range of ports (useful for finding unexpected services).
 
@@ -306,7 +305,7 @@ def get_service_name(port: int) -> str:
     return COMMON_SERVICE_PORTS.get(port, 'Unknown')
 
 
-def get_common_service_ports() -> Dict[int, str]:
+def get_common_service_ports() -> dict[int, str]:
     """
     Return dictionary of all common service ports.
 
@@ -320,7 +319,7 @@ def get_common_service_ports() -> Dict[int, str]:
     return COMMON_SERVICE_PORTS.copy()
 
 
-def summarize_port_scan(results: List[PortCheckResult]) -> Dict[str, Any]:
+def summarize_port_scan(results: list[PortCheckResult]) -> dict[str, Any]:
     """
     Generate summary statistics from port scan results.
 

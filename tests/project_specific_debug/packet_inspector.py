@@ -1,8 +1,9 @@
-from scapy.all import sniff, wrpcap
-from scapy.contrib.lldp import LLDPDU
-from scapy.contrib.cdp import CDPMsg
 import os
 import platform
+
+from scapy.all import sniff, wrpcap
+from scapy.contrib.cdp import CDPMsg
+from scapy.contrib.lldp import LLDPDU
 
 
 def inspect_packet():

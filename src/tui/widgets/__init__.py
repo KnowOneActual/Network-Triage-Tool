@@ -16,8 +16,8 @@ All widgets follow these patterns:
 4. Result caching for performance
 """
 
-from .base import BaseWidget, AsyncOperationMixin
-from .components import ResultsWidget, ProgressWidget, StatusIndicator
+from .base import AsyncOperationMixin, BaseWidget
+from .components import ProgressWidget, ResultsWidget, StatusIndicator
 from .dns_resolver_widget import DNSResolverWidget
 from .port_scanner_widget import PortScannerWidget
 

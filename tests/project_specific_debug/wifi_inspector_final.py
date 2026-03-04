@@ -1,7 +1,6 @@
 import platform
-import subprocess
-import json
 import re
+import subprocess
 
 # Attempt to import the CoreWLAN framework for macOS
 try:

@@ -5,37 +5,34 @@ Tests DNS utilities, port connectivity, and latency measurement functions.
 Uses mocking to avoid network calls and ensure fast test execution.
 """
 
-import unittest
-from unittest.mock import patch, MagicMock, call
-import sys
 import os
-import statistics
+import sys
+import unittest
+from unittest.mock import MagicMock, patch
 
 # Add src to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from shared.dns_utils import (
+    DNSLookupResult,
+    DNSStatus,
+    check_dns_propagation,
     resolve_hostname,
     validate_dns_server,
-    check_dns_propagation,
-    DNSStatus,
-    DNSLookupResult,
-)
-from shared.port_utils import (
-    check_port_open,
-    check_multiple_ports,
-    scan_common_ports,
-    scan_port_range,
-    get_service_name,
-    summarize_port_scan,
-    PortStatus,
 )
 from shared.latency_utils import (
-    ping_statistics,
-    mtr_style_trace,
-    _parse_ping_output,
     LatencyStatus,
     PingStatistics,
+    _parse_ping_output,
+    mtr_style_trace,
+    ping_statistics,
+)
+from shared.port_utils import (
+    PortStatus,
+    check_multiple_ports,
+    check_port_open,
+    get_service_name,
+    summarize_port_scan,
 )
 
 
@@ -168,8 +165,7 @@ class TestPortUtils(unittest.TestCase):
         mock_sock_instance = MagicMock()
         mock_socket_class.return_value = mock_sock_instance
         # Use socket.timeout exception for proper timeout handling
-        import socket
-        mock_sock_instance.connect.side_effect = socket.timeout("Connection timeout")
+        mock_sock_instance.connect.side_effect = TimeoutError("Connection timeout")
 
         result = check_port_open('10.255.255.1', 22, timeout=1)
 

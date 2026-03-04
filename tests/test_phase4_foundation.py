@@ -11,14 +11,11 @@ Tests for:
 """
 
 import sys
-from pathlib import Path
-import asyncio
-import pytest
 from datetime import datetime
-from unittest.mock import Mock, patch, MagicMock, PropertyMock
+from pathlib import Path
+from unittest.mock import MagicMock
 
-from textual.app import ComposeResult
-from textual.widgets import Static
+import pytest
 
 # Add src to path for imports (same as conftest but explicit)
 src_path = Path(__file__).parent.parent / "src"
@@ -27,17 +24,16 @@ if str(src_path) not in sys.path:
 
 # Import widgets to test
 from tui.widgets.base import (
-    BaseWidget,
     AsyncOperationMixin,
+    BaseWidget,
     OperationResult,
     WidgetTemplate,
 )
 from tui.widgets.components import (
-    ResultsWidget,
-    ResultColumn,
-    ProgressWidget,
-    StatusIndicator,
     ErrorDisplay,
+    ResultColumn,
+    ResultsWidget,
+    StatusIndicator,
     SummaryWidget,
 )
 
@@ -69,7 +65,7 @@ class TestOperationResult:
         before = datetime.now()
         result = OperationResult(success=True, data="test")
         after = datetime.now()
-        
+
         assert before <= result.timestamp <= after
 
     def test_operation_result_duration(self):
@@ -89,10 +85,10 @@ class TestAsyncOperationMixin:
     def test_enable_disable_cache(self):
         """Test enabling and disabling cache."""
         mixin = AsyncOperationMixin()
-        
+
         mixin.enable_cache(False)
         assert mixin._cache_enabled is False
-        
+
         mixin.enable_cache(True)
         assert mixin._cache_enabled is True
 
@@ -100,7 +96,7 @@ class TestAsyncOperationMixin:
         """Test caching results."""
         mixin = AsyncOperationMixin()
         mixin.cache_result("key1", "value1")
-        
+
         assert mixin.get_cached("key1") == "value1"
 
     def test_get_cached_returns_none_when_disabled(self):
@@ -108,7 +104,7 @@ class TestAsyncOperationMixin:
         mixin = AsyncOperationMixin()
         mixin.cache_result("key1", "value1")
         mixin.enable_cache(False)
-        
+
         assert mixin.get_cached("key1") is None
 
     def test_clear_cache_single_key(self):
@@ -116,9 +112,9 @@ class TestAsyncOperationMixin:
         mixin = AsyncOperationMixin()
         mixin.cache_result("key1", "value1")
         mixin.cache_result("key2", "value2")
-        
+
         mixin.clear_cache("key1")
-        
+
         assert mixin.get_cached("key1") is None
         assert mixin.get_cached("key2") == "value2"
 
@@ -127,9 +123,9 @@ class TestAsyncOperationMixin:
         mixin = AsyncOperationMixin()
         mixin.cache_result("key1", "value1")
         mixin.cache_result("key2", "value2")
-        
+
         mixin.clear_cache()
-        
+
         assert mixin.get_cached("key1") is None
         assert mixin.get_cached("key2") is None
 
@@ -137,9 +133,9 @@ class TestAsyncOperationMixin:
         """Test error handling."""
         mixin = AsyncOperationMixin()
         error = ValueError("Test error")
-        
+
         result = mixin.handle_error(error, "Custom message")
-        
+
         assert result.success is False
         assert result.error == "Custom message"
         assert result.error_type == ValueError
@@ -148,9 +144,9 @@ class TestAsyncOperationMixin:
         """Test error handling without custom message."""
         mixin = AsyncOperationMixin()
         error = ValueError("Test error")
-        
+
         result = mixin.handle_error(error)
-        
+
         assert result.success is False
         assert "Test error" in result.error
         assert result.error_type == ValueError
@@ -168,7 +164,7 @@ class TestBaseWidget:
     def test_base_widget_initialization(self):
         """Test BaseWidget initializes correctly."""
         widget = BaseWidget()
-        
+
         assert widget.is_loading is False
         assert widget.current_status == "Ready"
         assert widget.error_message == ""
@@ -189,7 +185,7 @@ class TestBaseWidget:
         except Exception:
             # Expected - no app context. But reactive attributes should still be set.
             pass
-        
+
         # Verify the reactive attributes changed
         assert widget.error_message == "Test error message"
         assert widget.current_status == "Error"
@@ -202,7 +198,7 @@ class TestBaseWidget:
         except Exception:
             # Expected - no app context
             pass
-        
+
         # Verify the reactive attributes
         assert widget.error_message == ""
         assert widget.is_loading is False
@@ -212,7 +208,7 @@ class TestBaseWidget:
         """Test showing loading state."""
         widget = BaseWidget()
         widget.show_loading("Processing...")
-        
+
         assert widget.is_loading is True
         assert widget.current_status == "Processing..."
         assert widget.error_message == ""
@@ -221,21 +217,21 @@ class TestBaseWidget:
         """Test setting status."""
         widget = BaseWidget()
         widget.set_status("Running operation")
-        
+
         assert widget.current_status == "Running operation"
 
     def test_get_result_summary(self):
         """Test getting result summary."""
         widget = BaseWidget()
         summary = widget.get_result_summary()
-        
+
         assert "BaseWidget" in summary
         assert "Ready" in summary
 
     def test_inherits_async_operation_mixin(self):
         """Test that BaseWidget inherits AsyncOperationMixin methods."""
         widget = BaseWidget()
-        
+
         assert hasattr(widget, 'cache_result')
         assert hasattr(widget, 'get_cached')
         assert hasattr(widget, 'handle_error')
@@ -248,19 +244,19 @@ class TestWidgetTemplate:
     def test_widget_template_initialization(self):
         """Test WidgetTemplate initializes with custom name."""
         template = WidgetTemplate(name="CustomWidget")
-        
+
         assert template.widget_name == "CustomWidget"
 
     def test_widget_template_default_name(self):
         """Test WidgetTemplate uses default name."""
         template = WidgetTemplate()
-        
+
         assert template.widget_name == "WidgetTemplate"
 
     def test_widget_template_async_operation(self):
         """Test async operation in template."""
         template = WidgetTemplate()
-        
+
         # This would normally be run in async context
         # Just verify the method exists and has proper signature
         assert hasattr(template, 'async_operation')
@@ -302,11 +298,11 @@ class TestResultsWidget:
         mock_widget.add_rows = MagicMock()
         mock_widget.result_count = 0
         mock_widget.get_summary = MagicMock(return_value="Results: 0 items")
-        
+
         # Verify methods can be called
         mock_widget.add_row(name="test", status="active")
         mock_widget.add_row.assert_called_with(name="test", status="active")
-        
+
         # Verify summary can be retrieved
         summary = mock_widget.get_summary()
         assert "Results" in summary
@@ -318,7 +314,7 @@ class TestStatusIndicator:
     def test_status_indicator_initialization(self):
         """Test StatusIndicator initializes correctly."""
         indicator = StatusIndicator(status="success", text="Connected")
-        
+
         assert indicator.status == "success"
         assert indicator.text == "Connected"
 
@@ -326,14 +322,14 @@ class TestStatusIndicator:
         """Test setting status on StatusIndicator."""
         indicator = StatusIndicator()
         indicator.set_status("error", "Disconnected")
-        
+
         assert indicator.status == "error"
         assert indicator.text == "Disconnected"
 
     def test_status_indicator_symbols(self):
         """Test that status indicator has valid symbols."""
         statuses = ["success", "error", "warning", "pending"]
-        
+
         for status in statuses:
             indicator = StatusIndicator(status=status)
             # Just verify it doesn't crash
@@ -347,7 +343,7 @@ class TestErrorDisplay:
         """Test showing error in ErrorDisplay."""
         display = ErrorDisplay()
         display.show_error("Connection failed", "Unable to reach server")
-        
+
         assert display.error_message == "Connection failed"
         assert display.error_details == "Unable to reach server"
         assert display.is_visible is True
@@ -357,7 +353,7 @@ class TestErrorDisplay:
         display = ErrorDisplay()
         display.show_error("Test error")
         display.clear_error()
-        
+
         assert display.error_message == ""
         assert display.error_details == ""
         assert display.is_visible is False
@@ -370,7 +366,7 @@ class TestSummaryWidget:
         """Test adding statistics to SummaryWidget."""
         summary = SummaryWidget()
         summary.add_stat("Total", "42")
-        
+
         assert "Total" in summary.stats
         assert summary.stats["Total"]["value"] == "42"
 
@@ -378,7 +374,7 @@ class TestSummaryWidget:
         """Test adding colored statistics."""
         summary = SummaryWidget()
         summary.add_stat("Success", "100", color="green")
-        
+
         assert summary.stats["Success"]["color"] == "green"
 
     def test_summary_widget_clear_stats(self):
@@ -386,9 +382,9 @@ class TestSummaryWidget:
         summary = SummaryWidget()
         summary.add_stat("Total", "42")
         summary.add_stat("Failed", "2")
-        
+
         summary.clear_stats()
-        
+
         assert len(summary.stats) == 0
 
 

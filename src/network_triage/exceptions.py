@@ -12,7 +12,7 @@ class NetworkTriageException(Exception):
 
 class NetworkCommandError(NetworkTriageException):
     """Raised when a system network command fails to execute.
-    
+
     Examples:
         - ping command not found
         - ifconfig fails
@@ -23,7 +23,7 @@ class NetworkCommandError(NetworkTriageException):
 
 class NetworkTimeoutError(NetworkTriageException):
     """Raised when a network operation times out.
-    
+
     Examples:
         - Speed test takes too long
         - DNS lookup timeout
@@ -34,7 +34,7 @@ class NetworkTimeoutError(NetworkTriageException):
 
 class PrivilegeError(NetworkTriageException):
     """Raised when an operation requires elevated privileges.
-    
+
     Examples:
         - Packet capture requires root
         - Nmap service detection requires sudo
@@ -44,7 +44,7 @@ class PrivilegeError(NetworkTriageException):
 
 class CommandNotFoundError(NetworkTriageException):
     """Raised when a required command is not installed or in PATH.
-    
+
     Examples:
         - nmap not installed
         - traceroute not found
@@ -54,7 +54,7 @@ class CommandNotFoundError(NetworkTriageException):
 
 class ParseError(NetworkTriageException):
     """Raised when parsing output from a command fails.
-    
+
     Examples:
         - XML parsing fails
         - Regex pattern doesn't match
@@ -64,7 +64,7 @@ class ParseError(NetworkTriageException):
 
 class NetworkConnectivityError(NetworkTriageException):
     """Raised when basic network connectivity is unavailable.
-    
+
     Examples:
         - Cannot reach public IP address
         - DNS server unreachable

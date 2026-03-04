@@ -39,7 +39,7 @@ def inspect_wifi_library_output():
         for name in interface_names:
             print(f"\n--- Checking interface: {name} ---")
             interface = CoreWLAN.CWInterface.interfaceWithName_(name)
-            
+
             if not interface:
                 print(f"Result: Could not get an interface object for '{name}'.")
                 continue

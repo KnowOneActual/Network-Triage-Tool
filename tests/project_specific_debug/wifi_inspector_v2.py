@@ -1,6 +1,6 @@
+import json
 import platform
 import subprocess
-import json
 
 
 def inspect_wifi_output_v2():
@@ -26,7 +26,7 @@ def inspect_wifi_output_v2():
     except (subprocess.CalledProcessError, FileNotFoundError) as e:
         print(f"Error running command: {e}")
         if hasattr(e, "stderr") and e.stderr:
-            print(f"--- Stderr ---")
+            print("--- Stderr ---")
             print(e.stderr)
             print("--------------")
 
@@ -41,7 +41,7 @@ def inspect_wifi_output_v2():
     except (subprocess.CalledProcessError, FileNotFoundError) as e:
         print(f"Error running command: {e}")
         if hasattr(e, "stderr") and e.stderr:
-            print(f"--- Stderr ---")
+            print("--- Stderr ---")
             print(e.stderr)
             print("--------------")
 
@@ -74,7 +74,7 @@ def inspect_wifi_output_v2():
     ) as e:
         print(f"Error running command: {e}")
         if hasattr(e, "stderr") and e.stderr:
-            print(f"--- Stderr ---")
+            print("--- Stderr ---")
             print(e.stderr)
             print("--------------")
 

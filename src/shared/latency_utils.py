@@ -8,14 +8,13 @@ Author: Network-Triage-Tool Contributors
 License: MIT
 """
 
-import subprocess
+import platform
 import re
 import statistics
-import time
-from typing import Dict, List, Any, Optional, Tuple
-from dataclasses import dataclass, asdict
+import subprocess
+from dataclasses import asdict, dataclass
 from enum import Enum
-import platform
+from typing import Any
 
 
 class LatencyStatus(Enum):
@@ -38,10 +37,10 @@ class PingStatistics:
     max_ms: float
     stddev_ms: float  # Jitter indicator
     status: LatencyStatus
-    rtt_values: List[float]  # Raw RTT values
-    error_message: Optional[str] = None
+    rtt_values: list[float]  # Raw RTT values
+    error_message: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary, excluding None values."""
         result = asdict(self)
         result['status'] = self.status.value
@@ -54,19 +53,19 @@ class PingStatistics:
 class TracerouteHop:
     """A single hop in a traceroute path."""
     hop_number: int
-    hostname: Optional[str]
-    ip_address: Optional[str]
-    rtt1_ms: Optional[float]
-    rtt2_ms: Optional[float]
-    rtt3_ms: Optional[float]
+    hostname: str | None
+    ip_address: str | None
+    rtt1_ms: float | None
+    rtt2_ms: float | None
+    rtt3_ms: float | None
     status: str  # 'responsive', 'timeout', 'error'
 
-    def avg_rtt_ms(self) -> Optional[float]:
+    def avg_rtt_ms(self) -> float | None:
         """Calculate average RTT across available samples."""
         times = [t for t in [self.rtt1_ms, self.rtt2_ms, self.rtt3_ms] if t is not None]
         return sum(times) / len(times) if times else None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
@@ -112,7 +111,6 @@ def ping_statistics(
     if system == 'Windows':
         # Windows: ping -n <count> <host>
         cmd = ['ping', '-n', str(count), '-w', str(timeout * 1000), host]
-        output_key = 'bytes'
     else:
         # Linux/macOS: ping -c <count> <host>
         cmd = ['ping', '-c', str(count), '-W', str(timeout), host]
@@ -120,7 +118,6 @@ def ping_statistics(
             cmd = ['ping', '-c', str(count), '-i', str(interval), host]
         else:  # Linux
             cmd = ['ping', '-c', str(count), '-i', str(interval), '-W', str(timeout), host]
-        output_key = 'bytes'
 
     try:
         # Execute ping
@@ -174,7 +171,7 @@ def ping_statistics(
     return result
 
 
-def _parse_ping_output(output: str, system: str) -> List[float]:
+def _parse_ping_output(output: str, system: str) -> list[float]:
     """
     Parse ping output and extract RTT values in milliseconds.
 
@@ -205,7 +202,7 @@ def mtr_style_trace(
     max_hops: int = 30,
     timeout: int = 5,
     min_hops: int = 1
-) -> Tuple[List[TracerouteHop], str]:
+) -> tuple[list[TracerouteHop], str]:
     """
     Perform MTR-style tracing combining traceroute with latency statistics.
 
@@ -258,7 +255,7 @@ def _parse_mtr_output(
     max_hops: int,
     timeout: int,
     system: str
-) -> Tuple[List[TracerouteHop], str]:
+) -> tuple[list[TracerouteHop], str]:
     """
     Parse MTR command output (if mtr is available).
 
@@ -301,7 +298,7 @@ def _parse_mtr_output(
         return [], f"MTR error: {str(e)}"
 
 
-def _extract_hops_from_mtr(mtr_output: str) -> List[TracerouteHop]:
+def _extract_hops_from_mtr(mtr_output: str) -> list[TracerouteHop]:
     """Extract hop information from MTR report output."""
     hops = []
     lines = mtr_output.split('\n')
@@ -341,7 +338,7 @@ def _fallback_trace(
     max_hops: int,
     timeout: int,
     system: str
-) -> Tuple[List[TracerouteHop], str]:
+) -> tuple[list[TracerouteHop], str]:
     """
     Fallback traceroute using subprocess (when mtr unavailable).
 
@@ -388,7 +385,7 @@ def _fallback_trace(
         return [], f"Traceroute error: {str(e)}"
 
 
-def _parse_traceroute_output(output: str, system: str) -> List[TracerouteHop]:
+def _parse_traceroute_output(output: str, system: str) -> list[TracerouteHop]:
     """Parse traceroute output and extract hops with RTT values."""
     hops = []
     lines = output.split('\n')

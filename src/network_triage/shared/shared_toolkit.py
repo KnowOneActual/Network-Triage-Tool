@@ -1,19 +1,16 @@
 import os
 import platform
+import shutil
 import socket
 import struct
 import subprocess
 import threading
-import re
-import requests
-import psutil
-import shutil
-import speedtest
-from netmiko import ConnectHandler
-from scapy.all import sniff, inet_ntoa
-from scapy.contrib.lldp import LLDPDU
-from scapy.contrib.cdp import CDPMsg, CDPAddrRecord
 import xml.etree.ElementTree as ET
+
+import speedtest
+from scapy.all import inet_ntoa, sniff
+from scapy.contrib.cdp import CDPAddrRecord, CDPMsg
+from scapy.contrib.lldp import LLDPDU
 
 
 class NetworkTriageToolkitBase:
@@ -137,7 +134,7 @@ class NetworkTriageToolkitBase:
                         i += 2 + tlv_len
 
                     if not chassis_id_val or not port_id_val: raise ValueError("Essential LLDP fields not found.")
-                    result = f"--- LLDP Packet Found ---\n"
+                    result = "--- LLDP Packet Found ---\n"
                     if system_name_val: result += f"System Name: {system_name_val.decode('utf-8', 'ignore')}\n"
                     result += f"Switch ID: {chassis_id_val.decode('utf-8', 'ignore')}\n"
                     if mgmt_address_val: result += f"Management Address: {mgmt_address_val}\n"
@@ -203,8 +200,7 @@ class NetworkTriageToolkitBase:
         """
         Performs an Nmap scan by running it as a subprocess and parsing the XML output.
         """
-        import shutil  # Ensure shutil is available
-        
+
         # dynamic path resolution
         nmap_path = shutil.which("nmap")
         if not nmap_path:
@@ -213,13 +209,13 @@ class NetworkTriageToolkitBase:
                  nmap_path = "/usr/local/bin/nmap"
              elif os.path.exists("/opt/homebrew/bin/nmap"):
                  nmap_path = "/opt/homebrew/bin/nmap"
-        
+
         if not nmap_path:
              return [{'ip': 'Error', 'hostname': 'Nmap not found.', 'status': "Please install nmap (brew install nmap).", 'mac': '', 'vendor': '', 'details': {}}]
 
         try:
             command = [nmap_path, *arguments.split(), target, "-oX", "-"]
-            
+
             process = subprocess.run(
                 command,
                 capture_output=True,
@@ -233,31 +229,31 @@ class NetworkTriageToolkitBase:
             # ... (The rest of your XML parsing logic remains exactly the same) ...
             root = ET.fromstring(process.stdout)
             results = []
-            
+
             for host in root.findall('host'):
                 status_elem = host.find('status')
                 status = status_elem.get('state') if status_elem is not None else 'unknown'
-                
+
                 if status != 'up':
                     continue
 
                 addr_elem = host.find("address[@addrtype='ipv4']")
                 ip_addr = addr_elem.get('addr') if addr_elem is not None else 'N/A'
-                
+
                 mac_elem = host.find("address[@addrtype='mac']")
                 mac_addr = mac_elem.get('addr') if mac_elem is not None else ''
                 vendor = mac_elem.get('vendor') if mac_elem is not None else ''
-                
+
                 hostname_elem = host.find("hostnames/hostname")
                 hostname = hostname_elem.get('name') if hostname_elem is not None else ''
-                
+
                 host_details = {
                     'ip': ip_addr, 'hostname': hostname, 'status': status,
                     'mac': mac_addr, 'vendor': vendor, 'details': {}
                 }
                 # ... (keep existing port parsing logic) ...
                 results.append(host_details)
-            
+
             return results
 
         except Exception as e:

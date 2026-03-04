@@ -5,14 +5,13 @@ import socket
 import struct
 import subprocess
 import threading
-import time
-import json
-import requests
+
 import psutil
+import requests
 from netmiko import ConnectHandler
-from scapy.all import sniff, inet_ntoa
+from scapy.all import inet_ntoa, sniff
+from scapy.contrib.cdp import CDPAddrRecord, CDPMsg
 from scapy.contrib.lldp import LLDPDU
-from scapy.contrib.cdp import CDPMsg, CDPAddrRecord
 
 # Attempt to import the CoreWLAN framework for macOS
 try:
@@ -150,7 +149,7 @@ class NetworkTriageToolkit:
                     if ssid_match:
                         wifi_info["SSID"] = ssid_match.group(1)
 
-                    with open("/proc/net/wireless", "r") as f:
+                    with open("/proc/net/wireless") as f:
                         for line in f:
                             if interface in line:
                                 parts = line.split()
@@ -184,7 +183,7 @@ class NetworkTriageToolkit:
     def continuous_ping(self, host, callback):
         """Pings a host continuously and sends output to a callback."""
         self.stop_ping_event.clear()
-        param = "-n" if platform.system().lower() == "windows" else "-c"
+        "-n" if platform.system().lower() == "windows" else "-c"
         command = ["ping", host]
 
         try:
@@ -228,7 +227,7 @@ class NetworkTriageToolkit:
             output, _ = process.communicate(timeout=45)
 
             if process.returncode != 0 and "administrat" in output:
-                return f"Traceroute failed due to permissions. Please run with 'sudo'."
+                return "Traceroute failed due to permissions. Please run with 'sudo'."
             return f"--- Traceroute to {host} ---\n{output}"
 
         except subprocess.TimeoutExpired:
@@ -358,7 +357,7 @@ class NetworkTriageToolkit:
                     if not chassis_id_val or not port_id_val:
                         raise ValueError("Essential LLDP fields not found.")
 
-                    result = f"--- LLDP Packet Found ---\n"
+                    result = "--- LLDP Packet Found ---\n"
                     if system_name_val:
                         result += f"System Name: {system_name_val.decode('utf-8', 'ignore')}\n"
                     result += f"Switch ID: {chassis_id_val.decode('utf-8', 'ignore')}\n"

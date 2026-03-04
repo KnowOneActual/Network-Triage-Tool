@@ -9,13 +9,12 @@ Author: Network-Triage-Tool Contributors
 License: MIT
 """
 
+import concurrent.futures
 import socket
 import time
-from typing import Dict, List, Any, Optional, Tuple
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from enum import Enum
-import threading
-import concurrent.futures
+from typing import Any
 
 
 class DNSStatus(Enum):
@@ -40,19 +39,19 @@ class DNSRecord:
 class DNSLookupResult:
     """Complete DNS lookup result for a hostname."""
     hostname: str
-    ipv4_addresses: List[str]
-    ipv6_addresses: List[str]
-    reverse_dns: Optional[str]
+    ipv4_addresses: list[str]
+    ipv6_addresses: list[str]
+    reverse_dns: str | None
     lookup_time_ms: float
     status: DNSStatus
-    error_message: Optional[str] = None
-    records: List[DNSRecord] = None
+    error_message: str | None = None
+    records: list[DNSRecord] = None
 
     def __post_init__(self):
         if self.records is None:
             self.records = []
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary, excluding None values."""
         result = asdict(self)
         result['status'] = self.status.value
@@ -106,7 +105,7 @@ def resolve_hostname(
                 hostname, None, socket.AF_UNSPEC, socket.SOCK_STREAM
             )
 
-            for family, socktype, proto, canonname, sockaddr in address_info:
+            for family, _socktype, _proto, _canonname, sockaddr in address_info:
                 ip_addr = sockaddr[0]
                 query_time = (time.time() - start_time) * 1000
 
@@ -142,7 +141,7 @@ def resolve_hostname(
             ))
             return result
 
-        except socket.timeout:
+        except TimeoutError:
             result.status = DNSStatus.TIMEOUT
             result.error_message = f"DNS resolution timeout after {timeout}s"
             return result
@@ -158,7 +157,7 @@ def resolve_hostname(
                     query_time_ms=(time.time() - start_time) * 1000,
                     status=DNSStatus.SUCCESS
                 ))
-            except (socket.herror, socket.timeout):
+            except (TimeoutError, socket.herror):
                 # Reverse DNS is optional; don't fail if it times out
                 pass
 
@@ -178,7 +177,7 @@ def validate_dns_server(
     server_ip: str,
     test_domain: str = "google.com",
     timeout: int = 5
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Validate if a DNS server is responsive and functional.
 
@@ -223,7 +222,7 @@ def validate_dns_server(
             else:
                 result['status'] = 'no_response'
 
-        except socket.timeout:
+        except TimeoutError:
             result['status'] = 'timeout'
             result['error'] = f"No response after {timeout}s"
         except Exception as e:
@@ -244,7 +243,7 @@ def check_dns_propagation(
     domain: str,
     record_type: str = "A",
     timeout: int = 5
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """
     Check DNS propagation across multiple public DNS providers.
 
@@ -272,7 +271,7 @@ def check_dns_propagation(
 
     propagation_results = []
 
-    def check_with_resolver(provider_name: str, server_ip: str) -> Dict[str, Any]:
+    def check_with_resolver(provider_name: str, server_ip: str) -> dict[str, Any]:
         """Check a single DNS resolver."""
         try:
             # Set resolver temporarily
@@ -288,7 +287,7 @@ def check_dns_propagation(
             except socket.gaierror:
                 ips = []
                 status = 'not_found'
-            except socket.timeout:
+            except TimeoutError:
                 ips = []
                 status = 'timeout'
             finally:

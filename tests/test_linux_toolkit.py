@@ -8,19 +8,13 @@ to be skipped on non-Linux systems.
 """
 
 import sys
-import pytest
-from unittest.mock import Mock, patch, MagicMock
 from pathlib import Path
+
+import pytest
 
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from network_triage.exceptions import (
-    NetworkTriageException,
-    NetworkCommandError,
-    CommandNotFoundError,
-    NetworkConnectivityError,
-)
 from network_triage.linux.network_toolkit import NetworkTriageToolkit
 
 

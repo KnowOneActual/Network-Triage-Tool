@@ -1,19 +1,20 @@
 from textual.app import App, ComposeResult
-from textual.widgets import Header, Footer, TabbedContent, TabPane, Label
+from textual.widgets import Footer, Header, Label, TabbedContent, TabPane
+
 
 class DebugTabsApp(App):
     """A minimal app to verify Tabs work in your terminal."""
-    
+
     # INLINE CSS: This overrides everything else.
     CSS = """
     Screen {
         background: #222222;
     }
-    
+
     /* 1. Make the Tab container huge and red so we see if it exists */
     TabbedContent {
         height: 1fr;
-        border: solid red; 
+        border: solid red;
     }
 
     /* 2. Style the internal Tabs strip */
@@ -35,24 +36,24 @@ class DebugTabsApp(App):
         background: #00FF00; /* Bright Green */
         color: #000000;
     }
-    
+
     Label {
         padding: 2;
         /* font-size removed because terminals don't support it! */
-        text-style: bold; 
+        text-style: bold;
     }
     """
 
     def compose(self) -> ComposeResult:
         yield Header()
         yield Label("If you see Blue/Green tabs below, your terminal is fine.")
-        
+
         with TabbedContent(initial="tab1"):
             with TabPane("Tab 1", id="tab1"):
                 yield Label("✅ Tab 1 Content is Visible")
             with TabPane("Tab 2", id="tab2"):
                 yield Label("✅ Tab 2 Content is Visible")
-        
+
         yield Footer()
 
 if __name__ == "__main__":

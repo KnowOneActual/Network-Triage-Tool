@@ -1,6 +1,8 @@
 import platform
 import socket
+
 from ..shared.shared_toolkit import NetworkTriageToolkitBase
+
 
 class NetworkTriageToolkit(NetworkTriageToolkitBase):
     """Windows-specific network troubleshooting functions."""
@@ -21,7 +23,7 @@ class NetworkTriageToolkit(NetworkTriageToolkitBase):
             "Interface": "Pending",
             "Connection Type": "Windows Support Coming Soon",
             "Status": "Unknown",
-            "IP Address": "0.0.0.0",
+            "IP Address": "0.0.0.0",  # noqa: S104
             "MAC Address": "00:00:00:00:00:00",
             "Speed": "N/A",
             "MTU": "N/A",

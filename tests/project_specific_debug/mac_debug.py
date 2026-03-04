@@ -1,5 +1,5 @@
-import subprocess
 import platform
+import subprocess
 
 
 def run_final_debug():
