@@ -1,7 +1,0 @@
-netmiko
-scapy
-psutil
-requests
-speedtest-cli
-textual
-python-nmap
