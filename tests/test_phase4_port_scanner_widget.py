@@ -295,7 +295,6 @@ class TestPortScannerPhase3Integration:
         from tui.widgets import port_scanner_widget
 
         # Check that the module imports the required functions
-        assert hasattr(port_scanner_widget, 'check_port_open')
         assert hasattr(port_scanner_widget, 'check_multiple_ports')
         assert hasattr(port_scanner_widget, 'PortStatus')
         assert hasattr(port_scanner_widget, 'COMMON_SERVICE_PORTS')

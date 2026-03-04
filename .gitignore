@@ -97,3 +97,4 @@ _scratch.*
 *.scratch
 start-work.sh
 
+temp/
