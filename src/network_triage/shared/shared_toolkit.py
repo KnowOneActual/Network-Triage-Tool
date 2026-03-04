@@ -86,9 +86,7 @@ class NetworkTriageToolkitBase:
             return
 
         self.stop_discovery = False
-        self.discovery_thread = threading.Thread(
-            target=self._run_discovery_capture, args=(callback, timeout), daemon=True
-        )
+        self.discovery_thread = threading.Thread(target=self._run_discovery_capture, args=(callback, timeout), daemon=True)
         self.discovery_thread.start()
 
     def stop_discovery_capture(self):
@@ -98,9 +96,7 @@ class NetworkTriageToolkitBase:
     def _run_discovery_capture(self, callback, timeout):
         """The actual packet sniffing logic."""
         if platform.system() != "Windows" and os.geteuid() != 0:
-            callback(
-                "Packet capture requires administrator privileges. Please run with 'sudo'."
-            )
+            callback("Packet capture requires administrator privileges. Please run with 'sudo'.")
             return
 
         packet_found = [False]
@@ -118,27 +114,38 @@ class NetworkTriageToolkitBase:
                     raw_payload = bytes(packet[LLDPDU].payload)
                     i = 0
                     while i < len(raw_payload):
-                        if i + 2 > len(raw_payload): break
+                        if i + 2 > len(raw_payload):
+                            break
                         tlv_header = struct.unpack("!H", raw_payload[i : i + 2])[0]
                         tlv_type, tlv_len = tlv_header >> 9, tlv_header & 0x1FF
-                        if i + 2 + tlv_len > len(raw_payload): break
+                        if i + 2 + tlv_len > len(raw_payload):
+                            break
                         value_bytes = raw_payload[i + 2 : i + 2 + tlv_len]
 
-                        if tlv_type == 1: chassis_id_val = value_bytes[1:]
-                        elif tlv_type == 2: port_id_val = value_bytes[1:]
-                        elif tlv_type == 4: port_description_val = value_bytes
-                        elif tlv_type == 5: system_name_val = value_bytes
+                        if tlv_type == 1:
+                            chassis_id_val = value_bytes[1:]
+                        elif tlv_type == 2:
+                            port_id_val = value_bytes[1:]
+                        elif tlv_type == 4:
+                            port_description_val = value_bytes
+                        elif tlv_type == 5:
+                            system_name_val = value_bytes
                         elif tlv_type == 8 and len(value_bytes) > 1 and value_bytes[1] == 1:
                             mgmt_address_val = inet_ntoa(value_bytes[2:6])
-                        elif tlv_type == 0: break
+                        elif tlv_type == 0:
+                            break
                         i += 2 + tlv_len
 
-                    if not chassis_id_val or not port_id_val: raise ValueError("Essential LLDP fields not found.")
+                    if not chassis_id_val or not port_id_val:
+                        raise ValueError("Essential LLDP fields not found.")
                     result = "--- LLDP Packet Found ---\n"
-                    if system_name_val: result += f"System Name: {system_name_val.decode('utf-8', 'ignore')}\n"
+                    if system_name_val:
+                        result += f"System Name: {system_name_val.decode('utf-8', 'ignore')}\n"
                     result += f"Switch ID: {chassis_id_val.decode('utf-8', 'ignore')}\n"
-                    if mgmt_address_val: result += f"Management Address: {mgmt_address_val}\n"
-                    if port_description_val: result += f"Port Description: {port_description_val.decode('utf-8', 'ignore')}\n"
+                    if mgmt_address_val:
+                        result += f"Management Address: {mgmt_address_val}\n"
+                    if port_description_val:
+                        result += f"Port Description: {port_description_val.decode('utf-8', 'ignore')}\n"
                 except Exception as e:
                     result = f"Error parsing LLDP packet: {e}"
                 callback(result)
@@ -151,11 +158,13 @@ class NetworkTriageToolkitBase:
                     port_id = packet[CDPMsg].port_id.decode()
                     platform_str = packet[CDPMsg].platform.decode()
                     mgmt_address = next((addr.addr for addr in packet[CDPMsg].addr if isinstance(addr, CDPAddrRecord)), "N-A")
-                    result = (f"--- CDP Packet Found ---\n"
-                              f"Device ID: {device_id}\n"
-                              f"Management Address: {mgmt_address}\n"
-                              f"Port ID: {port_id}\n"
-                              f"Platform: {platform_str}")
+                    result = (
+                        f"--- CDP Packet Found ---\n"
+                        f"Device ID: {device_id}\n"
+                        f"Management Address: {mgmt_address}\n"
+                        f"Port ID: {port_id}\n"
+                        f"Platform: {platform_str}"
+                    )
                 except Exception as e:
                     result = f"Error parsing CDP packet: {e}"
                 callback(result)
@@ -196,7 +205,7 @@ class NetworkTriageToolkitBase:
         except Exception as e:
             return {"Error": f"Speed test failed: {e}"}
 
-    def run_network_scan(self, target, arguments='-F', callback=None):
+    def run_network_scan(self, target, arguments="-F", callback=None):
         """
         Performs an Nmap scan by running it as a subprocess and parsing the XML output.
         """
@@ -204,52 +213,69 @@ class NetworkTriageToolkitBase:
         # dynamic path resolution
         nmap_path = shutil.which("nmap")
         if not nmap_path:
-             # Fallback checks for common macOS locations
-             if os.path.exists("/usr/local/bin/nmap"):
-                 nmap_path = "/usr/local/bin/nmap"
-             elif os.path.exists("/opt/homebrew/bin/nmap"):
-                 nmap_path = "/opt/homebrew/bin/nmap"
+            # Fallback checks for common macOS locations
+            if os.path.exists("/usr/local/bin/nmap"):
+                nmap_path = "/usr/local/bin/nmap"
+            elif os.path.exists("/opt/homebrew/bin/nmap"):
+                nmap_path = "/opt/homebrew/bin/nmap"
 
         if not nmap_path:
-             return [{'ip': 'Error', 'hostname': 'Nmap not found.', 'status': "Please install nmap (brew install nmap).", 'mac': '', 'vendor': '', 'details': {}}]
+            return [
+                {
+                    "ip": "Error",
+                    "hostname": "Nmap not found.",
+                    "status": "Please install nmap (brew install nmap).",
+                    "mac": "",
+                    "vendor": "",
+                    "details": {},
+                }
+            ]
 
         try:
             command = [nmap_path, *arguments.split(), target, "-oX", "-"]
 
-            process = subprocess.run(
-                command,
-                capture_output=True,
-                text=True,
-                check=False
-            )
+            process = subprocess.run(command, capture_output=True, text=True, check=False)
 
             if process.returncode != 0:
-                return [{'ip': 'Error', 'hostname': 'Nmap Error', 'status': process.stderr.strip() or "Unknown Error", 'mac': '', 'vendor': '', 'details': {}}]
+                return [
+                    {
+                        "ip": "Error",
+                        "hostname": "Nmap Error",
+                        "status": process.stderr.strip() or "Unknown Error",
+                        "mac": "",
+                        "vendor": "",
+                        "details": {},
+                    }
+                ]
 
             # ... (The rest of your XML parsing logic remains exactly the same) ...
             root = ET.fromstring(process.stdout)
             results = []
 
-            for host in root.findall('host'):
-                status_elem = host.find('status')
-                status = status_elem.get('state') if status_elem is not None else 'unknown'
+            for host in root.findall("host"):
+                status_elem = host.find("status")
+                status = status_elem.get("state") if status_elem is not None else "unknown"
 
-                if status != 'up':
+                if status != "up":
                     continue
 
                 addr_elem = host.find("address[@addrtype='ipv4']")
-                ip_addr = addr_elem.get('addr') if addr_elem is not None else 'N/A'
+                ip_addr = addr_elem.get("addr") if addr_elem is not None else "N/A"
 
                 mac_elem = host.find("address[@addrtype='mac']")
-                mac_addr = mac_elem.get('addr') if mac_elem is not None else ''
-                vendor = mac_elem.get('vendor') if mac_elem is not None else ''
+                mac_addr = mac_elem.get("addr") if mac_elem is not None else ""
+                vendor = mac_elem.get("vendor") if mac_elem is not None else ""
 
                 hostname_elem = host.find("hostnames/hostname")
-                hostname = hostname_elem.get('name') if hostname_elem is not None else ''
+                hostname = hostname_elem.get("name") if hostname_elem is not None else ""
 
                 host_details = {
-                    'ip': ip_addr, 'hostname': hostname, 'status': status,
-                    'mac': mac_addr, 'vendor': vendor, 'details': {}
+                    "ip": ip_addr,
+                    "hostname": hostname,
+                    "status": status,
+                    "mac": mac_addr,
+                    "vendor": vendor,
+                    "details": {},
                 }
                 # ... (keep existing port parsing logic) ...
                 results.append(host_details)
@@ -257,7 +283,7 @@ class NetworkTriageToolkitBase:
             return results
 
         except Exception as e:
-            return [{'ip': 'Error', 'hostname': 'Exception', 'status': str(e), 'mac': '', 'vendor': '', 'details': {}}]
+            return [{"ip": "Error", "hostname": "Exception", "status": str(e), "mac": "", "vendor": "", "details": {}}]
 
     def stop_network_scan(self):
         """Stops a running Nmap scan."""

@@ -18,9 +18,7 @@ def inspect_wifi_output():
 
         command = [airport_path, "-I"]
         try:
-            process = subprocess.run(
-                command, capture_output=True, text=True, check=True
-            )
+            process = subprocess.run(command, capture_output=True, text=True, check=True)
             print("\n--- Raw Airport Output ---")
             print(process.stdout)
             print("--------------------------")

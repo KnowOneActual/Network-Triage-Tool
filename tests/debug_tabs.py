@@ -56,5 +56,6 @@ class DebugTabsApp(App):
 
         yield Footer()
 
+
 if __name__ == "__main__":
     DebugTabsApp().run()

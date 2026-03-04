@@ -32,11 +32,7 @@ class DNSResolverWidget(BaseWidget):
         with Vertical(id="input-section"):
             # Hostname input
             yield Label("Hostname:")
-            yield Input(
-                id="hostname-input",
-                placeholder="example.com",
-                tooltip="Enter hostname to resolve"
-            )
+            yield Input(id="hostname-input", placeholder="example.com", tooltip="Enter hostname to resolve")
 
             # Query type select
             yield Label("Query Type:")
@@ -49,15 +45,13 @@ class DNSResolverWidget(BaseWidget):
                     ("All Records", "ALL"),
                 ],
                 id="query-type-select",
-                value="A"
+                value="A",
             )
 
             # DNS server input (optional)
             yield Label("DNS Server (optional):")
             yield Input(
-                id="dns-server-input",
-                placeholder="Leave blank for system DNS",
-                tooltip="Optional: specify custom DNS server"
+                id="dns-server-input", placeholder="Leave blank for system DNS", tooltip="Optional: specify custom DNS server"
             )
 
             # Action buttons
@@ -113,11 +107,7 @@ class DNSResolverWidget(BaseWidget):
 
             # Perform DNS resolution using Phase 3 utility
             # This is synchronous, so it works in the main thread
-            result = resolve_dns_hostname(
-                hostname,
-                timeout=5,
-                include_reverse_dns=True
-            )
+            result = resolve_dns_hostname(hostname, timeout=5, include_reverse_dns=True)
 
             # Check if resolution was successful
             if result.status == DNSStatus.NOT_FOUND:
@@ -143,14 +133,9 @@ class DNSResolverWidget(BaseWidget):
                 if result.ipv4_addresses:
                     for ip in result.ipv4_addresses:
                         # Find the record with this IP to get timing
-                        record = next(
-                            (r for r in result.records if r.value == ip and r.record_type == "A"),
-                            None
-                        )
+                        record = next((r for r in result.records if r.value == ip and r.record_type == "A"), None)
                         self.results_widget.add_row(
-                            type="A",
-                            value=ip,
-                            time=f"{record.query_time_ms:.2f}" if record else "N/A"
+                            type="A", value=ip, time=f"{record.query_time_ms:.2f}" if record else "N/A"
                         )
                         record_count += 1
 
@@ -159,40 +144,25 @@ class DNSResolverWidget(BaseWidget):
                 if result.ipv6_addresses:
                     for ip in result.ipv6_addresses:
                         # Find the record with this IP to get timing
-                        record = next(
-                            (r for r in result.records if r.value == ip and r.record_type == "AAAA"),
-                            None
-                        )
+                        record = next((r for r in result.records if r.value == ip and r.record_type == "AAAA"), None)
                         self.results_widget.add_row(
-                            type="AAAA",
-                            value=ip,
-                            time=f"{record.query_time_ms:.2f}" if record else "N/A"
+                            type="AAAA", value=ip, time=f"{record.query_time_ms:.2f}" if record else "N/A"
                         )
                         record_count += 1
 
             # Add PTR record (Reverse DNS)
             if query_type in ["PTR", "ALL"]:
                 if result.reverse_dns:
-                    record = next(
-                        (r for r in result.records if r.record_type == "PTR"),
-                        None
-                    )
+                    record = next((r for r in result.records if r.record_type == "PTR"), None)
                     self.results_widget.add_row(
-                        type="PTR",
-                        value=result.reverse_dns,
-                        time=f"{record.query_time_ms:.2f}" if record else "N/A"
+                        type="PTR", value=result.reverse_dns, time=f"{record.query_time_ms:.2f}" if record else "N/A"
                     )
                     record_count += 1
 
             # Show success message
             if record_count > 0:
-                self.display_success(
-                    f"Resolved {hostname} - Found {record_count} record(s) "
-                    f"in {result.lookup_time_ms:.2f}ms"
-                )
-                self.set_status(
-                    f"✓ Resolved {hostname} - {record_count} records found"
-                )
+                self.display_success(f"Resolved {hostname} - Found {record_count} record(s) in {result.lookup_time_ms:.2f}ms")
+                self.set_status(f"✓ Resolved {hostname} - {record_count} records found")
             else:
                 self.display_error(f"No records found for {hostname}")
                 self.set_status(f"No records found for {hostname}")

@@ -20,6 +20,7 @@ from textual.widgets.data_table import RowKey
 @dataclass
 class ResultColumn:
     """Definition for a results table column."""
+
     name: str
     key: str
     width: int | None = None
@@ -71,18 +72,11 @@ class ResultsWidget(DataTable):
     def _setup_columns(self) -> None:
         """Initialize table columns."""
         for col in self.columns_def:
-            self.add_column(
-                col.name,
-                key=col.key,
-                width=col.cell_width or 20
-            )
+            self.add_column(col.name, key=col.key, width=col.cell_width or 20)
 
     def add_row(self, **data) -> RowKey:
         """Add a result row."""
-        values = [
-            str(data.get(col.key, ""))
-            for col in self.columns_def
-        ]
+        values = [str(data.get(col.key, "")) for col in self.columns_def]
         self.result_count += 1
         return super().add_row(*values, key=str(self.result_count))
 
@@ -189,14 +183,7 @@ class StatusIndicator(Static):
         yield status
     """
 
-    def __init__(
-        self,
-        status: str = "pending",
-        text: str = "",
-        details: str = "",
-        *args,
-        **kwargs
-    ):
+    def __init__(self, status: str = "pending", text: str = "", details: str = "", *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.status = status
         self.text = text

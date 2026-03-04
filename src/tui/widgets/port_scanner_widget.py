@@ -46,11 +46,7 @@ class PortScannerWidget(BaseWidget):
         with Vertical(id="input-section"):
             # Host input
             yield Label("Target Host:")
-            yield Input(
-                id="host-input",
-                placeholder="localhost or 192.168.1.1",
-                tooltip="Enter hostname or IP address"
-            )
+            yield Input(id="host-input", placeholder="localhost or 192.168.1.1", tooltip="Enter hostname or IP address")
 
             # Scan mode select
             yield Label("Scan Mode:")
@@ -62,7 +58,7 @@ class PortScannerWidget(BaseWidget):
                     ("Port Range (e.g. 1-1024)", "range"),
                 ],
                 id="scan-mode-select",
-                value="common"
+                value="common",
             )
 
             # Port input (conditional based on mode)
@@ -70,17 +66,12 @@ class PortScannerWidget(BaseWidget):
             yield Input(
                 id="port-input",
                 placeholder="e.g. 80 or 80,443,22 or 1-1024",
-                tooltip="Port number, comma-separated ports, or port range"
+                tooltip="Port number, comma-separated ports, or port range",
             )
 
             # Timeout setting
             yield Label("Timeout per port (seconds):")
-            yield Input(
-                id="timeout-input",
-                value="3",
-                placeholder="3",
-                tooltip="Connection timeout in seconds"
-            )
+            yield Input(id="timeout-input", value="3", placeholder="3", tooltip="Connection timeout in seconds")
 
             # Action buttons
             with Horizontal(id="button-section"):
@@ -282,12 +273,7 @@ class PortScannerWidget(BaseWidget):
             self.scan_in_progress = True
 
             # Perform port scan using Phase 3 utility
-            results = check_multiple_ports(
-                host,
-                ports_to_scan,
-                timeout=timeout,
-                max_workers=10
-            )
+            results = check_multiple_ports(host, ports_to_scan, timeout=timeout, max_workers=10)
 
             # Display results
             if results:
@@ -307,7 +293,7 @@ class PortScannerWidget(BaseWidget):
                         port=str(result.port),
                         service=result.service_name or "Unknown",
                         status=status_str,
-                        time=f"{result.response_time_ms:.1f}"
+                        time=f"{result.response_time_ms:.1f}",
                     )
 
                 # Generate and display summary
@@ -322,11 +308,8 @@ class PortScannerWidget(BaseWidget):
                 summary_label.update(summary_text)
 
                 # Show success message
-                if summary['open_count'] > 0:
-                    self.display_success(
-                        f"Scan complete! Found {summary['open_count']} open port(s) "
-                        f"on {host}"
-                    )
+                if summary["open_count"] > 0:
+                    self.display_success(f"Scan complete! Found {summary['open_count']} open port(s) on {host}")
                 else:
                     self.display_success(f"Scan complete on {host}. No open ports found.")
 

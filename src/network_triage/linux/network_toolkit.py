@@ -66,25 +66,25 @@ class NetworkTriageToolkit:
         """
         try:
             # Get distro info
-            distro = safe_subprocess_run(['lsb_release', '-ds'], timeout=5)
-            kernel = safe_subprocess_run(['uname', '-r'], timeout=5)
-            hostname = safe_subprocess_run(['hostname'], timeout=5)
-            arch = safe_subprocess_run(['uname', '-m'], timeout=5)
+            distro = safe_subprocess_run(["lsb_release", "-ds"], timeout=5)
+            kernel = safe_subprocess_run(["uname", "-r"], timeout=5)
+            hostname = safe_subprocess_run(["hostname"], timeout=5)
+            arch = safe_subprocess_run(["uname", "-m"], timeout=5)
 
             return {
-                'OS': distro.strip(),
-                'Hostname': hostname.strip(),
-                'Kernel': kernel.strip(),
-                'Arch': arch.strip(),
+                "OS": distro.strip(),
+                "Hostname": hostname.strip(),
+                "Kernel": kernel.strip(),
+                "Arch": arch.strip(),
             }
         except CommandNotFoundError as e:
             logger.warning(f"System info command not found: {e}")
             # Graceful fallback
             return {
-                'OS': 'Linux',
-                'Hostname': 'Unknown',
-                'Kernel': 'Unknown',
-                'Arch': 'Unknown',
+                "OS": "Linux",
+                "Hostname": "Unknown",
+                "Kernel": "Unknown",
+                "Arch": "Unknown",
             }
         except Exception as e:
             logger.error(f"Failed to get system info: {e}")
@@ -113,44 +113,44 @@ class NetworkTriageToolkit:
         """
         try:
             # Find default gateway and primary interface
-            route_output = safe_subprocess_run(['ip', 'route', 'show', 'default'], timeout=5)
+            route_output = safe_subprocess_run(["ip", "route", "show", "default"], timeout=5)
 
             # Parse to extract primary interface (usually second field)
             parts = route_output.split()
             if len(parts) >= 5:
                 interface = parts[4]
             else:
-                interface = 'eth0'  # fallback
+                interface = "eth0"  # fallback
 
             # Get internal IP from primary interface
-            ip_output = safe_subprocess_run(['ip', '-4', 'addr', 'show', interface], timeout=5)
+            ip_output = safe_subprocess_run(["ip", "-4", "addr", "show", interface], timeout=5)
 
             # Extract IP using regex
-            ip_match = re.search(r'inet (\d+\.\d+\.\d+\.\d+)', ip_output)
-            internal_ip = ip_match.group(1) if ip_match else 'Unknown'
+            ip_match = re.search(r"inet (\d+\.\d+\.\d+\.\d+)", ip_output)
+            internal_ip = ip_match.group(1) if ip_match else "Unknown"
 
             # Extract gateway from route output
-            gateway = parts[2] if len(parts) >= 3 else 'Unknown'
+            gateway = parts[2] if len(parts) >= 3 else "Unknown"
 
             # Get public IP via HTTP
             try:
-                public_data = safe_http_request('https://api.ipify.org?format=json', timeout=5)
-                public_ip = public_data.get('ip', 'Unavailable')
+                public_data = safe_http_request("https://api.ipify.org?format=json", timeout=5)
+                public_ip = public_data.get("ip", "Unavailable")
             except Exception as e:
                 logger.warning(f"Could not get public IP: {e}")
-                public_ip = 'Unavailable'
+                public_ip = "Unavailable"
 
             return {
-                'Internal IP': internal_ip,
-                'Public IP': public_ip,
-                'Gateway': gateway,
+                "Internal IP": internal_ip,
+                "Public IP": public_ip,
+                "Gateway": gateway,
             }
         except Exception as e:
             logger.error(f"Failed to get IP info: {e}")
             return {
-                'Internal IP': 'Unknown',
-                'Public IP': 'Unavailable',
-                'Gateway': 'Unknown',
+                "Internal IP": "Unknown",
+                "Public IP": "Unavailable",
+                "Gateway": "Unknown",
             }
 
     def get_connection_details(self) -> dict:
@@ -185,77 +185,77 @@ class NetworkTriageToolkit:
         """
         try:
             # Get primary interface
-            route_output = safe_subprocess_run(['ip', 'route', 'show', 'default'], timeout=5)
+            route_output = safe_subprocess_run(["ip", "route", "show", "default"], timeout=5)
             parts = route_output.split()
-            interface = parts[4] if len(parts) >= 5 else 'eth0'
+            interface = parts[4] if len(parts) >= 5 else "eth0"
 
             # Get IP and netmask
-            addr_output = safe_subprocess_run(['ip', '-4', 'addr', 'show', interface], timeout=5)
-            ip_match = re.search(r'inet (\d+\.\d+\.\d+\.\d+)/(\d+)', addr_output)
-            ip_addr = ip_match.group(1) if ip_match else 'Unknown'
-            netmask_bits = ip_match.group(2) if ip_match else '24'
+            addr_output = safe_subprocess_run(["ip", "-4", "addr", "show", interface], timeout=5)
+            ip_match = re.search(r"inet (\d+\.\d+\.\d+\.\d+)/(\d+)", addr_output)
+            ip_addr = ip_match.group(1) if ip_match else "Unknown"
+            netmask_bits = ip_match.group(2) if ip_match else "24"
 
             # Convert netmask bits to dotted notation
             def bits_to_netmask(bits):
                 try:
                     bits = int(bits)
-                    mask = (0xffffffff >> (32 - bits)) << (32 - bits)
-                    return '.'.join([str((mask >> (i << 3)) & 0xff) for i in range(4)[::-1]])
+                    mask = (0xFFFFFFFF >> (32 - bits)) << (32 - bits)
+                    return ".".join([str((mask >> (i << 3)) & 0xFF) for i in range(4)[::-1]])
                 except:
-                    return '255.255.255.0'
+                    return "255.255.255.0"
 
             netmask = bits_to_netmask(netmask_bits)
 
             # Get MAC address and MTU
-            link_output = safe_subprocess_run(['ip', 'link', 'show', interface], timeout=5)
-            mac_match = re.search(r'link/ether ([0-9a-f:]+)', link_output)
-            mac_addr = mac_match.group(1) if mac_match else 'Unknown'
+            link_output = safe_subprocess_run(["ip", "link", "show", interface], timeout=5)
+            mac_match = re.search(r"link/ether ([0-9a-f:]+)", link_output)
+            mac_addr = mac_match.group(1) if mac_match else "Unknown"
 
-            mtu_match = re.search(r'mtu (\d+)', link_output)
-            mtu = mtu_match.group(1) if mtu_match else 'Unknown'
+            mtu_match = re.search(r"mtu (\d+)", link_output)
+            mtu = mtu_match.group(1) if mtu_match else "Unknown"
 
             # Get gateway
-            gateway = parts[2] if len(parts) >= 3 else 'Unknown'
+            gateway = parts[2] if len(parts) >= 3 else "Unknown"
 
             # Get speed using ethtool
             try:
-                ethtool_output = safe_subprocess_run(['ethtool', interface], timeout=5)
-                speed_match = re.search(r'Speed: (\d+Mb/s)', ethtool_output)
-                speed = speed_match.group(1) if speed_match else 'Unknown'
+                ethtool_output = safe_subprocess_run(["ethtool", interface], timeout=5)
+                speed_match = re.search(r"Speed: (\d+Mb/s)", ethtool_output)
+                speed = speed_match.group(1) if speed_match else "Unknown"
             except CommandNotFoundError:
-                speed = 'Unknown (ethtool not installed)'
+                speed = "Unknown (ethtool not installed)"
             except Exception as e:
                 logger.warning(f"Could not get speed: {e}")
-                speed = 'Unknown'
+                speed = "Unknown"
 
             # Check if wireless and get WiFi details
             wifi_details = {}
             try:
-                iwconfig_output = safe_subprocess_run(['iwconfig', interface], timeout=5)
+                iwconfig_output = safe_subprocess_run(["iwconfig", interface], timeout=5)
                 # Check if it's a wireless interface (iwconfig succeeds and doesn't show "no wireless")
-                if 'no wireless extensions' not in iwconfig_output.lower():
+                if "no wireless extensions" not in iwconfig_output.lower():
                     # Extract SSID
                     ssid_match = re.search(r'ESSID:"([^"]+)"', iwconfig_output)
                     if ssid_match:
-                        wifi_details['SSID'] = ssid_match.group(1)
+                        wifi_details["SSID"] = ssid_match.group(1)
 
                     # Extract signal strength
-                    signal_match = re.search(r'Signal level[=:](^\s]+)', iwconfig_output)
+                    signal_match = re.search(r"Signal level[=:](^\s]+)", iwconfig_output)
                     if signal_match:
-                        wifi_details['Signal Strength'] = signal_match.group(1)
+                        wifi_details["Signal Strength"] = signal_match.group(1)
             except CommandNotFoundError:
                 pass  # iwconfig not installed, skip wireless info
             except Exception as e:
                 logger.debug(f"Could not get WiFi details: {e}")
 
             result = {
-                'Interface': interface,
-                'IP Address': ip_addr,
-                'Netmask': netmask,
-                'MAC Address': mac_addr,
-                'Speed': speed,
-                'MTU': mtu,
-                'Gateway': gateway,
+                "Interface": interface,
+                "IP Address": ip_addr,
+                "Netmask": netmask,
+                "MAC Address": mac_addr,
+                "Speed": speed,
+                "MTU": mtu,
+                "Gateway": gateway,
             }
 
             # Add WiFi details if available
@@ -266,13 +266,13 @@ class NetworkTriageToolkit:
         except Exception as e:
             logger.error(f"Failed to get connection details: {e}")
             return {
-                'Interface': 'Unknown',
-                'IP Address': 'Unknown',
-                'MAC Address': 'Unknown',
-                'Netmask': 'Unknown',
-                'Speed': 'Unknown',
-                'MTU': 'Unknown',
-                'Gateway': 'Unknown',
+                "Interface": "Unknown",
+                "IP Address": "Unknown",
+                "MAC Address": "Unknown",
+                "Netmask": "Unknown",
+                "Speed": "Unknown",
+                "MTU": "Unknown",
+                "Gateway": "Unknown",
             }
 
     def network_adapter_info(self) -> dict:
@@ -304,45 +304,45 @@ class NetworkTriageToolkit:
             adapters = {}
 
             # Get all interfaces using 'ip link show'
-            link_output = safe_subprocess_run(['ip', 'link', 'show'], timeout=5)
+            link_output = safe_subprocess_run(["ip", "link", "show"], timeout=5)
 
             # Parse each interface line (format: "<number>: <name>: <flags>...")
-            for line in link_output.split('\n'):
+            for line in link_output.split("\n"):
                 # Look for interface lines (start with digit)
                 if line and line[0].isdigit():
                     # Extract interface name and status
-                    match = re.match(r'\d+: ([^:]+):', line)
+                    match = re.match(r"\d+: ([^:]+):", line)
                     if match:
                         iface_name = match.group(1)
 
                         # Determine if interface is up or down
-                        status = 'up' if 'UP' in line else 'down'
+                        status = "up" if "UP" in line else "down"
 
                         # Determine interface type
-                        iface_type = 'unknown'
-                        if 'loopback' in line.lower():
-                            iface_type = 'loopback'
-                        elif 'link/ether' in line.lower():
-                            iface_type = 'ethernet'
+                        iface_type = "unknown"
+                        if "loopback" in line.lower():
+                            iface_type = "loopback"
+                        elif "link/ether" in line.lower():
+                            iface_type = "ethernet"
 
                         # Get MAC address and MTU for this interface
                         try:
-                            iface_link_output = safe_subprocess_run(['ip', 'link', 'show', iface_name], timeout=5)
-                            mac_match = re.search(r'link/ether ([0-9a-f:]+)', iface_link_output)
-                            mac = mac_match.group(1) if mac_match else 'N/A'
+                            iface_link_output = safe_subprocess_run(["ip", "link", "show", iface_name], timeout=5)
+                            mac_match = re.search(r"link/ether ([0-9a-f:]+)", iface_link_output)
+                            mac = mac_match.group(1) if mac_match else "N/A"
 
-                            mtu_match = re.search(r'mtu (\d+)', iface_link_output)
-                            mtu = mtu_match.group(1) if mtu_match else 'Unknown'
+                            mtu_match = re.search(r"mtu (\d+)", iface_link_output)
+                            mtu = mtu_match.group(1) if mtu_match else "Unknown"
                         except Exception as e:
                             logger.debug(f"Could not get details for {iface_name}: {e}")
-                            mac = 'N/A'
-                            mtu = 'Unknown'
+                            mac = "N/A"
+                            mtu = "Unknown"
 
                         # Get IP address for this interface
                         ip_addr = None
                         try:
-                            addr_output = safe_subprocess_run(['ip', '-4', 'addr', 'show', iface_name], timeout=5)
-                            ip_match = re.search(r'inet (\d+\.\d+\.\d+\.\d+)', addr_output)
+                            addr_output = safe_subprocess_run(["ip", "-4", "addr", "show", iface_name], timeout=5)
+                            ip_match = re.search(r"inet (\d+\.\d+\.\d+\.\d+)", addr_output)
                             if ip_match:
                                 ip_addr = ip_match.group(1)
                         except Exception as e:
@@ -350,9 +350,9 @@ class NetworkTriageToolkit:
 
                         # Check if wireless
                         try:
-                            iwconfig_output = safe_subprocess_run(['iwconfig', iface_name], timeout=5)
-                            if 'no wireless extensions' not in iwconfig_output.lower():
-                                iface_type = 'wireless'
+                            iwconfig_output = safe_subprocess_run(["iwconfig", iface_name], timeout=5)
+                            if "no wireless extensions" not in iwconfig_output.lower():
+                                iface_type = "wireless"
                         except CommandNotFoundError:
                             pass  # iwconfig not available
                         except Exception:
@@ -360,19 +360,19 @@ class NetworkTriageToolkit:
 
                         # Store adapter info
                         adapters[iface_name] = {
-                            'Status': status,
-                            'Type': iface_type,
-                            'MAC': mac,
-                            'MTU': mtu,
+                            "Status": status,
+                            "Type": iface_type,
+                            "MAC": mac,
+                            "MTU": mtu,
                         }
 
                         if ip_addr:
-                            adapters[iface_name]['IP'] = ip_addr
+                            adapters[iface_name]["IP"] = ip_addr
 
-            return adapters if adapters else {'error': 'No interfaces found'}
+            return adapters if adapters else {"error": "No interfaces found"}
         except Exception as e:
             logger.error(f"Failed to get network adapter info: {e}")
-            return {'error': f'Failed to get adapter info: {e}'}
+            return {"error": f"Failed to get adapter info: {e}"}
 
     def traceroute_test(self, destination: str = "8.8.8.8") -> dict:
         """Perform a traceroute test to a destination.
@@ -427,9 +427,7 @@ class NetworkTriageToolkit:
                     latencies = re.findall(r"([\\d.]+)\\s+ms", line)
                     if latencies:
                         hop_info["Latencies"] = [float(lat) for lat in latencies]
-                        hop_info["Avg Latency"] = sum(hop_info["Latencies"]) / len(
-                            hop_info["Latencies"]
-                        )
+                        hop_info["Avg Latency"] = sum(hop_info["Latencies"]) / len(hop_info["Latencies"])
                     else:
                         hop_info["Status"] = "Unknown response format"
 
@@ -468,8 +466,6 @@ class NetworkTriageToolkit:
                 "Success": False,
                 "Message": f"Traceroute failed: {exc}",
             }
-
-
 
 
 # TODO: Helper functions for Linux-specific parsing

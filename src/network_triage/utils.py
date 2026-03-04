@@ -40,6 +40,7 @@ def retry(
         def fetch_public_ip():
             return requests.get('https://ipinfo.io/json').json()
     """
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         def wrapper(*args, **kwargs) -> Any:
@@ -59,9 +60,7 @@ def retry(
                         time.sleep(current_delay)
                         current_delay *= backoff
                     else:
-                        logger.error(
-                            f"All {max_attempts} attempts failed for {func.__name__}: {e}"
-                        )
+                        logger.error(f"All {max_attempts} attempts failed for {func.__name__}: {e}")
 
             # If we've exhausted all retries, raise the last exception
             raise last_exception
@@ -100,10 +99,7 @@ def safe_subprocess_run(
     if check_command_exists and not shell:
         cmd_name = command[0]
         if not shutil.which(cmd_name):
-            raise CommandNotFoundError(
-                f"Command '{cmd_name}' not found. "
-                f"Please install it or ensure it's in your PATH."
-            )
+            raise CommandNotFoundError(f"Command '{cmd_name}' not found. Please install it or ensure it's in your PATH.")
 
     try:
         result = subprocess.run(
@@ -117,16 +113,12 @@ def safe_subprocess_run(
 
         if result.returncode != 0:
             error_msg = result.stderr.strip() or result.stdout.strip()
-            raise NetworkCommandError(
-                f"Command '{' '.join(command)}' failed with exit code {result.returncode}: {error_msg}"
-            )
+            raise NetworkCommandError(f"Command '{' '.join(command)}' failed with exit code {result.returncode}: {error_msg}")
 
         return result.stdout.strip()
 
     except subprocess.TimeoutExpired:
-        raise NetworkTimeoutError(
-            f"Command '{' '.join(command)}' exceeded {timeout}s timeout"
-        )
+        raise NetworkTimeoutError(f"Command '{' '.join(command)}' exceeded {timeout}s timeout")
     except CommandNotFoundError:
         raise  # Re-raise our custom exception
     except NetworkCommandError:
@@ -171,6 +163,7 @@ def safe_socket_operation(
 
         # Only use signal on Unix systems
         import platform
+
         if platform.system() != "Windows":
             old_handler = signal.signal(signal.SIGALRM, timeout_handler)
             signal.alarm(int(timeout) + 1)  # +1 for safety
@@ -223,9 +216,7 @@ def safe_http_request(
     try:
         return _request()
     except Exception as e:
-        raise NetworkConnectivityError(
-            f"Failed to fetch {url} after {retries} attempts: {e}"
-        )
+        raise NetworkConnectivityError(f"Failed to fetch {url} after {retries} attempts: {e}")
 
 
 def format_error_message(error: Exception, context: str = "") -> str:

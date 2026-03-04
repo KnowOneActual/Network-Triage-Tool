@@ -19,6 +19,7 @@ from typing import Any
 
 class DNSStatus(Enum):
     """DNS lookup status indicators."""
+
     SUCCESS = "success"
     TIMEOUT = "timeout"
     NOT_FOUND = "not_found"
@@ -29,6 +30,7 @@ class DNSStatus(Enum):
 @dataclass
 class DNSRecord:
     """Represents a single DNS record result."""
+
     record_type: str  # 'A', 'AAAA', 'PTR'
     value: str  # IP address or hostname
     query_time_ms: float
@@ -38,6 +40,7 @@ class DNSRecord:
 @dataclass
 class DNSLookupResult:
     """Complete DNS lookup result for a hostname."""
+
     hostname: str
     ipv4_addresses: list[str]
     ipv6_addresses: list[str]
@@ -54,19 +57,12 @@ class DNSLookupResult:
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary, excluding None values."""
         result = asdict(self)
-        result['status'] = self.status.value
-        result['records'] = [
-            {**asdict(r), 'status': r.status.value}
-            for r in self.records
-        ]
+        result["status"] = self.status.value
+        result["records"] = [{**asdict(r), "status": r.status.value} for r in self.records]
         return {k: v for k, v in result.items() if v is not None}
 
 
-def resolve_hostname(
-    hostname: str,
-    timeout: int = 5,
-    include_reverse_dns: bool = True
-) -> DNSLookupResult:
+def resolve_hostname(hostname: str, timeout: int = 5, include_reverse_dns: bool = True) -> DNSLookupResult:
     """
     Resolve A, AAAA, and optionally reverse DNS records for a hostname.
 
@@ -91,7 +87,7 @@ def resolve_hostname(
         reverse_dns=None,
         lookup_time_ms=0,
         status=DNSStatus.SUCCESS,
-        error_message=None
+        error_message=None,
     )
 
     # Set socket timeout
@@ -101,9 +97,7 @@ def resolve_hostname(
     try:
         # Try getaddrinfo for both A and AAAA records
         try:
-            address_info = socket.getaddrinfo(
-                hostname, None, socket.AF_UNSPEC, socket.SOCK_STREAM
-            )
+            address_info = socket.getaddrinfo(hostname, None, socket.AF_UNSPEC, socket.SOCK_STREAM)
 
             for family, _socktype, _proto, _canonname, sockaddr in address_info:
                 ip_addr = sockaddr[0]
@@ -112,33 +106,26 @@ def resolve_hostname(
                 if family == socket.AF_INET:
                     if ip_addr not in result.ipv4_addresses:
                         result.ipv4_addresses.append(ip_addr)
-                        result.records.append(DNSRecord(
-                            record_type='A',
-                            value=ip_addr,
-                            query_time_ms=query_time,
-                            status=DNSStatus.SUCCESS
-                        ))
+                        result.records.append(
+                            DNSRecord(record_type="A", value=ip_addr, query_time_ms=query_time, status=DNSStatus.SUCCESS)
+                        )
                 elif family == socket.AF_INET6:
                     # Normalize IPv6 address (remove trailing %interface)
-                    ipv6_clean = ip_addr.split('%')[0]
+                    ipv6_clean = ip_addr.split("%")[0]
                     if ipv6_clean not in result.ipv6_addresses:
                         result.ipv6_addresses.append(ipv6_clean)
-                        result.records.append(DNSRecord(
-                            record_type='AAAA',
-                            value=ipv6_clean,
-                            query_time_ms=query_time,
-                            status=DNSStatus.SUCCESS
-                        ))
+                        result.records.append(
+                            DNSRecord(record_type="AAAA", value=ipv6_clean, query_time_ms=query_time, status=DNSStatus.SUCCESS)
+                        )
 
         except socket.gaierror as e:
             result.status = DNSStatus.NOT_FOUND
             result.error_message = str(e)
-            result.records.append(DNSRecord(
-                record_type='A/AAAA',
-                value='',
-                query_time_ms=(time.time() - start_time) * 1000,
-                status=DNSStatus.NOT_FOUND
-            ))
+            result.records.append(
+                DNSRecord(
+                    record_type="A/AAAA", value="", query_time_ms=(time.time() - start_time) * 1000, status=DNSStatus.NOT_FOUND
+                )
+            )
             return result
 
         except TimeoutError:
@@ -151,12 +138,14 @@ def resolve_hostname(
             try:
                 reverse_lookup = socket.gethostbyaddr(result.ipv4_addresses[0])
                 result.reverse_dns = reverse_lookup[0]
-                result.records.append(DNSRecord(
-                    record_type='PTR',
-                    value=reverse_lookup[0],
-                    query_time_ms=(time.time() - start_time) * 1000,
-                    status=DNSStatus.SUCCESS
-                ))
+                result.records.append(
+                    DNSRecord(
+                        record_type="PTR",
+                        value=reverse_lookup[0],
+                        query_time_ms=(time.time() - start_time) * 1000,
+                        status=DNSStatus.SUCCESS,
+                    )
+                )
             except (TimeoutError, socket.herror):
                 # Reverse DNS is optional; don't fail if it times out
                 pass
@@ -173,11 +162,7 @@ def resolve_hostname(
     return result
 
 
-def validate_dns_server(
-    server_ip: str,
-    test_domain: str = "google.com",
-    timeout: int = 5
-) -> dict[str, Any]:
+def validate_dns_server(server_ip: str, test_domain: str = "google.com", timeout: int = 5) -> dict[str, Any]:
     """
     Validate if a DNS server is responsive and functional.
 
@@ -196,12 +181,12 @@ def validate_dns_server(
     """
     start_time = time.time()
     result = {
-        'server_ip': server_ip,
-        'test_domain': test_domain,
-        'is_responsive': False,
-        'response_time_ms': 0,
-        'error': None,
-        'status': 'unknown'
+        "server_ip": server_ip,
+        "test_domain": test_domain,
+        "is_responsive": False,
+        "response_time_ms": 0,
+        "error": None,
+        "status": "unknown",
     }
 
     try:
@@ -217,33 +202,29 @@ def validate_dns_server(
             response, _ = sock.recvfrom(512)
 
             if response:
-                result['is_responsive'] = True
-                result['status'] = 'responsive'
+                result["is_responsive"] = True
+                result["status"] = "responsive"
             else:
-                result['status'] = 'no_response'
+                result["status"] = "no_response"
 
         except TimeoutError:
-            result['status'] = 'timeout'
-            result['error'] = f"No response after {timeout}s"
+            result["status"] = "timeout"
+            result["error"] = f"No response after {timeout}s"
         except Exception as e:
-            result['status'] = 'error'
-            result['error'] = str(e)
+            result["status"] = "error"
+            result["error"] = str(e)
         finally:
             sock.close()
 
     except Exception as e:
-        result['status'] = 'error'
-        result['error'] = str(e)
+        result["status"] = "error"
+        result["error"] = str(e)
 
-    result['response_time_ms'] = (time.time() - start_time) * 1000
+    result["response_time_ms"] = (time.time() - start_time) * 1000
     return result
 
 
-def check_dns_propagation(
-    domain: str,
-    record_type: str = "A",
-    timeout: int = 5
-) -> list[dict[str, Any]]:
+def check_dns_propagation(domain: str, record_type: str = "A", timeout: int = 5) -> list[dict[str, Any]]:
     """
     Check DNS propagation across multiple public DNS providers.
 
@@ -262,11 +243,11 @@ def check_dns_propagation(
     """
     # Major public DNS providers
     public_dns_servers = {
-        'Google': ['8.8.8.8', '8.8.4.4'],
-        'Cloudflare': ['1.1.1.1', '1.0.0.1'],
-        'OpenDNS': ['208.67.222.222', '208.67.220.220'],
-        'Quad9': ['9.9.9.9', '149.112.112.112'],
-        'ISP DNS': ['8.8.8.8'],  # Fallback; user may override
+        "Google": ["8.8.8.8", "8.8.4.4"],
+        "Cloudflare": ["1.1.1.1", "1.0.0.1"],
+        "OpenDNS": ["208.67.222.222", "208.67.220.220"],
+        "Quad9": ["9.9.9.9", "149.112.112.112"],
+        "ISP DNS": ["8.8.8.8"],  # Fallback; user may override
     }
 
     propagation_results = []
@@ -283,30 +264,19 @@ def check_dns_propagation(
                 # More reliable: use direct socket query
                 addresses = socket.gethostbyname_ex(domain)
                 ips = addresses[2]
-                status = 'found'
+                status = "found"
             except socket.gaierror:
                 ips = []
-                status = 'not_found'
+                status = "not_found"
             except TimeoutError:
                 ips = []
-                status = 'timeout'
+                status = "timeout"
             finally:
                 socket.setdefaulttimeout(old_timeout)
 
-            return {
-                'provider': provider_name,
-                'server_ip': server_ip,
-                'ips': ips,
-                'status': status
-            }
+            return {"provider": provider_name, "server_ip": server_ip, "ips": ips, "status": status}
         except Exception as e:
-            return {
-                'provider': provider_name,
-                'server_ip': server_ip,
-                'ips': [],
-                'status': 'error',
-                'error': str(e)
-            }
+            return {"provider": provider_name, "server_ip": server_ip, "ips": [], "status": "error", "error": str(e)}
 
     # Use ThreadPoolExecutor for concurrent checks
     with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
@@ -321,11 +291,7 @@ def check_dns_propagation(
                 result = future.result(timeout=timeout + 2)
                 propagation_results.append(result)
             except Exception as e:
-                propagation_results.append({
-                    'provider': 'unknown',
-                    'status': 'error',
-                    'error': str(e)
-                })
+                propagation_results.append({"provider": "unknown", "status": "error", "error": str(e)})
 
     return propagation_results
 
@@ -344,30 +310,30 @@ def _build_simple_dns_query(domain: str) -> bytes:
         Binary DNS query packet
     """
     # DNS header
-    transaction_id = b'\x00\x01'  # Simple ID
-    flags = b'\x01\x00'  # Standard query
-    questions = b'\x00\x01'  # 1 question
-    answer_rrs = b'\x00\x00'  # No answers (request)
-    authority_rrs = b'\x00\x00'  # No authority
-    additional_rrs = b'\x00\x00'  # No additional
+    transaction_id = b"\x00\x01"  # Simple ID
+    flags = b"\x01\x00"  # Standard query
+    questions = b"\x00\x01"  # 1 question
+    answer_rrs = b"\x00\x00"  # No answers (request)
+    authority_rrs = b"\x00\x00"  # No authority
+    additional_rrs = b"\x00\x00"  # No additional
 
     header = transaction_id + flags + questions + answer_rrs + authority_rrs + additional_rrs
 
     # Question section
-    question = b''
-    for label in domain.split('.'):
-        question += bytes([len(label)]) + label.encode('utf-8')
-    question += b'\x00'  # Root label
-    question += b'\x00\x01'  # Type A
-    question += b'\x00\x01'  # Class IN
+    question = b""
+    for label in domain.split("."):
+        question += bytes([len(label)]) + label.encode("utf-8")
+    question += b"\x00"  # Root label
+    question += b"\x00\x01"  # Type A
+    question += b"\x00\x01"  # Class IN
 
     return header + question
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Example usage
     print("\n=== DNS Resolution Test ===")
-    result = resolve_hostname('google.com')
+    result = resolve_hostname("google.com")
     print(f"Hostname: {result.hostname}")
     print(f"IPv4: {result.ipv4_addresses}")
     print(f"IPv6: {result.ipv6_addresses}")
@@ -376,12 +342,12 @@ if __name__ == '__main__':
     print(f"Status: {result.status.value}")
 
     print("\n=== DNS Server Validation ===")
-    server_result = validate_dns_server('8.8.8.8')
+    server_result = validate_dns_server("8.8.8.8")
     print(f"Server: {server_result['server_ip']}")
     print(f"Responsive: {server_result['is_responsive']}")
     print(f"Response time: {server_result['response_time_ms']:.2f}ms")
 
     print("\n=== DNS Propagation Check ===")
-    propagation = check_dns_propagation('google.com')
+    propagation = check_dns_propagation("google.com")
     for provider_result in propagation:
         print(f"{provider_result['provider']}: {provider_result['status']}")

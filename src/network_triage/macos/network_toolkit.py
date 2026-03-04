@@ -54,21 +54,25 @@ class NetworkTriageToolkit(NetworkTriageToolkitBase):
             try:
                 # Get marketing name from system
                 product_name = safe_subprocess_run(
-                    ['sw_vers', '-productName'],
+                    ["sw_vers", "-productName"],
                     timeout=5,
                     check_command_exists=False,
                 )
                 product_version = safe_subprocess_run(
-                    ['sw_vers', '-productVersion'],
+                    ["sw_vers", "-productVersion"],
                     timeout=5,
                     check_command_exists=False,
                 )
 
                 # Parse major version and map to marketing name
-                major_version = int(product_version.split('.')[0])
+                major_version = int(product_version.split(".")[0])
                 marketing_names = {
-                    15: "Sequoia", 14: "Sonoma", 13: "Ventura",
-                    12: "Monterey", 11: "Big Sur", 10: "Catalina",
+                    15: "Sequoia",
+                    14: "Sonoma",
+                    13: "Ventura",
+                    12: "Monterey",
+                    11: "Big Sur",
+                    10: "Catalina",
                 }
                 marketing_name = marketing_names.get(major_version, "")
 
@@ -105,6 +109,7 @@ class NetworkTriageToolkit(NetworkTriageToolkitBase):
 
         # Get internal IP via socket connection
         try:
+
             def _get_internal_ip():
                 with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
                     # Connect to a non-routable address (doesn't actually connect)
@@ -128,8 +133,8 @@ class NetworkTriageToolkit(NetworkTriageToolkitBase):
                 check_command_exists=False,
             )
             # Parse netstat output for default gateway
-            for line in gateway.split('\n'):
-                if 'default' in line:
+            for line in gateway.split("\n"):
+                if "default" in line:
                     parts = line.split()
                     if len(parts) > 1:
                         info["Gateway"] = parts[1]
@@ -144,7 +149,7 @@ class NetworkTriageToolkit(NetworkTriageToolkitBase):
 
         # Get public IP via HTTP request
         try:
-            data = safe_http_request('https://ipinfo.io/json', timeout=5, retries=2)
+            data = safe_http_request("https://ipinfo.io/json", timeout=5, retries=2)
             info["Public IP"] = data.get("ip", "N/A")
         except NetworkConnectivityError as e:
             logger.debug(f"Could not get public IP: {e}")
@@ -178,8 +183,8 @@ class NetworkTriageToolkit(NetworkTriageToolkitBase):
                     check_command_exists=False,
                 )
                 # Parse netstat output
-                for line in interface_name.split('\n'):
-                    if 'default' in line:
+                for line in interface_name.split("\n"):
+                    if "default" in line:
                         parts = line.split()
                         if len(parts) > 3:
                             interface_name = parts[3]
@@ -207,9 +212,7 @@ class NetworkTriageToolkit(NetworkTriageToolkitBase):
 
                     # Parse Current Network Information section
                     network_info_block = re.search(
-                        r"Current Network Information:(.*?)(?:Other Local Wi-Fi Networks:|\Z)",
-                        profiler_output,
-                        re.DOTALL
+                        r"Current Network Information:(.*?)(?:Other Local Wi-Fi Networks:|\Z)", profiler_output, re.DOTALL
                     )
 
                     if network_info_block:
@@ -248,8 +251,8 @@ class NetworkTriageToolkit(NetworkTriageToolkitBase):
                 )
                 # Parse DNS servers
                 dns_servers = set()
-                for line in dns_output.split('\n'):
-                    if 'nameserver[' in line:
+                for line in dns_output.split("\n"):
+                    if "nameserver[" in line:
                         parts = line.split()
                         if len(parts) > 0:
                             dns_servers.add(parts[-1])
@@ -267,7 +270,7 @@ class NetworkTriageToolkit(NetworkTriageToolkitBase):
                     if addr.family == socket.AF_INET:
                         info["IP Address"] = addr.address
                         info["Netmask"] = addr.netmask
-                    elif hasattr(psutil, 'AF_LINK') and addr.family == psutil.AF_LINK:
+                    elif hasattr(psutil, "AF_LINK") and addr.family == psutil.AF_LINK:
                         info["MAC Address"] = addr.address
 
                 stats = psutil.net_if_stats().get(interface_name)

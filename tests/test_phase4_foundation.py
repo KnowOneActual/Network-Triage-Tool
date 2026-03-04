@@ -51,11 +51,7 @@ class TestOperationResult:
 
     def test_operation_result_error(self):
         """Test creating an error operation result."""
-        result = OperationResult(
-            success=False,
-            error="Test error",
-            error_type=ValueError
-        )
+        result = OperationResult(success=False, error="Test error", error_type=ValueError)
         assert result.success is False
         assert result.error == "Test error"
         assert result.error_type == ValueError
@@ -168,7 +164,7 @@ class TestBaseWidget:
         assert widget.is_loading is False
         assert widget.current_status == "Ready"
         assert widget.error_message == ""
-        assert hasattr(widget, 'widget_name')
+        assert hasattr(widget, "widget_name")
 
     def test_base_widget_name(self):
         """Test widget name is set correctly."""
@@ -232,10 +228,10 @@ class TestBaseWidget:
         """Test that BaseWidget inherits AsyncOperationMixin methods."""
         widget = BaseWidget()
 
-        assert hasattr(widget, 'cache_result')
-        assert hasattr(widget, 'get_cached')
-        assert hasattr(widget, 'handle_error')
-        assert hasattr(widget, 'cancel_operations')
+        assert hasattr(widget, "cache_result")
+        assert hasattr(widget, "get_cached")
+        assert hasattr(widget, "handle_error")
+        assert hasattr(widget, "cancel_operations")
 
 
 class TestWidgetTemplate:
@@ -259,7 +255,7 @@ class TestWidgetTemplate:
 
         # This would normally be run in async context
         # Just verify the method exists and has proper signature
-        assert hasattr(template, 'async_operation')
+        assert hasattr(template, "async_operation")
         assert callable(template.async_operation)
 
 
@@ -270,11 +266,11 @@ class TestResultsWidget:
         """Test ResultsWidget has required attributes."""
         # Don't instantiate with columns (requires app context)
         # Just test the class has what we need
-        assert hasattr(ResultsWidget, '__init__')
-        assert hasattr(ResultsWidget, 'add_row')
-        assert hasattr(ResultsWidget, 'add_rows')
-        assert hasattr(ResultsWidget, 'clear_results')
-        assert hasattr(ResultsWidget, 'get_summary')
+        assert hasattr(ResultsWidget, "__init__")
+        assert hasattr(ResultsWidget, "add_row")
+        assert hasattr(ResultsWidget, "add_rows")
+        assert hasattr(ResultsWidget, "clear_results")
+        assert hasattr(ResultsWidget, "get_summary")
 
     def test_result_column_creation(self):
         """Test ResultColumn can be created with correct attributes."""

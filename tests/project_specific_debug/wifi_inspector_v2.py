@@ -46,14 +46,10 @@ def inspect_wifi_output_v2():
             print("--------------")
 
     # --- Test 3: system_profiler ---
-    print(
-        "\n\n--- Test 3: system_profiler SPNetworkDataType -json (Wi-Fi section only) ---"
-    )
+    print("\n\n--- Test 3: system_profiler SPNetworkDataType -json (Wi-Fi section only) ---")
     try:
         command = ["system_profiler", "SPNetworkDataType", "-json"]
-        process = subprocess.run(
-            command, capture_output=True, text=True, check=True, timeout=15
-        )
+        process = subprocess.run(command, capture_output=True, text=True, check=True, timeout=15)
         network_data = json.loads(process.stdout)
         wifi_info_found = False
         for service in network_data.get("SPNetworkDataType", []):

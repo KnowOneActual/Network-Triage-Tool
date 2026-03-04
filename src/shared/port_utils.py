@@ -18,6 +18,7 @@ from typing import Any
 
 class PortStatus(Enum):
     """Port status indicators."""
+
     OPEN = "open"
     CLOSED = "closed"
     FILTERED = "filtered"  # Likely firewall/ACL
@@ -27,41 +28,42 @@ class PortStatus(Enum):
 
 # Common service port mappings
 COMMON_SERVICE_PORTS = {
-    20: 'FTP-DATA',
-    21: 'FTP',
-    22: 'SSH',
-    23: 'TELNET',
-    25: 'SMTP',
-    53: 'DNS',
-    80: 'HTTP',
-    110: 'POP3',
-    143: 'IMAP',
-    161: 'SNMP',
-    179: 'BGP',
-    389: 'LDAP',
-    443: 'HTTPS',
-    445: 'SMB',
-    465: 'SMTPS',
-    587: 'SMTP-TLS',
-    636: 'LDAPS',
-    993: 'IMAPS',
-    995: 'POP3S',
-    1433: 'MSSQL',
-    3306: 'MySQL',
-    3389: 'RDP',
-    5432: 'PostgreSQL',
-    5900: 'VNC',
-    6379: 'Redis',
-    8080: 'HTTP-ALT',
-    8443: 'HTTPS-ALT',
-    27017: 'MongoDB',
-    50000: 'SAP',
+    20: "FTP-DATA",
+    21: "FTP",
+    22: "SSH",
+    23: "TELNET",
+    25: "SMTP",
+    53: "DNS",
+    80: "HTTP",
+    110: "POP3",
+    143: "IMAP",
+    161: "SNMP",
+    179: "BGP",
+    389: "LDAP",
+    443: "HTTPS",
+    445: "SMB",
+    465: "SMTPS",
+    587: "SMTP-TLS",
+    636: "LDAPS",
+    993: "IMAPS",
+    995: "POP3S",
+    1433: "MSSQL",
+    3306: "MySQL",
+    3389: "RDP",
+    5432: "PostgreSQL",
+    5900: "VNC",
+    6379: "Redis",
+    8080: "HTTP-ALT",
+    8443: "HTTPS-ALT",
+    27017: "MongoDB",
+    50000: "SAP",
 }
 
 
 @dataclass
 class PortCheckResult:
     """Result of a single port check."""
+
     host: str
     port: int
     status: PortStatus
@@ -73,16 +75,11 @@ class PortCheckResult:
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary, excluding None values."""
         result = asdict(self)
-        result['status'] = self.status.value
+        result["status"] = self.status.value
         return {k: v for k, v in result.items() if v is not None}
 
 
-def check_port_open(
-    host: str,
-    port: int,
-    timeout: int = 3,
-    grab_banner: bool = False
-) -> PortCheckResult:
+def check_port_open(host: str, port: int, timeout: int = 3, grab_banner: bool = False) -> PortCheckResult:
     """
     Check if a single port is open using TCP connection attempt.
 
@@ -107,7 +104,7 @@ def check_port_open(
         status=PortStatus.ERROR,
         service_name=COMMON_SERVICE_PORTS.get(port),
         response_time_ms=0,
-        error_message=None
+        error_message=None,
     )
 
     # Validate port
@@ -128,7 +125,7 @@ def check_port_open(
             # Optionally grab banner
             if grab_banner:
                 try:
-                    banner = sock.recv(1024).decode('utf-8', errors='ignore').strip()
+                    banner = sock.recv(1024).decode("utf-8", errors="ignore").strip()
                     result.banner = banner[:100]  # Limit to 100 chars
                 except (TimeoutError, OSError):
                     pass  # Banner grab optional
@@ -149,9 +146,9 @@ def check_port_open(
 
         except OSError as e:
             # Other OS errors (host unreachable, etc.)
-            if 'Network is unreachable' in str(e):
+            if "Network is unreachable" in str(e):
                 result.status = PortStatus.FILTERED
-            elif 'No route to host' in str(e):
+            elif "No route to host" in str(e):
                 result.status = PortStatus.FILTERED
             else:
                 result.status = PortStatus.ERROR
@@ -172,12 +169,7 @@ def check_port_open(
     return result
 
 
-def check_multiple_ports(
-    host: str,
-    ports: list[int],
-    timeout: int = 3,
-    max_workers: int = 10
-) -> list[PortCheckResult]:
+def check_multiple_ports(host: str, ports: list[int], timeout: int = 3, max_workers: int = 10) -> list[PortCheckResult]:
     """
     Check multiple ports concurrently.
 
@@ -208,25 +200,23 @@ def check_multiple_ports(
                 results.append(result)
             except Exception as e:
                 port = futures[future]
-                results.append(PortCheckResult(
-                    host=host,
-                    port=port,
-                    status=PortStatus.ERROR,
-                    service_name=COMMON_SERVICE_PORTS.get(port),
-                    response_time_ms=(time.time() - time.time()) * 1000,
-                    error_message=str(e)
-                ))
+                results.append(
+                    PortCheckResult(
+                        host=host,
+                        port=port,
+                        status=PortStatus.ERROR,
+                        service_name=COMMON_SERVICE_PORTS.get(port),
+                        response_time_ms=(time.time() - time.time()) * 1000,
+                        error_message=str(e),
+                    )
+                )
 
     # Sort by port number
     results.sort(key=lambda r: r.port)
     return results
 
 
-def scan_common_ports(
-    host: str,
-    timeout: int = 3,
-    max_workers: int = 10
-) -> list[PortCheckResult]:
+def scan_common_ports(host: str, timeout: int = 3, max_workers: int = 10) -> list[PortCheckResult]:
     """
     Scan all common service ports.
 
@@ -248,11 +238,7 @@ def scan_common_ports(
 
 
 def scan_port_range(
-    host: str,
-    start_port: int = 1,
-    end_port: int = 1024,
-    timeout: int = 2,
-    max_workers: int = 20
+    host: str, start_port: int = 1, end_port: int = 1024, timeout: int = 2, max_workers: int = 20
 ) -> list[PortCheckResult]:
     """
     Scan a range of ports (useful for finding unexpected services).
@@ -302,7 +288,7 @@ def get_service_name(port: int) -> str:
         >>> get_service_name(22)
         'SSH'
     """
-    return COMMON_SERVICE_PORTS.get(port, 'Unknown')
+    return COMMON_SERVICE_PORTS.get(port, "Unknown")
 
 
 def get_common_service_ports() -> dict[int, str]:
@@ -344,34 +330,34 @@ def summarize_port_scan(results: list[PortCheckResult]) -> dict[str, Any]:
     avg_response_time = sum(response_times) / len(response_times) if response_times else 0
 
     return {
-        'total_scanned': len(results),
-        'open_count': len(open_ports),
-        'closed_count': len(closed_ports),
-        'filtered_count': len(filtered_ports),
-        'timeout_count': len(timeout_ports),
-        'error_count': len(error_ports),
-        'open_ports': [(r.port, r.service_name) for r in open_ports],
-        'avg_response_time_ms': avg_response_time,
-        'min_response_time_ms': min(response_times) if response_times else 0,
-        'max_response_time_ms': max(response_times) if response_times else 0,
+        "total_scanned": len(results),
+        "open_count": len(open_ports),
+        "closed_count": len(closed_ports),
+        "filtered_count": len(filtered_ports),
+        "timeout_count": len(timeout_ports),
+        "error_count": len(error_ports),
+        "open_ports": [(r.port, r.service_name) for r in open_ports],
+        "avg_response_time_ms": avg_response_time,
+        "min_response_time_ms": min(response_times) if response_times else 0,
+        "max_response_time_ms": max(response_times) if response_times else 0,
     }
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Example usage
     print("\n=== Single Port Check ===")
-    result = check_port_open('localhost', 22)
+    result = check_port_open("localhost", 22)
     print(f"Host: {result.host}")
     print(f"Port: {result.port} ({result.service_name})")
     print(f"Status: {result.status.value}")
     print(f"Response time: {result.response_time_ms:.2f}ms")
 
     print("\n=== Multiple Common Ports ===")
-    results = check_multiple_ports('localhost', [22, 80, 443, 3306, 5432])
+    results = check_multiple_ports("localhost", [22, 80, 443, 3306, 5432])
     summary = summarize_port_scan(results)
     print(f"Total scanned: {summary['total_scanned']}")
     print(f"Open: {summary['open_count']}")
     print(f"Closed: {summary['closed_count']}")
     print(f"Filtered: {summary['filtered_count']}")
-    if summary['open_ports']:
+    if summary["open_ports"]:
         print(f"Open ports: {summary['open_ports']}")

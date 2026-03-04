@@ -1,0 +1,15 @@
+netmiko
+scapy
+psutil
+requests
+speedtest-cli
+textual
+python-nmap
+
+[dev]
+ruff
+bandit
+pytest
+pytest-mock
+pytest-cov
+pip-audit

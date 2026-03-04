@@ -67,6 +67,7 @@ class TestRetryDecorator:
 
     def test_retry_succeeds_on_first_attempt(self):
         """Test that function succeeds without retrying when no error occurs."""
+
         @retry(max_attempts=3)
         def always_succeeds():
             return "success"
@@ -91,6 +92,7 @@ class TestRetryDecorator:
 
     def test_retry_exhausts_attempts(self):
         """Test that function raises exception after max attempts."""
+
         @retry(max_attempts=2, delay=0.01)
         def always_fails():
             raise ValueError("Always fails")
@@ -100,6 +102,7 @@ class TestRetryDecorator:
 
     def test_retry_with_specific_exception(self):
         """Test that retry only retries on specified exceptions."""
+
         @retry(max_attempts=3, exceptions=(ValueError,))
         def raises_type_error():
             raise TypeError("This exception should not be retried")
@@ -115,33 +118,33 @@ class TestSafeSubprocessRun:
         """Test successful subprocess execution."""
         # Use 'echo' command which exists on all platforms
         result = safe_subprocess_run(
-            ['echo', 'hello'],
+            ["echo", "hello"],
             timeout=5,
             check_command_exists=False,
         )
         assert "hello" in result
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_safe_subprocess_run_timeout(self, mock_run):
         """Test subprocess timeout handling."""
-        mock_run.side_effect = subprocess.TimeoutExpired('ping', 10)
+        mock_run.side_effect = subprocess.TimeoutExpired("ping", 10)
 
         with pytest.raises(NetworkTimeoutError, match="exceeded"):
-            safe_subprocess_run(['ping', 'google.com'], timeout=1)
+            safe_subprocess_run(["ping", "google.com"], timeout=1)
 
-    @patch('shutil.which')
+    @patch("shutil.which")
     def test_safe_subprocess_run_command_not_found(self, mock_which):
         """Test command not found error handling."""
         mock_which.return_value = None
 
         with pytest.raises(CommandNotFoundError, match="not found"):
             safe_subprocess_run(
-                ['nonexistent_command', 'arg'],
+                ["nonexistent_command", "arg"],
                 timeout=5,
                 check_command_exists=True,
             )
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_safe_subprocess_run_non_zero_exit(self, mock_run):
         """Test non-zero exit code handling."""
         mock_run.return_value = MagicMock(
@@ -151,7 +154,7 @@ class TestSafeSubprocessRun:
         )
 
         with pytest.raises(NetworkCommandError, match="failed"):
-            safe_subprocess_run(['false'], timeout=5)
+            safe_subprocess_run(["false"], timeout=5)
 
 
 class TestSafeSocketOperation:
@@ -159,6 +162,7 @@ class TestSafeSocketOperation:
 
     def test_safe_socket_operation_success(self):
         """Test successful socket operation."""
+
         def successful_op():
             return "socket_result"
 
@@ -167,6 +171,7 @@ class TestSafeSocketOperation:
 
     def test_safe_socket_operation_raises_on_exception(self):
         """Test that exceptions are wrapped properly."""
+
         def failing_op():
             raise ConnectionError("Connection failed")
 
@@ -177,35 +182,37 @@ class TestSafeSocketOperation:
 class TestSafeHttpRequest:
     """Test safe HTTP request functionality."""
 
-    @patch('requests.get')
+    @patch("requests.get")
     def test_safe_http_request_success(self, mock_get):
         """Test successful HTTP request."""
         mock_response = MagicMock()
-        mock_response.json.return_value = {'ip': '192.0.2.1'}
+        mock_response.json.return_value = {"ip": "192.0.2.1"}
         mock_get.return_value = mock_response
 
-        result = safe_http_request('https://ipinfo.io/json', timeout=5)
-        assert result['ip'] == '192.0.2.1'
+        result = safe_http_request("https://ipinfo.io/json", timeout=5)
+        assert result["ip"] == "192.0.2.1"
 
-    @patch('requests.get')
+    @patch("requests.get")
     def test_safe_http_request_timeout(self, mock_get):
         """Test HTTP request timeout."""
         import requests
+
         mock_get.side_effect = requests.Timeout("Request timed out")
 
         # Use case-insensitive match: look for 'Failed' (capital F) in message
         with pytest.raises(NetworkConnectivityError, match="Failed"):
-            safe_http_request('https://ipinfo.io/json', timeout=5, retries=1)
+            safe_http_request("https://ipinfo.io/json", timeout=5, retries=1)
 
-    @patch('requests.get')
+    @patch("requests.get")
     def test_safe_http_request_connection_error(self, mock_get):
         """Test HTTP connection error."""
         import requests
+
         mock_get.side_effect = requests.ConnectionError("No connection")
 
         # Use case-insensitive match: look for 'Failed' (capital F) in message
         with pytest.raises(NetworkConnectivityError, match="Failed"):
-            safe_http_request('https://ipinfo.io/json', timeout=5, retries=1)
+            safe_http_request("https://ipinfo.io/json", timeout=5, retries=1)
 
 
 class TestFormatErrorMessage:
@@ -234,12 +241,13 @@ class TestFormatErrorMessage:
 class TestMacOSToolkit:
     """Test macOS-specific toolkit error handling."""
 
-    @patch('network_triage.utils.safe_subprocess_run')
+    @patch("network_triage.utils.safe_subprocess_run")
     def test_get_system_info_with_error(self, mock_subprocess):
         """Test get_system_info handles errors gracefully."""
         mock_subprocess.side_effect = CommandNotFoundError("sw_vers not found")
 
         from network_triage.macos.network_toolkit import NetworkTriageToolkit
+
         toolkit = NetworkTriageToolkit()
         result = toolkit.get_system_info()
 
@@ -248,12 +256,13 @@ class TestMacOSToolkit:
         assert "Hostname" in result
         assert result["OS"] != "N/A"  # Should have Darwin version fallback
 
-    @patch('network_triage.utils.safe_http_request')
+    @patch("network_triage.utils.safe_http_request")
     def test_get_ip_info_handles_network_failure(self, mock_request):
         """Test get_ip_info handles network failures."""
         mock_request.side_effect = NetworkConnectivityError("No internet")
 
         from network_triage.macos.network_toolkit import NetworkTriageToolkit
+
         toolkit = NetworkTriageToolkit()
         result = toolkit.get_ip_info()
 

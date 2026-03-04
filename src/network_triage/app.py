@@ -57,11 +57,13 @@ class InfoBox(Static):
         yield Label(self.value_text, classes="label-value")
 
     def watch_title_text(self, new_val):
-        if not self.is_mounted: return
+        if not self.is_mounted:
+            return
         self.query_one(".label-title", Label).update(new_val)
 
     def watch_value_text(self, new_val):
-        if not self.is_mounted: return
+        if not self.is_mounted:
+            return
         self.query_one(".label-value", Label).update(new_val)
 
     def on_click(self) -> None:
@@ -98,6 +100,7 @@ class Dashboard(Container):
         self.query_one("#info_gateway", InfoBox).value_text = ip_info.get("Gateway", "N/A")
         self.query_one("#info_public_ip", InfoBox).value_text = ip_info.get("Public IP", "N/A")
 
+
 class ConnectionTool(Container):
     """A tool to display detailed network interface information."""
 
@@ -131,14 +134,13 @@ class ConnectionTool(Container):
 
     @work(thread=True)
     def refresh_connection(self):
-        self.app.call_from_thread(
-            self.query_one("#conn_status", Label).update, "Scanning interface..."
-        )
+        self.app.call_from_thread(self.query_one("#conn_status", Label).update, "Scanning interface...")
         details = net_tool.get_connection_details()
         self.app.call_from_thread(self.update_ui, details)
 
     def update_ui(self, details):
         self.query_one("#conn_status", Label).update("Updated.")
+
         def set_val(widget_id, key):
             self.query_one(f"#{widget_id}", InfoBox).value_text = details.get(key, "N/A")
 
@@ -155,6 +157,7 @@ class ConnectionTool(Container):
         set_val("wifi_channel", "Channel")
         set_val("wifi_signal", "Signal")
         set_val("wifi_noise", "Noise")
+
 
 class PingTool(Container):
     def compose(self) -> ComposeResult:
@@ -173,7 +176,8 @@ class PingTool(Container):
     def action_start_ping(self) -> None:
         host = self.query_one("#ping_input", Input).value
         if not host:
-            self.notify("Please enter a valid IP", severity="error"); return
+            self.notify("Please enter a valid IP", severity="error")
+            return
         self.query_one("#start_ping_btn", Button).disabled = True
         self.query_one("#stop_ping_btn", Button).disabled = False
         self.query_one("#ping_input", Input).disabled = True
@@ -193,6 +197,7 @@ class PingTool(Container):
     def start_ping_worker(self, host):
         def write_to_log(line):
             self.app.call_from_thread(self.query_one("#ping_log", Log).write, line)
+
         net_tool.continuous_ping(host, write_to_log)
 
 
@@ -234,13 +239,11 @@ class LLDPTool(Container):
     @work(thread=True)
     def start_lldp_worker(self):
         self.scan_active = True
+
         def write_to_log(line):
             if "requires administrator privileges" in line:
                 self.app.call_from_thread(
-                    self.notify,
-                    "Error: Root/Admin rights needed for packet capture.",
-                    severity="error",
-                    timeout=5
+                    self.notify, "Error: Root/Admin rights needed for packet capture.", severity="error", timeout=5
                 )
             self.app.call_from_thread(self.update_log, line)
 
@@ -256,6 +259,7 @@ class LLDPTool(Container):
         self.query_one("#btn_lldp_start", Button).disabled = False
         self.query_one("#btn_lldp_stop", Button).disabled = True
         self.query_one("#lldp_status", Label).update("Scan Complete.")
+
 
 class SpeedTestTool(Container):
     def compose(self) -> ComposeResult:
@@ -283,7 +287,8 @@ class SpeedTestTool(Container):
         bar = self.query_one("#speed_progress", ProgressBar)
         bar.remove_class("hidden")
 
-        for w in self.query(InfoBox): w.value_text = "..."
+        for w in self.query(InfoBox):
+            w.value_text = "..."
         self.run_speedtest_worker()
 
     @work(thread=True)
@@ -334,7 +339,7 @@ class NmapTool(Container):
                 ],
                 allow_blank=False,
                 value="-F",
-                id="nmap_select"
+                id="nmap_select",
             )
 
             yield Input(placeholder="Flags", value="-F", id="nmap_custom_args", classes="input_short hidden")
@@ -436,16 +441,16 @@ class NmapTool(Container):
             return
 
         for host in results:
-            if host.get('ip') == 'Error':
+            if host.get("ip") == "Error":
                 self.notify(f"Scan Error: {host.get('status')}", severity="error")
                 continue
 
             table.add_row(
-                host.get('ip', 'N/A'),
-                host.get('hostname', ''),
-                host.get('status', 'up'),
-                host.get('mac', ''),
-                host.get('vendor', '')
+                host.get("ip", "N/A"),
+                host.get("hostname", ""),
+                host.get("status", "up"),
+                host.get("mac", ""),
+                host.get("vendor", ""),
             )
         self.notify("Scan Complete.")
 
@@ -458,9 +463,11 @@ class NotesTool(Container):
         yield Label("📝 Engineer Notes / Observations", id="notes_header")
         yield TextArea(id="notes_area", language=None)
 
+
 # ----------------------------------------------------------------------------
 # Utility Tools (Traceroute, DNS, Port Check)
 # ----------------------------------------------------------------------------
+
 
 class TracerouteTool(Container):
     def compose(self) -> ComposeResult:
@@ -480,7 +487,8 @@ class TracerouteTool(Container):
     def action_run_trace(self):
         host = self.query_one("#trace_input", Input).value
         if not host:
-            self.notify("Please enter a host.", severity="error"); return
+            self.notify("Please enter a host.", severity="error")
+            return
 
         log = self.query_one("#trace_log", Log)
         log.clear()
@@ -519,7 +527,8 @@ class DNSTool(Container):
     def action_resolve(self):
         domain = self.query_one("#dns_input", Input).value
         if not domain:
-            self.notify("Please enter a domain.", severity="error"); return
+            self.notify("Please enter a domain.", severity="error")
+            return
 
         self.query_one("#dns_result", Label).update("Resolving...")
         self.resolve_worker(domain)
@@ -551,7 +560,8 @@ class PortTool(Container):
         port = self.query_one("#port_num", Input).value
 
         if not host or not port:
-            self.notify("Please enter Host and Port.", severity="error"); return
+            self.notify("Please enter Host and Port.", severity="error")
+            return
 
         self.query_one("#port_result", Label).update(f"Checking {host}:{port}...")
         self.check_worker(host, port)
@@ -584,17 +594,15 @@ class UtilityTool(Container):
     def on_button_pressed(self, event: Button.Pressed) -> None:
         btn_id = event.button.id
         if btn_id and btn_id.startswith("sub_"):
-            target_map = {
-                "sub_trace": "tool_trace",
-                "sub_dns": "tool_dns",
-                "sub_port": "tool_port"
-            }
+            target_map = {"sub_trace": "tool_trace", "sub_dns": "tool_dns", "sub_port": "tool_port"}
             if btn_id in target_map:
                 # Switch Content
                 self.query_one("#util_content", ContentSwitcher).current = target_map[btn_id]
                 # Update Buttons
-                for btn in self.query(".util_btn"): btn.remove_class("-active")
+                for btn in self.query(".util_btn"):
+                    btn.remove_class("-active")
                 self.query_one(f"#{btn_id}", Button).add_class("-active")
+
 
 class NetworkTriageApp(App):
     """A Textual TUI with Manual Button Navigation."""
@@ -670,8 +678,10 @@ class NetworkTriageApp(App):
 
         # 2. Gather Connection Details
         conn = self.query_one(ConnectionTool)
+
         # Helper to extract value safely
-        def get_conn(idx): return conn.query_one(f"#{idx}", InfoBox).value_text
+        def get_conn(idx):
+            return conn.query_one(f"#{idx}", InfoBox).value_text
 
         # 3. Gather Speed Test
         speed = self.query_one(SpeedTestTool)
@@ -688,9 +698,9 @@ class NetworkTriageApp(App):
 
         # Build the Report String
         report = []
-        report.append("="*50)
+        report.append("=" * 50)
         report.append(f"NETWORK TRIAGE REPORT - {timestamp}")
-        report.append("="*50 + "\n")
+        report.append("=" * 50 + "\n")
 
         report.append("SYSTEM INFO")
         report.append(f"Hostname:    {hostname}")
@@ -704,7 +714,7 @@ class NetworkTriageApp(App):
         report.append(f"Status:      {get_conn('iface_status')}")
         report.append(f"Speed/MTU:   {get_conn('iface_speed')} / {get_conn('iface_mtu')}")
         report.append(f"DNS:         {get_conn('iface_dns')}")
-        if get_conn('wifi_ssid') != "N/A":
+        if get_conn("wifi_ssid") != "N/A":
             report.append(f"Wi-Fi:       {get_conn('wifi_ssid')} (Ch: {get_conn('wifi_channel')})")
         report.append("")
 
@@ -719,10 +729,10 @@ class NetworkTriageApp(App):
             report.append(f"{'IP':<16} {'HOSTNAME':<25} {'STATUS':<10} {'VENDOR'}")
             report.append("-" * 70)
             for host in scan_data:
-                ip = host.get('ip', 'N/A')
-                name = host.get('hostname', '')[:24] # Truncate long names
-                status = host.get('status', '')
-                vendor = host.get('vendor', '')
+                ip = host.get("ip", "N/A")
+                name = host.get("hostname", "")[:24]  # Truncate long names
+                status = host.get("status", "")
+                vendor = host.get("vendor", "")
                 report.append(f"{ip:<16} {name:<25} {status:<10} {vendor}")
             report.append("")
 
@@ -745,6 +755,7 @@ def run():
     """Entry point for the console script."""
     app = NetworkTriageApp()
     app.run()
+
 
 if __name__ == "__main__":
     run()

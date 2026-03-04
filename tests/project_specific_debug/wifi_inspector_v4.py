@@ -7,6 +7,7 @@ try:
 except ImportError:
     CoreWLAN = None
 
+
 def inspect_wifi_library_output():
     """
     Directly queries the CoreWLAN library to see exactly what interfaces
@@ -54,6 +55,7 @@ def inspect_wifi_library_output():
 
     except Exception as e:
         print(f"\nAn unexpected error occurred while querying the CoreWLAN library: {e}")
+
 
 if __name__ == "__main__":
     inspect_wifi_library_output()

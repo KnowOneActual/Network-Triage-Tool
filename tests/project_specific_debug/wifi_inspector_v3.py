@@ -91,14 +91,10 @@ class NetworkTriageToolkit:
         try:
             if system == "Darwin":  # macOS
                 if CoreWLAN is None:
-                    wifi_info["SSID"] = (
-                        "Required library not found. Run: pip install pyobjc-framework-CoreWLAN"
-                    )
+                    wifi_info["SSID"] = "Required library not found. Run: pip install pyobjc-framework-CoreWLAN"
                     return wifi_info
 
-                interface = (
-                    CoreWLAN.CWInterface.interface()
-                )  # Get the primary Wi-Fi interface
+                interface = CoreWLAN.CWInterface.interface()  # Get the primary Wi-Fi interface
                 if not interface or not interface.ssid():
                     wifi_info["SSID"] = "No active Wi-Fi connection found."
                     return wifi_info
@@ -113,9 +109,7 @@ class NetworkTriageToolkit:
                     band = "5GHz" if channel.is5GHz() else "2.4GHz"
                     width_map = {0: "20MHz", 1: "40MHz", 2: "80MHz", 3: "160MHz"}
                     width_str = width_map.get(channel.channelWidth(), "")
-                    wifi_info["Channel"] = (
-                        f"{channel.channelNumber()} ({band}, {width_str})"
-                    )
+                    wifi_info["Channel"] = f"{channel.channelNumber()} ({band}, {width_str})"
 
             elif system == "Windows":
                 process = subprocess.run(
@@ -155,13 +149,9 @@ class NetworkTriageToolkit:
                                 parts = line.split()
                                 wifi_info["Signal"] = f"{parts[3].strip('.')} dBm"
 
-                    process = subprocess.run(
-                        ["iw", "dev", interface, "link"], capture_output=True, text=True
-                    )
+                    process = subprocess.run(["iw", "dev", interface, "link"], capture_output=True, text=True)
                     if process.returncode == 0:
-                        bssid_match = re.search(
-                            r"Connected to ([0-9a-fA-F:]+)", process.stdout
-                        )
+                        bssid_match = re.search(r"Connected to ([0-9a-fA-F:]+)", process.stdout)
                         if bssid_match:
                             wifi_info["BSSID"] = bssid_match.group(1)
                         freq_match = re.search(r"freq: (\d+)", process.stdout)
@@ -221,9 +211,7 @@ class NetworkTriageToolkit:
             else:  # Linux/macOS
                 command = ["traceroute", "-I", host]  # -I uses ICMP, more reliable
 
-            process = subprocess.Popen(
-                command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
-            )
+            process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
             output, _ = process.communicate(timeout=45)
 
             if process.returncode != 0 and "administrat" in output:
@@ -273,9 +261,7 @@ class NetworkTriageToolkit:
             else:
                 command = ["ifconfig"]
 
-            result = subprocess.run(
-                command, capture_output=True, text=True, check=True, timeout=10
-            )
+            result = subprocess.run(command, capture_output=True, text=True, check=True, timeout=10)
             return result.stdout
         except FileNotFoundError:
             return "Could not find 'ipconfig' or 'ifconfig'. Please ensure it's in your system PATH."
@@ -289,9 +275,7 @@ class NetworkTriageToolkit:
             return
 
         self.stop_discovery = False
-        self.discovery_thread = threading.Thread(
-            target=self._run_discovery_capture, args=(callback, timeout), daemon=True
-        )
+        self.discovery_thread = threading.Thread(target=self._run_discovery_capture, args=(callback, timeout), daemon=True)
         self.discovery_thread.start()
 
     def stop_discovery_capture(self):
@@ -301,9 +285,7 @@ class NetworkTriageToolkit:
     def _run_discovery_capture(self, callback, timeout):
         """The actual packet sniffing logic."""
         if platform.system() != "Windows" and os.geteuid() != 0:
-            callback(
-                "Packet capture requires administrator privileges. Please run with 'sudo'."
-            )
+            callback("Packet capture requires administrator privileges. Please run with 'sudo'.")
             return
 
         packet_found = [False]
@@ -344,11 +326,7 @@ class NetworkTriageToolkit:
                             port_description_val = value_bytes
                         elif tlv_type == 5:
                             system_name_val = value_bytes
-                        elif (
-                            tlv_type == 8
-                            and len(value_bytes) > 1
-                            and value_bytes[1] == 1
-                        ):
+                        elif tlv_type == 8 and len(value_bytes) > 1 and value_bytes[1] == 1:
                             mgmt_address_val = inet_ntoa(value_bytes[2:6])
                         elif tlv_type == 0:
                             break
@@ -379,11 +357,7 @@ class NetworkTriageToolkit:
                     port_id = packet[CDPMsg].port_id.decode()
                     platform = packet[CDPMsg].platform.decode()
                     mgmt_address = next(
-                        (
-                            addr.addr
-                            for addr in packet[CDPMsg].addr
-                            if isinstance(addr, CDPAddrRecord)
-                        ),
+                        (addr.addr for addr in packet[CDPMsg].addr if isinstance(addr, CDPAddrRecord)),
                         "N-A",
                     )
 
@@ -412,9 +386,7 @@ class NetworkTriageToolkit:
             callback(f"An error occurred during packet capture: {e}")
         finally:
             if not packet_found[0] and not self.stop_discovery:
-                callback(
-                    f"\nScan complete. No LLDP or CDP packets found in {timeout} seconds."
-                )
+                callback(f"\nScan complete. No LLDP or CDP packets found in {timeout} seconds.")
 
 
 class RouterConnection:

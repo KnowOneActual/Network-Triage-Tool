@@ -22,12 +22,13 @@ from textual.widgets import Label, Static
 
 logger = logging.getLogger(__name__)
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 @dataclass
 class OperationResult(Generic[T]):
     """Result of an async operation."""
+
     success: bool
     data: T | None = None
     error: str | None = None
@@ -92,12 +93,12 @@ class AsyncOperationMixin:
         """Cancel active workers."""
         if worker_name and worker_name in self._active_workers:
             worker = self._active_workers[worker_name]
-            if hasattr(worker, 'cancel'):
+            if hasattr(worker, "cancel"):
                 worker.cancel()
             self._active_workers.pop(worker_name, None)
         elif not worker_name:
             for worker in self._active_workers.values():
-                if hasattr(worker, 'cancel'):
+                if hasattr(worker, "cancel"):
                     worker.cancel()
             self._active_workers.clear()
 
@@ -105,11 +106,7 @@ class AsyncOperationMixin:
         """Consistent error handling."""
         error_msg = message or str(error)
         logger.error(f"Operation error: {error_msg}", exc_info=error)
-        return OperationResult(
-            success=False,
-            error=error_msg,
-            error_type=type(error)
-        )
+        return OperationResult(success=False, error=error_msg, error_type=type(error))
 
 
 class BaseWidget(Container, AsyncOperationMixin):
@@ -164,7 +161,7 @@ class BaseWidget(Container, AsyncOperationMixin):
             Label(f"[{self.widget_name}]", id="widget-title"),
             Static(id="error-display"),
             Static(id="content"),
-            id="widget-layout"
+            id="widget-layout",
         )
 
     def display_error(self, message: str) -> None:
@@ -256,6 +253,7 @@ class WidgetTemplate(BaseWidget):
 
             # Simulate work
             import asyncio
+
             await asyncio.sleep(1)
 
             result = f"Processed: {input_data}"

@@ -52,9 +52,7 @@ def inspect_all_wifi_methods():
     if wifi_port:
         try:
             command = ["networksetup", "-getairportnetwork", wifi_port]
-            process = subprocess.run(
-                command, capture_output=True, text=True, check=True
-            )
+            process = subprocess.run(command, capture_output=True, text=True, check=True)
             print("[RAW OUTPUT of '-getairportnetwork']")
             print(process.stdout)
         except Exception as e:
@@ -94,9 +92,7 @@ def inspect_all_wifi_methods():
             for name in interface_names:
                 interface = CoreWLAN.CWInterface.interfaceWithName_(name)
                 if interface:
-                    print(
-                        f"  - Checking '{name}': SSID = {interface.ssid()}, BSSID = {interface.bssid()}"
-                    )
+                    print(f"  - Checking '{name}': SSID = {interface.ssid()}, BSSID = {interface.bssid()}")
                 else:
                     print(f"  - Could not get object for interface '{name}'.")
         except Exception as e:

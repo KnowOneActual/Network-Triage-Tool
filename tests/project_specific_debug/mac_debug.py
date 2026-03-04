@@ -35,20 +35,14 @@ def run_final_debug():
     try:
         # Find the default interface first
         command = "netstat -rn -f inet | grep default | awk '{print $4}'"
-        interface = (
-            subprocess.check_output(command, shell=True, text=True)
-            .strip()
-            .split("\n")[0]
-        )
+        interface = subprocess.check_output(command, shell=True, text=True).strip().split("\n")[0]
 
         print(f"DEBUG: Found default interface: {interface}")
 
         networksetup_cmd = f"networksetup -getairportnetwork {interface}"
         print(f"DEBUG: Running command: '{networksetup_cmd}'")
 
-        networksetup_result = subprocess.check_output(
-            networksetup_cmd, shell=True, text=True, stderr=subprocess.STDOUT
-        )
+        networksetup_result = subprocess.check_output(networksetup_cmd, shell=True, text=True, stderr=subprocess.STDOUT)
         print("RAW OUTPUT of networksetup command:")
         print("---")
         print(networksetup_result)

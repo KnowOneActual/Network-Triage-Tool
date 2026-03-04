@@ -8,10 +8,7 @@ class NetworkTriageToolkit(NetworkTriageToolkitBase):
     """Windows-specific network troubleshooting functions."""
 
     def get_system_info(self):
-        return {
-            "OS": f"{platform.system()} {platform.release()} (Windows Support Pending)",
-            "Hostname": socket.gethostname()
-        }
+        return {"OS": f"{platform.system()} {platform.release()} (Windows Support Pending)", "Hostname": socket.gethostname()}
 
     def get_ip_info(self):
         # Placeholder - Real implementation would use 'ipconfig' or WMI
@@ -27,7 +24,7 @@ class NetworkTriageToolkit(NetworkTriageToolkitBase):
             "MAC Address": "00:00:00:00:00:00",
             "Speed": "N/A",
             "MTU": "N/A",
-            "DNS Servers": "N/A"
+            "DNS Servers": "N/A",
         }
 
     def traceroute_test(self, host):

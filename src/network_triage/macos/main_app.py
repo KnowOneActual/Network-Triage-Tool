@@ -17,6 +17,7 @@ net_tool = NetworkTriageToolkit()
 
 class TriageDashboard(ttk.Frame):
     """Dashboard for at-a-glance network info."""
+
     def __init__(self, parent, main_app_instance):
         super().__init__(parent)
         self.parent = parent
@@ -59,6 +60,7 @@ class TriageDashboard(ttk.Frame):
         system_info = net_tool.get_system_info()
         ip_info = net_tool.get_ip_info()
         all_info = {**system_info, **ip_info}
+
         def update_gui():
             for key, value in all_info.items():
                 if key in self.info_labels:
@@ -67,6 +69,7 @@ class TriageDashboard(ttk.Frame):
                 if label.cget("text") == "Loading...":
                     label.config(text="N/A")
             self.main_app.status_label.config(text="Ready")
+
         self.parent.after(0, update_gui)
 
     def show_adapter_info(self):
@@ -76,11 +79,14 @@ class TriageDashboard(ttk.Frame):
         text_area = scrolledtext.ScrolledText(info_window, wrap=tk.WORD, width=70, height=20)
         text_area.pack(padx=10, pady=10, fill="both", expand=True)
         text_area.insert(tk.INSERT, "Fetching adapter information...")
+
         def fetch_and_display():
             adapter_info = net_tool.network_adapter_info()
             text_area.delete("1.0", tk.END)
             text_area.insert(tk.INSERT, adapter_info)
+
         threading.Thread(target=fetch_and_display, daemon=True).start()
+
 
 class ConnectionDetails(ttk.Frame):
     def __init__(self, parent, main_app_instance):
@@ -99,7 +105,17 @@ class ConnectionDetails(ttk.Frame):
         connection_frame = ttk.LabelFrame(container, text="Connection Details")
         connection_frame.pack(fill="x", expand=True, side="top")
         self.wifi_frame = ttk.LabelFrame(container, text="Wi-Fi Details")
-        self.detail_points = ["Connection Type", "Interface", "Status", "Speed", "MTU", "IP Address", "Netmask", "MAC Address", "DNS Servers"]
+        self.detail_points = [
+            "Connection Type",
+            "Interface",
+            "Status",
+            "Speed",
+            "MTU",
+            "IP Address",
+            "Netmask",
+            "MAC Address",
+            "DNS Servers",
+        ]
         self.wifi_points = ["SSID", "Signal", "Noise", "Channel"]
         for i, point in enumerate(self.detail_points):
             label_title = ttk.Label(connection_frame, text=f"{point}:")
@@ -117,7 +133,7 @@ class ConnectionDetails(ttk.Frame):
         ssid_note = ttk.Label(
             self.wifi_frame,
             text="Note: If SSID shows '<redacted>', please add it to the User Notes on the Dashboard.",
-            font=("Helvetica", 9, "italic")
+            font=("Helvetica", 9, "italic"),
         )
         ssid_note.grid(row=len(self.wifi_points), columnspan=2, sticky="w", padx=5, pady=(10, 2))
 
@@ -133,6 +149,7 @@ class ConnectionDetails(ttk.Frame):
 
     def task(self):
         details = net_tool.get_connection_details()
+
         def update_ui():
             if details.get("Connection Type") == "Wi-Fi":
                 self.wifi_frame.pack(fill="x", expand=True, side="top", pady=(10, 0))
@@ -144,7 +161,9 @@ class ConnectionDetails(ttk.Frame):
                 if key in self.detail_labels:
                     self.detail_labels[key].config(text=value)
             self.main_app.status_label.config(text="Ready")
+
         self.parent.after(0, update_ui)
+
 
 class PerformanceTab(ttk.Frame):
     def __init__(self, parent, main_app_instance):
@@ -199,7 +218,7 @@ class PerformanceTab(ttk.Frame):
 
     def update_ui(self, results):
         self.progress.stop()
-        self.progress['value'] = 100
+        self.progress["value"] = 100
 
         if "Error" in results:
             self.status_label.config(text=results["Error"])
@@ -216,6 +235,7 @@ class PerformanceTab(ttk.Frame):
                 elif key == "Result URL":
                     self.url_label.config(text=value)
         self.start_button.config(state="normal")
+
 
 class ConnectivityTools(ttk.Frame):
     def __init__(self, parent, main_app_instance):
@@ -283,9 +303,11 @@ class ConnectivityTools(ttk.Frame):
         self.start_button.config(state="disabled")
         self.stop_button.config(state="normal")
         self.main_app.status_label.config(text=f"Pinging {host}...")
+
         def update_text(message):
             self.ping_output_text.insert(tk.END, message)
             self.ping_output_text.see(tk.END)
+
         self.ping_thread = threading.Thread(target=net_tool.continuous_ping, args=(host, update_text), daemon=True)
         self.ping_thread.start()
 
@@ -300,28 +322,37 @@ class ConnectivityTools(ttk.Frame):
         self.other_tools_output.delete("1.0", tk.END)
         self.other_tools_output.insert(tk.INSERT, "Running...")
         self.main_app.status_label.config(text=f"Running {tool_function.__name__}...")
+
         def task_wrapper():
             result = tool_function(*args)
             self.other_tools_output.delete("1.0", tk.END)
             self.other_tools_output.insert(tk.INSERT, result)
             self.main_app.status_label.config(text="Scan complete.")
+
         threading.Thread(target=task_wrapper, daemon=True).start()
 
     def run_traceroute(self):
         host = self.trace_host_entry.get()
-        if host: self.run_tool_in_thread(net_tool.traceroute_test, host)
-        else: messagebox.showerror("Error", "Please enter a host for the traceroute.")
+        if host:
+            self.run_tool_in_thread(net_tool.traceroute_test, host)
+        else:
+            messagebox.showerror("Error", "Please enter a host for the traceroute.")
 
     def run_dns_lookup(self):
         domain = self.dns_host_entry.get()
-        if domain: self.run_tool_in_thread(net_tool.dns_resolution_test, domain)
-        else: messagebox.showerror("Error", "Please enter a domain to look up.")
+        if domain:
+            self.run_tool_in_thread(net_tool.dns_resolution_test, domain)
+        else:
+            messagebox.showerror("Error", "Please enter a domain to look up.")
 
     def run_port_scan(self):
         host = self.port_host_entry.get()
         port = self.port_entry.get()
-        if host and port: self.run_tool_in_thread(net_tool.port_connectivity_test, host, port)
-        else: messagebox.showerror("Error", "Please enter both a host and port.")
+        if host and port:
+            self.run_tool_in_thread(net_tool.port_connectivity_test, host, port)
+        else:
+            messagebox.showerror("Error", "Please enter both a host and port.")
+
 
 class AdvancedDiagnostics(ttk.Frame):
     def __init__(self, parent, main_app_instance):
@@ -345,7 +376,9 @@ class AdvancedDiagnostics(ttk.Frame):
         self.pass_entry = ttk.Entry(conn_frame, show="*")
         self.pass_entry.grid(row=2, column=1, sticky="ew", padx=5, pady=2)
         ttk.Label(conn_frame, text="Device Type:").grid(row=3, column=0, sticky="w", padx=5, pady=2)
-        self.device_type_combo = ttk.Combobox(conn_frame, values=["cisco_ios", "cisco_xr", "cisco_nxos", "arista_eos", "juniper_junos"])
+        self.device_type_combo = ttk.Combobox(
+            conn_frame, values=["cisco_ios", "cisco_xr", "cisco_nxos", "arista_eos", "juniper_junos"]
+        )
         self.device_type_combo.grid(row=3, column=1, sticky="ew", padx=5, pady=2)
         self.device_type_combo.set("cisco_ios")
         button_frame = ttk.Frame(conn_frame)
@@ -370,7 +403,12 @@ class AdvancedDiagnostics(ttk.Frame):
         self.output_text.pack(padx=5, pady=5, fill="both", expand=True)
 
     def connect_device(self):
-        ip, user, password, device_type = (self.ip_entry.get(), self.user_entry.get(), self.pass_entry.get(), self.device_type_combo.get())
+        ip, user, password, device_type = (
+            self.ip_entry.get(),
+            self.user_entry.get(),
+            self.pass_entry.get(),
+            self.device_type_combo.get(),
+        )
         if not all([ip, user, password, device_type]):
             messagebox.showerror("Error", "Please fill in all connection details.")
             return
@@ -383,6 +421,7 @@ class AdvancedDiagnostics(ttk.Frame):
 
     def connection_task(self):
         result = self.router_connection.connect()
+
         def update_ui():
             self.output_text.insert(tk.END, f"\n{result}\n")
             if "successful" in result:
@@ -395,6 +434,7 @@ class AdvancedDiagnostics(ttk.Frame):
                 self.status_label.config(text="Status: Failed", foreground="red")
                 self.main_app.status_label.config(text="Connection failed.")
                 self.router_connection = None
+
         self.parent.after(0, update_ui)
 
     def disconnect_device(self):
@@ -420,11 +460,14 @@ class AdvancedDiagnostics(ttk.Frame):
     def command_task(self, command):
         if self.router_connection:
             result = self.router_connection.send_command(command)
+
             def update_ui():
                 self.output_text.delete("1.0", tk.END)
                 self.output_text.insert(tk.END, f"--- Output for '{command}' ---\n{result}")
                 self.main_app.status_label.config(text="Command successful.")
+
             self.parent.after(0, update_ui)
+
 
 class PhysicalLayerDiscovery(ttk.Frame):
     def __init__(self, parent, main_app_instance):
@@ -453,8 +496,10 @@ class PhysicalLayerDiscovery(ttk.Frame):
         self.stop_button.config(state="normal")
         self.progress.start(10)
         self.main_app.status_label.config(text="Scanning for LLDP/CDP packets...")
+
         def update_output(message):
             self.parent.after(0, self._update_text_widget, message)
+
         net_tool.start_discovery_capture(update_output, timeout=60)
         self.output_text.insert(tk.END, "Scanning for LLDP/CDP packets (60s)...\n")
 
@@ -475,12 +520,14 @@ class PhysicalLayerDiscovery(ttk.Frame):
         self.output_text.insert(tk.END, "\n--- Scan Stopped by User ---\n")
         self.main_app.status_label.config(text="Scan stopped by user.")
 
+
 class NetworkScanTab(ttk.Frame):
     """Tab for running Nmap network scans."""
+
     def __init__(self, parent, main_app_instance):
         super().__init__(parent)
         self.main_app = main_app_instance
-        self.scan_results_data = {} # To store full scan data for each host
+        self.scan_results_data = {}  # To store full scan data for each host
         self.create_widgets()
         self.prefill_target()
 
@@ -499,10 +546,12 @@ class NetworkScanTab(ttk.Frame):
 
         ttk.Label(control_frame, text="Scan Type:").grid(row=1, column=0, padx=(0, 5), pady=5, sticky="w")
         # --- NEW: Add "Custom" to the scan types ---
-        self.scan_type = ttk.Combobox(control_frame, values=["Ping Scan", "Fast Scan", "Intense Scan", "Custom"], width=12, state="readonly")
+        self.scan_type = ttk.Combobox(
+            control_frame, values=["Ping Scan", "Fast Scan", "Intense Scan", "Custom"], width=12, state="readonly"
+        )
         self.scan_type.grid(row=1, column=1, pady=5, sticky="w")
         self.scan_type.set("Fast Scan")
-        self.scan_type.bind("<<ComboboxSelected>>", self.toggle_custom_args) # Event to show/hide custom field
+        self.scan_type.bind("<<ComboboxSelected>>", self.toggle_custom_args)  # Event to show/hide custom field
         ToolTip(self.scan_type, text="Choose a preset or select 'Custom' to enter your own Nmap arguments.")
 
         self.start_button = ttk.Button(control_frame, text="Start Scan", command=self.start_scan)
@@ -513,7 +562,11 @@ class NetworkScanTab(ttk.Frame):
         self.custom_args_entry = ttk.Entry(control_frame)
         ToolTip(self.custom_args_entry, text="Enter your custom Nmap flags here (e.g., -sV -p 80,443)")
 
-        info_label = ttk.Label(scan_frame, text="(Double-click a host in the results to see detailed port and service information)", font="-size 10 -slant italic")
+        info_label = ttk.Label(
+            scan_frame,
+            text="(Double-click a host in the results to see detailed port and service information)",
+            font="-size 10 -slant italic",
+        )
         info_label.pack(fill="x", padx=10, pady=(0, 5))
 
         result_frame = ttk.Frame(scan_frame)
@@ -542,7 +595,7 @@ class NetworkScanTab(ttk.Frame):
         self.results_tree.bind("<Double-1>", self.show_host_details)
 
         bottom_frame = ttk.Frame(scan_frame)
-        bottom_frame.pack(fill="x", padx=5, pady=(5,0), side="bottom")
+        bottom_frame.pack(fill="x", padx=5, pady=(5, 0), side="bottom")
 
         self.progress_bar = ttk.Progressbar(bottom_frame, mode="indeterminate")
         self.progress_bar.pack(fill="x", expand=True, side="left")
@@ -564,7 +617,7 @@ class NetworkScanTab(ttk.Frame):
         try:
             gateway = net_tool.get_ip_info().get("Gateway", "")
             if gateway and all(c in "0123456789." for c in gateway):
-                network_base = ".".join(gateway.split('.')[:3])
+                network_base = ".".join(gateway.split(".")[:3])
                 self.target_entry.delete(0, tk.END)
                 self.target_entry.insert(0, f"{network_base}.0/24")
         except Exception as e:
@@ -592,7 +645,7 @@ class NetworkScanTab(ttk.Frame):
         self.scan_results_data.clear()
 
         self.start_button.config(state="disabled")
-        self.export_button.config(state="disabled") # Disable export during scan
+        self.export_button.config(state="disabled")  # Disable export during scan
         self.main_app.status_label.config(text=f"Scanning {target} with Nmap...")
         self.progress_bar.start(10)
 
@@ -611,16 +664,20 @@ class NetworkScanTab(ttk.Frame):
 
         if results:
             for host_data in results:
-                self.scan_results_data[host_data['ip']] = host_data
-                if host_data['status'] == 'up' or 'Error' in host_data.values():
-                    self.results_tree.insert("", "end", values=(
-                        host_data.get('ip', 'N/A'),
-                        host_data.get('hostname', 'N/A'),
-                        host_data.get('status', 'N/A'),
-                        host_data.get('mac', 'N/A'),
-                        host_data.get('vendor', 'N/A')
-                    ))
-            self.export_button.config(state="normal") # Enable export after scan
+                self.scan_results_data[host_data["ip"]] = host_data
+                if host_data["status"] == "up" or "Error" in host_data.values():
+                    self.results_tree.insert(
+                        "",
+                        "end",
+                        values=(
+                            host_data.get("ip", "N/A"),
+                            host_data.get("hostname", "N/A"),
+                            host_data.get("status", "N/A"),
+                            host_data.get("mac", "N/A"),
+                            host_data.get("vendor", "N/A"),
+                        ),
+                    )
+            self.export_button.config(state="normal")  # Enable export after scan
         else:
             self.results_tree.insert("", "end", values=("No hosts found.", "", "", "", ""))
             self.export_button.config(state="disabled")
@@ -630,18 +687,20 @@ class NetworkScanTab(ttk.Frame):
 
     def show_host_details(self, event):
         selected_item = self.results_tree.focus()
-        if not selected_item: return
+        if not selected_item:
+            return
 
-        item_values = self.results_tree.item(selected_item, 'values')
+        item_values = self.results_tree.item(selected_item, "values")
         host_ip = item_values[0]
         host_data = self.scan_results_data.get(host_ip)
-        if not host_data: return
+        if not host_data:
+            return
 
         details_window = tk.Toplevel(self)
         details_window.title(f"Details for {host_ip}")
         details_window.geometry("500x400")
 
-        os_info = host_data['details'].get('os', 'N/A')
+        os_info = host_data["details"].get("os", "N/A")
         ttk.Label(details_window, text=f"Operating System: {os_info}", font=("-weight bold")).pack(anchor="w", padx=10, pady=5)
 
         ports_frame = ttk.LabelFrame(details_window, text="Open Ports & Services")
@@ -650,22 +709,33 @@ class NetworkScanTab(ttk.Frame):
         port_columns = ("port", "protocol", "state", "service", "product")
         ports_tree = ttk.Treeview(ports_frame, columns=port_columns, show="headings")
 
-        ports_tree.heading("port", text="Port", anchor=tk.W); ports_tree.column("port", width=60, anchor=tk.W)
-        ports_tree.heading("protocol", text="Protocol", anchor=tk.W); ports_tree.column("protocol", width=60, anchor=tk.W)
-        ports_tree.heading("state", text="State", anchor=tk.W); ports_tree.column("state", width=80, anchor=tk.W)
-        ports_tree.heading("service", text="Service", anchor=tk.W); ports_tree.column("service", width=120, anchor=tk.W)
-        ports_tree.heading("product", text="Product/Version", anchor=tk.W); ports_tree.column("product", width=180, anchor=tk.W)
+        ports_tree.heading("port", text="Port", anchor=tk.W)
+        ports_tree.column("port", width=60, anchor=tk.W)
+        ports_tree.heading("protocol", text="Protocol", anchor=tk.W)
+        ports_tree.column("protocol", width=60, anchor=tk.W)
+        ports_tree.heading("state", text="State", anchor=tk.W)
+        ports_tree.column("state", width=80, anchor=tk.W)
+        ports_tree.heading("service", text="Service", anchor=tk.W)
+        ports_tree.column("service", width=120, anchor=tk.W)
+        ports_tree.heading("product", text="Product/Version", anchor=tk.W)
+        ports_tree.column("product", width=180, anchor=tk.W)
         ports_tree.pack(fill="both", expand=True)
 
-        ports_data = host_data['details'].get('ports', [])
+        ports_data = host_data["details"].get("ports", [])
         if ports_data:
             for port in ports_data:
                 product_version = f"{port.get('product', '')} {port.get('version', '')}".strip()
-                ports_tree.insert("", "end", values=(
-                    port.get('port', 'N/A'), port.get('protocol', 'N/A'),
-                    port.get('state', 'N/A'), port.get('name', 'N/A'),
-                    product_version if product_version else 'N/A'
-                ))
+                ports_tree.insert(
+                    "",
+                    "end",
+                    values=(
+                        port.get("port", "N/A"),
+                        port.get("protocol", "N/A"),
+                        port.get("state", "N/A"),
+                        port.get("name", "N/A"),
+                        product_version if product_version else "N/A",
+                    ),
+                )
         else:
             ports_tree.insert("", "end", values=("No open ports found.", "", "", "", ""))
 
@@ -673,28 +743,29 @@ class NetworkScanTab(ttk.Frame):
     def export_to_csv(self):
         try:
             file_path = filedialog.asksaveasfilename(
-                defaultextension=".csv",
-                filetypes=[("CSV files", "*.csv"), ("All files", "*.*")],
-                title="Export Scan Results"
+                defaultextension=".csv", filetypes=[("CSV files", "*.csv"), ("All files", "*.*")], title="Export Scan Results"
             )
             if not file_path:
                 return
 
             import csv
+
             with open(file_path, "w", newline="") as f:
                 writer = csv.writer(f)
                 # Write header
-                writer.writerow(['IP Address', 'Hostname', 'Status', 'MAC Address', 'Vendor'])
+                writer.writerow(["IP Address", "Hostname", "Status", "MAC Address", "Vendor"])
                 # Write data
                 for item_id in self.results_tree.get_children():
-                    row = self.results_tree.item(item_id)['values']
+                    row = self.results_tree.item(item_id)["values"]
                     writer.writerow(row)
             messagebox.showinfo("Success", f"Scan results exported to {file_path}")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to export CSV: {e}")
 
+
 class MainApplication(tk.Window):
     """The main application window."""
+
     def __init__(self):
         super().__init__(themename="darkly")
         self.title("Network Triage Tool")
@@ -754,41 +825,43 @@ class MainApplication(tk.Window):
 
         # Connectivity Tools
         report_content.append("\n\n--- Connectivity Tools ---\n")
-        report_content.append("Ping Results:\n" + self.connectivity_tab.ping_output_text.get('1.0', tk.END).strip())
-        report_content.append("\nOther Tools Results:\n" + self.connectivity_tab.other_tools_output.get('1.0', tk.END).strip())
+        report_content.append("Ping Results:\n" + self.connectivity_tab.ping_output_text.get("1.0", tk.END).strip())
+        report_content.append("\nOther Tools Results:\n" + self.connectivity_tab.other_tools_output.get("1.0", tk.END).strip())
 
         # Network Scan
         report_content.append("\n\n--- Network Scan ---\n")
         for item in self.network_scan_tab.results_tree.get_children():
-            values = self.network_scan_tab.results_tree.item(item, 'values')
+            values = self.network_scan_tab.results_tree.item(item, "values")
             if len(values) == 5:
-                report_content.append(f"IP: {values[0]}, Hostname: {values[1]}, Status: {values[2]}, MAC: {values[3]}, Vendor: {values[4]}")
+                report_content.append(
+                    f"IP: {values[0]}, Hostname: {values[1]}, Status: {values[2]}, MAC: {values[3]}, Vendor: {values[4]}"
+                )
 
         # Physical Layer
         report_content.append("\n\n--- Physical Layer ---\n")
-        report_content.append(self.lldp_tab.output_text.get('1.0', tk.END).strip())
+        report_content.append(self.lldp_tab.output_text.get("1.0", tk.END).strip())
 
         # Advanced Diagnostics
         report_content.append("\n\n--- Advanced Diagnostics ---\n")
-        report_content.append(self.advanced_tab.output_text.get('1.0', tk.END).strip())
+        report_content.append(self.advanced_tab.output_text.get("1.0", tk.END).strip())
 
         try:
             file_path = filedialog.asksaveasfilename(
-                defaultextension=".txt",
-                filetypes=[("Text files", "*.txt"), ("All files", "*.*")],
-                title="Save Network Report"
+                defaultextension=".txt", filetypes=[("Text files", "*.txt"), ("All files", "*.*")], title="Save Network Report"
             )
             if file_path:
-                with open(file_path, "w", encoding='utf-8') as f:
+                with open(file_path, "w", encoding="utf-8") as f:
                     f.write("\n".join(report_content))
                 messagebox.showinfo("Success", f"Report saved to {file_path}")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to save report: {e}")
 
+
 def main():
     """Main function to run the application."""
     app = MainApplication()
     app.mainloop()
+
 
 if __name__ == "__main__":
     if platform.system() == "Darwin" and os.geteuid() != 0:
@@ -797,7 +870,7 @@ if __name__ == "__main__":
             python_executable = sys.executable
             command_to_run = f"cd '{project_root}' && '{python_executable}' -m src.macos.main_app"
             applescript = f'do shell script "{command_to_run}" with administrator privileges'
-            subprocess.Popen(['osascript', '-e', applescript])
+            subprocess.Popen(["osascript", "-e", applescript])
             sys.exit(0)
         except Exception as e:
             root = tk.Tk()
