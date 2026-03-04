@@ -102,7 +102,7 @@ class ResultsWidget(DataTable):
 
     def filter_by(self, column_key: str, value: str) -> None:
         """Filter results by column value."""
-        # Note: Textual DataTable doesn't have built-in filtering
+        # Custom filtering implementation as Textual DataTable lacks built-in filtering
         # This would be implemented with a custom filter in subclasses
         pass
 

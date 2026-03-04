@@ -466,12 +466,3 @@ class NetworkTriageToolkit:
                 "Success": False,
                 "Message": f"Traceroute failed: {exc}",
             }
-
-
-# TODO: Helper functions for Linux-specific parsing
-# - parse_ip_output(): Parse 'ip' command output
-# - parse_ethtool_output(): Parse 'ethtool' command output
-# - parse_iwconfig_output(): Parse 'iwconfig' command output
-# - parse_lsb_release(): Parse 'lsb_release' command output
-# - get_primary_interface(): Find primary network interface
-# - is_wireless_interface(): Check if interface is wireless

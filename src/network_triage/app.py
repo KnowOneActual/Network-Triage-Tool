@@ -634,7 +634,7 @@ class NetworkTriageApp(App):
         ul = speed.query_one("#spd_upload", InfoBox).value_text
         ping = speed.query_one("#spd_ping", InfoBox).value_text
 
-        # 4. Gather Nmap Data (from our new class variable)
+        # 4. Gather Nmap Data (from class variable)
         nmap_tool = self.query_one(NmapTool)
         scan_data = nmap_tool.scan_data
 

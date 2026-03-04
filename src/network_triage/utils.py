@@ -122,9 +122,9 @@ def safe_subprocess_run(
     except subprocess.TimeoutExpired:
         raise NetworkTimeoutError(f"Command '{' '.join(command)}' exceeded {timeout}s timeout")
     except CommandNotFoundError:
-        raise  # Re-raise our custom exception
+        raise  # Re-raise custom exception
     except NetworkCommandError:
-        raise  # Re-raise our custom exception
+        raise  # Re-raise custom exception
     except Exception as e:
         raise NetworkCommandError(f"Unexpected error running command: {e}")
 

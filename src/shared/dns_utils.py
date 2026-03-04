@@ -133,7 +133,7 @@ def resolve_hostname(hostname: str, timeout: int = 5, include_reverse_dns: bool 
             result.error_message = f"DNS resolution timeout after {timeout}s"
             return result
 
-        # Reverse DNS lookup if requested and we have IP addresses
+        # Reverse DNS lookup if requested and IP addresses are available
         if include_reverse_dns and result.ipv4_addresses:
             try:
                 reverse_lookup = socket.gethostbyaddr(result.ipv4_addresses[0])
