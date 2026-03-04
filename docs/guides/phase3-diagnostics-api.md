@@ -43,7 +43,7 @@ Resolve A, AAAA, and reverse DNS records for a hostname.
 
 **Example:**
 ```python
-from src.shared.dns_utils import resolve_hostname
+from shared.dns_utils import resolve_hostname
 
 result = resolve_hostname('google.com')
 if result.status.value == 'success':
@@ -80,7 +80,7 @@ Validate if a DNS server is responsive and functional.
 
 **Example:**
 ```python
-from src.shared.dns_utils import validate_dns_server
+from shared.dns_utils import validate_dns_server
 
 result = validate_dns_server('8.8.8.8')
 if result['is_responsive']:
@@ -113,7 +113,7 @@ Useful for:
 
 **Example:**
 ```python
-from src.shared.dns_utils import check_dns_propagation
+from shared.dns_utils import check_dns_propagation
 
 results = check_dns_propagation('example.com')
 for provider_result in results:
@@ -194,7 +194,7 @@ Check if a single port is open using TCP connection.
 
 **Example:**
 ```python
-from src.shared.port_utils import check_port_open
+from shared.port_utils import check_port_open
 
 result = check_port_open('192.168.1.1', 22, timeout=3)
 if result.status.value == 'open':
@@ -221,7 +221,7 @@ Concurrently check multiple ports.
 
 **Example:**
 ```python
-from src.shared.port_utils import check_multiple_ports
+from shared.port_utils import check_multiple_ports
 
 results = check_multiple_ports('localhost', [22, 80, 443, 3306, 5432])
 for result in results:
@@ -247,7 +247,7 @@ Scan all ~30 common service ports.
 
 **Example:**
 ```python
-from src.shared.port_utils import scan_common_ports, PortStatus
+from shared.port_utils import scan_common_ports, PortStatus
 
 results = scan_common_ports('192.168.1.100')
 open_ports = [r for r in results if r.status == PortStatus.OPEN]
@@ -271,7 +271,7 @@ Scan a range of ports (returns only OPEN ports).
 
 **Example:**
 ```python
-from src.shared.port_utils import scan_port_range
+from shared.port_utils import scan_port_range
 
 # Scan well-known ports (1-1024)
 open_ports = scan_port_range('192.168.1.50', 1, 1024, timeout=1)
@@ -298,7 +298,7 @@ Generate summary statistics from port scan results.
 
 **Example:**
 ```python
-from src.shared.port_utils import check_multiple_ports, summarize_port_scan
+from shared.port_utils import check_multiple_ports, summarize_port_scan
 
 results = check_multiple_ports('localhost', [22, 80, 443, 3306, 5432])
 summary = summarize_port_scan(results)
@@ -356,7 +356,7 @@ Execute ping and calculate comprehensive statistics including jitter.
 
 **Example:**
 ```python
-from src.shared.latency_utils import ping_statistics
+from shared.latency_utils import ping_statistics
 
 stats = ping_statistics('8.8.8.8', count=10)
 if stats.status.value == 'success':
@@ -394,7 +394,7 @@ Automatically uses `mtr` if available, otherwise falls back to traceroute + ping
 
 **Example:**
 ```python
-from src.shared.latency_utils import mtr_style_trace
+from shared.latency_utils import mtr_style_trace
 
 hops, message = mtr_style_trace('8.8.8.8', max_hops=15)
 print(f"Trace status: {message}")
@@ -453,7 +453,7 @@ python -m pytest tests/test_phase3_diagnostics.py -v
 python -m pytest tests/test_phase3_diagnostics.py::TestDNSUtils -v
 
 # Run with coverage
-python -m pytest tests/test_phase3_diagnostics.py --cov=src.shared --cov-report=html
+python -m pytest tests/test_phase3_diagnostics.py --cov=shared --cov-report=html
 ```
 
 **Test Coverage:**
@@ -479,8 +479,8 @@ Phase 3 utilities can be integrated into the Textual TUI as new tabs:
 from textual.app import ComposeResult
 from textual.containers import Container
 from textual.widgets import Static
-from src.shared.dns_utils import resolve_hostname
-from src.shared.port_utils import check_multiple_ports
+from shared.dns_utils import resolve_hostname
+from shared.port_utils import check_multiple_ports
 
 class DiagnosticsTab(Static):
     """Advanced diagnostics tab."""

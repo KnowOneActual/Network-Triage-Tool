@@ -114,7 +114,7 @@ This PR introduces **Phase 3: Advanced Diagnostics**, extending the Network-Tria
 python -m pytest tests/test_phase3_diagnostics.py -v
 
 # With coverage report
-python -m pytest tests/test_phase3_diagnostics.py --cov=src.shared --cov-report=term
+python -m pytest tests/test_phase3_diagnostics.py --cov=shared --cov-report=term
 ```
 
 ---

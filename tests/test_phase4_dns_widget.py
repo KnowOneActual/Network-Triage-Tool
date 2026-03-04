@@ -156,7 +156,7 @@ class TestDNSResolution:
             mock_resolve.return_value = mock_result
 
             # The method would normally be called through the UI
-            # For testing, we just verify it can be called
+            # For testing, just verify it can be called
             assert callable(widget.resolve_hostname)
 
     def test_resolve_hostname_imports_dns_utility(self):
@@ -175,7 +175,7 @@ class TestDNSResolution:
 
         # Results widget is created in compose()
         # We can't test it directly without running the app,
-        # but we can verify compose exists and will create it
+        # but can verify compose exists and will create it
         assert hasattr(widget, "compose")
         assert callable(widget.compose)
 

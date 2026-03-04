@@ -191,7 +191,7 @@ class TestPortUtils(unittest.TestCase):
 
         result = check_multiple_ports("localhost", [22, 80])
 
-        # Note: Since we mocked check_port_open, we're testing the threading logic
+        # Note: Since mocked check_port_open, we're testing the threading logic
         self.assertEqual(len(result), 2)
 
     def test_get_service_name(self):

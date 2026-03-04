@@ -31,7 +31,7 @@ pip install -e .
 ### DNS Resolution
 
 ```python
-from src.shared.dns_utils import resolve_hostname
+from shared.dns_utils import resolve_hostname
 
 # Basic hostname resolution
 result = resolve_hostname('google.com')
@@ -55,7 +55,7 @@ Lookup time: 23.45ms
 ### DNS Server Validation
 
 ```python
-from src.shared.dns_utils import validate_dns_server
+from shared.dns_utils import validate_dns_server
 
 # Check if Google DNS is responsive
 result = validate_dns_server('8.8.8.8')
@@ -68,7 +68,7 @@ else:
 ### DNS Propagation Check
 
 ```python
-from src.shared.dns_utils import check_dns_propagation
+from shared.dns_utils import check_dns_propagation
 
 # Check DNS propagation across 5 major providers
 results = check_dns_propagation('example.com')
@@ -89,7 +89,7 @@ for provider in results:
 ### Port Scanning
 
 ```python
-from src.shared.port_utils import check_port_open, check_multiple_ports
+from shared.port_utils import check_port_open, check_multiple_ports
 
 # Check single port
 result = check_port_open('192.168.1.1', 22)
@@ -115,7 +115,7 @@ Port 5432 (PostgreSQL): closed
 ### Common Ports Scan
 
 ```python
-from src.shared.port_utils import scan_common_ports, summarize_port_scan
+from shared.port_utils import scan_common_ports, summarize_port_scan
 
 # Scan ~30 common service ports
 results = scan_common_ports('192.168.1.100')
@@ -132,7 +132,7 @@ for port, service in summary['open_ports']:
 ### Ping Statistics with Jitter
 
 ```python
-from src.shared.latency_utils import ping_statistics
+from shared.latency_utils import ping_statistics
 
 # Comprehensive ping analysis
 stats = ping_statistics('8.8.8.8', count=10)
@@ -167,7 +167,7 @@ Jitter (stddev): 1.82ms
 ### MTR-Style Traceroute
 
 ```python
-from src.shared.latency_utils import mtr_style_trace
+from shared.latency_utils import mtr_style_trace
 
 # Comprehensive path analysis
 hops, message = mtr_style_trace('8.8.8.8', max_hops=15)
@@ -196,7 +196,7 @@ Hop 12: 8.8.8.8         15.67ms  dns.google
 ## Port Range Scanning
 
 ```python
-from src.shared.port_utils import scan_port_range
+from shared.port_utils import scan_port_range
 
 # Scan well-known ports (1-1024)
 open_ports = scan_port_range('192.168.1.50', start_port=1, end_port=1024, timeout=1)
@@ -210,7 +210,7 @@ for port in open_ports:
 ### Concurrent Port Scanning with Custom Thread Pool
 
 ```python
-from src.shared.port_utils import check_multiple_ports
+from shared.port_utils import check_multiple_ports
 import time
 
 # Scan 100 ports with 50 concurrent workers
@@ -229,7 +229,7 @@ print(f"Scanned {len(ports)} ports in {elapsed:.2f} seconds")
 ### DNS Resolution with Custom Timeout
 
 ```python
-from src.shared.dns_utils import resolve_hostname
+from shared.dns_utils import resolve_hostname
 
 # Fast lookup with 1-second timeout
 result = resolve_hostname('slow-dns-server.com', timeout=1, include_reverse_dns=False)
@@ -241,8 +241,8 @@ if result.status.value == 'timeout':
 
 ```python
 import json
-from src.shared.dns_utils import resolve_hostname
-from src.shared.port_utils import scan_common_ports
+from shared.dns_utils import resolve_hostname
+from shared.port_utils import scan_common_ports
 
 # DNS results
 dns_result = resolve_hostname('example.com')
@@ -266,7 +266,7 @@ python -m pytest tests/test_phase3_diagnostics.py -v
 python -m pytest tests/test_phase3_diagnostics.py::TestDNSUtils -v
 
 # Run with coverage report
-python -m pytest tests/test_phase3_diagnostics.py --cov=src.shared --cov-report=html
+python -m pytest tests/test_phase3_diagnostics.py --cov=shared --cov-report=html
 
 # View coverage report
 open htmlcov/index.html  # macOS

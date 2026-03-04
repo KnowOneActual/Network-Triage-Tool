@@ -24,7 +24,7 @@ Comprehensive DNS resolution and validation toolkit with 652 lines of production
 
 #### API Highlights
 ```python
-from src.shared.dns_utils import resolve_hostname, validate_dns_server, check_dns_propagation
+from shared.dns_utils import resolve_hostname, validate_dns_server, check_dns_propagation
 
 # Resolve hostname with full details
 result = resolve_hostname('example.com')
@@ -61,7 +61,7 @@ TCP-based port scanning and service detection with 613 lines of concurrent scann
 
 #### API Highlights
 ```python
-from src.shared.port_utils import check_port_open, scan_common_ports, summarize_port_scan
+from shared.port_utils import check_port_open, scan_common_ports, summarize_port_scan
 
 # Check single port
 result = check_port_open('192.168.1.1', 22)
@@ -96,7 +96,7 @@ Comprehensive latency measurement with MTR-style path analysis (748 lines).
 
 #### API Highlights
 ```python
-from src.shared.latency_utils import ping_statistics, mtr_style_trace
+from shared.latency_utils import ping_statistics, mtr_style_trace
 
 # Comprehensive ping analysis
 stats = ping_statistics('8.8.8.8', count=10)
@@ -256,9 +256,9 @@ Phase 3 is **fully backward compatible**. No breaking changes.
 #### New Capabilities Available
 ```python
 # Add to existing code
-from src.shared.dns_utils import resolve_hostname
-from src.shared.port_utils import check_port_open
-from src.shared.latency_utils import ping_statistics
+from shared.dns_utils import resolve_hostname
+from shared.port_utils import check_port_open
+from shared.latency_utils import ping_statistics
 
 # Use alongside existing features
 result = resolve_hostname('example.com')

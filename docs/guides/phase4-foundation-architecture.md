@@ -275,7 +275,7 @@ class DNSResolverWidget(WidgetTemplate):
             self.show_loading(f"Resolving {hostname}...")
             
             # Import Phase 3 utilities
-            from src.shared.dns_utils import resolve_hostname
+            from shared.dns_utils import resolve_hostname
             
             result = await self.run_in_thread(resolve_hostname, hostname)
             

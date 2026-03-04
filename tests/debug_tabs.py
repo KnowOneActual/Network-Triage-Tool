@@ -11,7 +11,7 @@ class DebugTabsApp(App):
         background: #222222;
     }
 
-    /* 1. Make the Tab container huge and red so we see if it exists */
+    /* 1. Make the Tab container huge and red so see if it exists */
     TabbedContent {
         height: 1fr;
         border: solid red;

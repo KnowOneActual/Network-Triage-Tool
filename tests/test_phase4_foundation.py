@@ -175,7 +175,7 @@ class TestBaseWidget:
         """Test displaying error message via logging."""
         widget = BaseWidget()
         # Test that display_error sets the reactive attribute
-        # Note: query_one() requires an active app context, so we test the state changes
+        # Note: query_one() requires an active app context, so test the state changes
         try:
             widget.display_error("Test error message")
         except Exception:
@@ -265,7 +265,7 @@ class TestResultsWidget:
     def test_results_widget_attributes(self):
         """Test ResultsWidget has required attributes."""
         # Don't instantiate with columns (requires app context)
-        # Just test the class has what we need
+        # Just test the class has what need
         assert hasattr(ResultsWidget, "__init__")
         assert hasattr(ResultsWidget, "add_row")
         assert hasattr(ResultsWidget, "add_rows")

@@ -165,7 +165,7 @@ High standards are maintained through automated CI/CD scans:
 ### DNS Resolution
 
 ```python
-from src.shared.dns_utils import resolve_hostname
+from shared.dns_utils import resolve_hostname
 
 result = resolve_hostname('google.com')
 print(f"IPv4: {result.ipv4_addresses}")
@@ -175,7 +175,7 @@ print(f"IPv6: {result.ipv6_addresses}")
 ### Port Scanning
 
 ```python
-from src.shared.port_utils import check_multiple_ports
+from shared.port_utils import check_multiple_ports
 
 results = check_multiple_ports('localhost', [22, 80, 443])
 for result in results:
@@ -185,7 +185,7 @@ for result in results:
 ### Latency Analysis
 
 ```python
-from src.shared.latency_utils import ping_statistics
+from shared.latency_utils import ping_statistics
 
 stats = ping_statistics('8.8.8.8', count=10)
 print(f"Average latency: {stats.avg_ms:.2f}ms")

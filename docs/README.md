@@ -144,7 +144,7 @@ network-triage
 **Using Phase 3 utilities:**
 ```python
 # See: getting-started/quick-start.md
-from src.shared.dns_utils import resolve_hostname
+from shared.dns_utils import resolve_hostname
 result = resolve_hostname('example.com')
 print(result.ipv4_addresses)
 ```

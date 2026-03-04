@@ -184,9 +184,9 @@ sudo network-triage  # Linux/macOS
 Use the diagnostic utilities directly in Python scripts:
 
 ```python
-from src.shared.dns_utils import resolve_hostname
-from src.shared.port_utils import scan_common_ports
-from src.shared.latency_utils import ping_statistics
+from shared.dns_utils import resolve_hostname
+from shared.port_utils import scan_common_ports
+from shared.latency_utils import ping_statistics
 
 # Your diagnostic code here
 ```
@@ -341,13 +341,13 @@ tests/test_phase3_diagnostics.py::TestDNSUtils::test_validate_dns_server PASSED
 
 ```bash
 # Test DNS resolution
-python -c "from src.shared.dns_utils import resolve_hostname; print(resolve_hostname('google.com').ipv4_addresses)"
+python -c "from shared.dns_utils import resolve_hostname; print(resolve_hostname('google.com').ipv4_addresses)"
 
 # Test port check
-python -c "from src.shared.port_utils import check_port_open; print(check_port_open('8.8.8.8', 53))"
+python -c "from shared.port_utils import check_port_open; print(check_port_open('8.8.8.8', 53))"
 
 # Test ping
-python -c "from src.shared.latency_utils import ping_statistics; print(ping_statistics('8.8.8.8', count=3).avg_ms)"
+python -c "from shared.latency_utils import ping_statistics; print(ping_statistics('8.8.8.8', count=3).avg_ms)"
 ```
 
 ## Troubleshooting
@@ -408,7 +408,7 @@ Some network tests may require Administrator privileges:
 
 Increase timeout values:
 ```python
-from src.shared.dns_utils import resolve_hostname
+from shared.dns_utils import resolve_hostname
 result = resolve_hostname('example.com', timeout=10)  # Default is 5
 ```
 
