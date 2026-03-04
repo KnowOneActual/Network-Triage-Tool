@@ -29,18 +29,18 @@ Python 3.11+, Textual (UI), Scapy, Netmiko, psutil, requests, speedtest-cli, pyt
 - **Research -> Strategy -> Execution** lifecycle.
 - **Empirical Reproduction:** Reproduce bugs before fixing.
 - **Verification:** Every change MUST be verified with tests and local builds.
-- **Parallel Testing:** Full suite (~106 tests) is fast (< 1s); run frequently with `pytest`.
+- **Parallel Testing:** Full suite (~184 items) is fast; run frequently with `pytest`.
 
 ### 2. Code Standards
-- **Python Convention:** Follow PEP 8 strictly.
-- **Typing:** Maintain 100% type hints for all new code.
+- **Python Convention:** Follow PEP 8 strictly (enforced by Ruff).
+- **Typing:** Maintain type hints for all new code (verified by Mypy).
 - **Indentation:** **4 spaces** for Python files.
 - **TUI Responsiveness:** NEVER perform blocking network I/O in the main TUI thread. Use `@work(thread=True)` and `self.app.call_from_thread()` or `AsyncOperationMixin` patterns.
 - **Error Handling:** Use `BaseWidget.display_error()` or `AsyncOperationMixin.handle_error()` for user-facing feedback.
 
 ### 3. Testing
 - **Framework:** `pytest` with `pytest-mock`.
-- **Coverage:** Aim for high coverage (current is ~94%).
+- **Coverage:** Minimum 45% total coverage required (enforced by CI).
 - **Widget Tests:** New widgets require comprehensive unit and integration tests.
 
 ### 4. Build & Environment
@@ -49,12 +49,11 @@ Python 3.11+, Textual (UI), Scapy, Netmiko, psutil, requests, speedtest-cli, pyt
 
 ## 🚀 Key Commands
 - **Run App:** `network-triage`
-- **Run Tests:** `pytest`
+- **Run Tests:** `pytest --cov`
 - **Linting:** `ruff check .`
 - **Formatting:** `ruff format .`
-- **Security:** `bandit -c pyproject.toml -r src/`
-- **Secret Scan:** `gitleaks` (integrated in CI)
 - **Type Checking:** `mypy src/`
+- **Security:** `bandit -c pyproject.toml -r src/`
 - **Spelling:** `codespell`
 - **Audit:** `pip-audit`
 - **Dependabot:** Weekly updates for Pip and GitHub Actions.

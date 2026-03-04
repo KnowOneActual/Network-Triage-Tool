@@ -12,8 +12,10 @@
 [![UI Framework](https://img.shields.io/badge/UI-Textual-orange)](https://textual.textualize.io/)
 [![Tests](https://img.shields.io/badge/tests-106%2F106%20passing-success)](./tests/)
 [![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-blue)](https://github.com/knowoneactual/Network-Triage-Tool/actions)
+[![Security Scan](https://github.com/knowoneactual/Network-Triage-Tool/actions/workflows/python-app.yml/badge.svg)](https://github.com/knowoneactual/Network-Triage-Tool/actions)
 
-A cross-platform **Terminal User Interface (TUI)** designed for network professionals to diagnose and troubleshoot connectivity issues efficiently.
+A cross-platform **Terminal User Interface (TUI)**
+ designed for network professionals to diagnose and troubleshoot connectivity issues efficiently.
 
 Unlike the previous GUI version, this tool runs entirely in the terminal, making it lighter, faster, and fully capable of running over SSH sessions. **Now with comprehensive advanced diagnostics for DNS, ports, and latency measurement, plus integrated TUI widgets.**
 
@@ -132,6 +134,18 @@ network-triage
   * **System Info:** `psutil`, `requests`
   * **Testing:** `pytest`, `pytest-mock` (106 comprehensive tests)
   * **Advanced Diagnostics:** Pure Python stdlib (Phase 3)
+
+## 🛡️ Code Quality & Security
+
+We maintain high engineering standards through automated CI/CD scans:
+
+- **Linting & Formatting:** [Ruff](https://github.com/astral-sh/ruff) for near-instant linting and PEP 8 compliance.
+- **Type Checking:** [Mypy](http://mypy-lang.org/) for static type verification and catching subtle bugs.
+- **Security Scanning:** [Bandit](https://github.com/PyCQA/bandit) for detecting common security vulnerabilities.
+- **Secret Scanning:** [Gitleaks](https://github.com/gitleaks/gitleaks) to prevent accidental credential commits.
+- **Dependency Audit:** [pip-audit](https://github.com/pypa/pip-audit) for vulnerability scanning in third-party libraries.
+- **Spell Checking:** [Codespell](https://github.com/codespell-project/codespell) to ensure a professional, typo-free interface and documentation.
+- **Automated Updates:** [Dependabot](https://github.com/dependabot) for keeping our environment secure and modern.
 
 ## 📊 Quality Metrics
 
