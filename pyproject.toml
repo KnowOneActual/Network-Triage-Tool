@@ -32,7 +32,11 @@ dev = [
     "pytest",
     "pytest-mock",
     "pytest-cov",
-    "pip-audit"
+    "pip-audit",
+    "mypy",
+    "types-requests",
+    "types-psutil",
+    "types-PyYAML"
 ]
 
 [tool.ruff]
@@ -68,6 +72,17 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S101", "E402", "F401", "F841"] # tests often have unused imports/vars during debug
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = false
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = false
+ignore_missing_imports = true
+show_error_codes = true
+disable_error_code = ["attr-defined", "union-attr", "arg-type", "call-overload", "override", "assignment", "dict-item", "var-annotated", "misc"]
 
 [tool.bandit]
 exclude_dirs = ["tests", ".venv", "venv"]

@@ -63,7 +63,9 @@ def retry(
                         logger.error(f"All {max_attempts} attempts failed for {func.__name__}: {e}")
 
             # If we've exhausted all retries, raise the last exception
-            raise last_exception
+            if last_exception:
+                raise last_exception
+            raise RuntimeError(f"Retry decorator failed for {func.__name__}")
 
         return wrapper
 

@@ -31,9 +31,17 @@ jobs:
         
       - name: Check formatting with ruff
         run: ruff format --check .
+
+      - name: Type check with mypy
+        run: mypy src/
         
       - name: Security scan with bandit
         run: bandit -c pyproject.toml -r src/
+
+      - name: Secret scan with gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         
       - name: Dependency vulnerability scan
         run: pip-audit
