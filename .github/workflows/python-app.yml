@@ -32,6 +32,9 @@ jobs:
       - name: Check formatting with ruff
         run: ruff format --check .
 
+      - name: Spell check with codespell
+        run: codespell
+
       - name: Type check with mypy
         run: mypy src/
         
@@ -63,4 +66,4 @@ jobs:
           pip install .[dev]
           
       - name: Run tests with pytest
-        run: pytest
+        run: pytest --cov

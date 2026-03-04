@@ -52,8 +52,12 @@ Python 3.11+, Textual (UI), Scapy, Netmiko, psutil, requests, speedtest-cli, pyt
 - **Run Tests:** `pytest`
 - **Linting:** `ruff check .`
 - **Formatting:** `ruff format .`
-- **Security:** `bandit -r src/`
+- **Security:** `bandit -c pyproject.toml -r src/`
+- **Secret Scan:** `gitleaks` (integrated in CI)
+- **Type Checking:** `mypy src/`
+- **Spelling:** `codespell`
 - **Audit:** `pip-audit`
+- **Dependabot:** Weekly updates for Pip and GitHub Actions.
 
 ## 📅 Roadmap Context (Current Phase: 4.3)
 - **Phase 4.4 (Planned):** Latency Analyzer widget.

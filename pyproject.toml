@@ -36,7 +36,8 @@ dev = [
     "mypy",
     "types-requests",
     "types-psutil",
-    "types-PyYAML"
+    "types-PyYAML",
+    "codespell"
 ]
 
 [tool.ruff]
@@ -87,6 +88,18 @@ disable_error_code = ["attr-defined", "union-attr", "arg-type", "call-overload",
 [tool.bandit]
 exclude_dirs = ["tests", ".venv", "venv"]
 skips = ["B101", "B104", "B110", "B314", "B404", "B405", "B602", "B603", "B607"]
+
+[tool.codespell]
+skip = "*.json,*.zip,.git,venv,.*venv,temp,docs/archive,build,dist"
+ignore-words-list = "nd,toolk"
+
+[tool.coverage.run]
+source = ["src"]
+omit = ["src/network_triage/shared/*", "tests/*", "*/__init__.py"]
+
+[tool.coverage.report]
+fail_under = 45
+show_missing = true
 
 [project.scripts]
 network-triage = "network_triage.app:run"
