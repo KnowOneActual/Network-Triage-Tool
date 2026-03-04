@@ -309,10 +309,10 @@ start htmlcov/index.html  # Windows
 
 ## Next Steps
 
-- Review the [full API documentation](docs/PHASE3_DIAGNOSTICS.md) for detailed reference
-- Check [RELEASE-NOTES-PHASE3.md](RELEASE-NOTES-PHASE3.md) for complete changelog
-- See [PHASE4-INTEGRATION-ROADMAP.md](PHASE4-INTEGRATION-ROADMAP.md) for upcoming TUI integration
-- Read [ERROR_HANDLING_GUIDE.md](ERROR_HANDLING_GUIDE.md) for error handling patterns
+- Review the [full API documentation](../guides/phase3-diagnostics-api.md) for detailed reference
+- Check [v0.3.0 Release Notes](../releases/phase3.md) for Phase 3 background
+- See [Roadmap](../planning/roadmap.md) for upcoming TUI integration
+- Read [Error Handling Guide](../guides/error-handling.md) for error handling patterns
 
 ## Common Issues
 
@@ -334,8 +334,8 @@ start htmlcov/index.html  # Windows
 
 For issues, questions, or contributions:
 - Open an issue: https://github.com/knowoneactual/Network-Triage-Tool/issues
-- Read contributing guide: [CONTRIBUTING.md](CONTRIBUTING.md)
-- Review documentation: [DOCUMENTATION-INDEX.md](DOCUMENTATION-INDEX.md)
+- Read contributing guide: [CONTRIBUTING.md](../../CONTRIBUTING.md)
+- Review documentation: [Documentation Index](../README.md)
 
 ---
 

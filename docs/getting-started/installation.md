@@ -130,7 +130,7 @@ network-triage --version
 
 You should see:
 ```
-Network Triage Tool v0.3.0
+Network Triage Tool v0.5.0
 ```
 
 ### Method 2: Direct Installation from Git
@@ -467,14 +467,14 @@ pip install --upgrade -e .
 After installation:
 
 1. **Launch the TUI**: `network-triage`
-2. **Try Phase 3 utilities**: Read [PHASE3-QUICK-START.md](PHASE3-QUICK-START.md)
-3. **Review documentation**: See [DOCUMENTATION-INDEX.md](DOCUMENTATION-INDEX.md)
+2. **Try diagnostic utilities**: Read [Quick Start Guide](quick-start.md)
+3. **Review documentation**: See [Documentation Index](../README.md)
 4. **Run tests**: `pytest tests/ -v`
-5. **Contribute**: Read [CONTRIBUTING.md](CONTRIBUTING.md)
+5. **Contribute**: Read [CONTRIBUTING.md](../../CONTRIBUTING.md)
 
 ## Getting Help
 
-- **Documentation**: [DOCUMENTATION-INDEX.md](DOCUMENTATION-INDEX.md)
+- **Documentation**: [Documentation Index](../README.md)
 - **Issues**: https://github.com/knowoneactual/Network-Triage-Tool/issues
 - **Discussions**: https://github.com/knowoneactual/Network-Triage-Tool/discussions
 

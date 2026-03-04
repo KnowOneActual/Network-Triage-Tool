@@ -1,8 +1,8 @@
 # Phase 4.1: Widget Foundation Architecture
 
-**Status:** 🚀 In Development  
+**Status:** ✅ COMPLETE  
 **Target:** v0.4.0  
-**Timeline:** Weeks 1-2 of Phase 4  
+**Timeline:** March 2026  
 
 ---
 
@@ -485,13 +485,12 @@ def test_dns_resolver_widget():
 
 ## Next Steps
 
-Once Phase 4.1 Foundation is complete:
+With Phase 4.1 Foundation, 4.2 DNS Resolver, and 4.3 Port Scanner complete:
 
-1. **Week 3-4:** Implement [Phase 4.2: DNS Resolver Widget](./dns-resolver.md)
-2. **Week 5-6:** Implement [Phase 4.3: Port Scanner Widget](./port-scanner.md)
-3. **Week 7-9:** Implement [Phase 4.4: Latency Analyzer Widget](./latency-analyzer.md)
-4. **Week 9-10:** Implement [Phase 4.5: Results History & Export](./results-management.md)
-5. **Week 11-12:** Testing, documentation, release v0.4.0
+1. **Phase 4.4:** Implement [Latency Analyzer Widget](./latency-analyzer.md) (MTR-style)
+2. **Phase 4.5:** Implement [Results History & Export](./results-management.md)
+3. **Phase 4.6:** Implement [LAN Bandwidth Tester](./lan-tester.md)
+4. **Testing:** Ongoing integration testing and documentation updates
 
 ---
 

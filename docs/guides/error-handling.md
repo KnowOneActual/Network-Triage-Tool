@@ -891,4 +891,4 @@ See these files for comprehensive error handling examples:
 
 **Questions or suggestions?** Open an issue or discussion on [GitHub](https://github.com/knowoneactual/Network-Triage-Tool)!
 
-**Last Updated:** December 19, 2025 (Phase 3)
+**Last Updated:** March 4, 2026 (v0.5.0)

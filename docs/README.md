@@ -25,10 +25,10 @@ Start here if you're new to the Network Triage Tool:
 
 Upgrading or looking for specific information:
 
-1. **[Release Notes - Phase 3](releases/phase3.md)** - What's new in v0.3.0
+1. **[Release Notes - Phase 3](releases/phase3.md)** - Features, testing, and metrics for Phase 3
 2. **[Changelog](../CHANGELOG.md)** - Detailed version history
 3. **[Roadmap](planning/roadmap.md)** - Upcoming features and development plans
-4. **[Phase 4 Integration Roadmap](planning/phase4-integration.md)** - Next phase: TUI integration
+4. **[Phase 4 Integration Roadmap](planning/phase4-integration.md)** - Phase 4 details and TUI integration
 
 ### Contributors & Developers
 
@@ -109,14 +109,15 @@ Contributing to the project:
 - [README.md](../README.md) - TUI features and keyboard shortcuts
 - [Changelog](../CHANGELOG.md) - v0.2.x releases
 
-### Phase 3: Advanced Diagnostics (Current)
+### Phase 3: Advanced Diagnostics
 - **[Phase 3 Quick Start](getting-started/quick-start.md)** - Quick start guide
 - **[Phase 3 Diagnostics API](guides/phase3-diagnostics-api.md)** - Complete API reference
 - **[Release Notes - Phase 3](releases/phase3.md)** - Release notes and metrics
 - **[Phase 3 Tests](../tests/test_phase3_diagnostics.py)** - Test suite
 - **[Changelog](../CHANGELOG.md)** - v0.3.0 changelog
 
-### Phase 4: TUI Integration (Planned)
+### Phase 4: TUI Integration (Current)
+- **[Foundation Architecture](guides/phase4-foundation-architecture.md)** - Widget architecture guide
 - **[Phase 4 Integration Roadmap](planning/phase4-integration.md)** - Detailed planning and timeline
 - **[Roadmap](planning/roadmap.md)** - High-level Phase 4 overview
 
@@ -330,6 +331,6 @@ See [Contributing](../CONTRIBUTING.md) for the contribution process.
 
 ---
 
-**Last Updated:** December 19, 2025 (v0.3.1)  
+**Last Updated:** March 4, 2026 (v0.5.0)  
 **Maintained By:** Network Triage Tool Contributors  
 **Questions?** Open a [discussion](https://github.com/knowoneactual/Network-Triage-Tool/discussions) on GitHub
