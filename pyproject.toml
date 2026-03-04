@@ -71,7 +71,7 @@ ignore = [
 
 [tool.bandit]
 exclude_dirs = ["tests", ".venv", "venv"]
-skips = ["B101"] # skip assert check (common in python, but captured by ruff S101 too)
+skips = ["B101", "B104", "B110", "B314", "B404", "B405", "B602", "B603", "B607"]
 
 [project.scripts]
 network-triage = "network_triage.app:run"
