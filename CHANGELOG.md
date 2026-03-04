@@ -5,7 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.4.0] - 2025-12-20 (In Progress)
+## [0.5.0] - 2026-03-04
+
+### Added
+- **Professional Tooling Suite:** Integrated a comprehensive set of automated quality and security tools.
+  - **Ruff:** For near-instant linting and PEP 8 compliance.
+  - **Mypy:** For static type checking and verification.
+  - **Bandit:** For automated security vulnerability scanning.
+  - **Gitleaks:** For secret scanning in GitHub Actions.
+  - **Codespell:** For automated typo detection in code and docs.
+  - **Pip-audit:** For dependency vulnerability scanning.
+- **Enhanced CI/CD Workflow:** Unified all scans and tests into a robust GitHub Action pipeline.
+- **Automated Updates:** Configured Dependabot for weekly Pip and GitHub Action dependency tracking.
+- **Coverage Gates:** Enforced a minimum 45% test coverage threshold via `pytest-cov`.
+- **Project Context:** Added `GEMINI.md` to establish foundational engineering mandates and roadmap context.
+
+### Changed
+- **Application Integration:** Successfully wired up Phase 4 widgets (`DNSResolverWidget` and `PortScannerWidget`) into the main application, replacing legacy tools.
+- **Documentation Standards:** Rephrased all documentation (README, CONTRIBUTING, GEMINI, Roadmap) to use objective, pronoun-free language.
+- **Repository Cleanup:** Removed build artifacts (`.egg-info`) and consolidated legacy archive files.
+- **Modern CI Actions:** Updated all GitHub Actions to latest non-deprecated versions (`setup-python@v5`, `upload-artifact@v4`, `codecov-action@v4`).
+
+### Fixed
+- Fixed duplicate method definitions in `app.py` and `components.py`.
+- Resolved `mypy` errors in the `@retry` decorator logic.
+- Corrected test failures caused by removed imports in `port_scanner_widget.py`.
+
+## [0.4.0] - 2025-12-20
 
 ### Added
 
