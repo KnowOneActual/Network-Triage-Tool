@@ -39,10 +39,17 @@ We want to keep the codebase clean and consistent.
 
   * **Python:** We follow standard Python conventions (PEP 8).
       * **Indentation:** Use **4 spaces** for Python files. (Note: The `.editorconfig` defaults to 2 spaces for other file types, but Python should remain 4).
-      * **Linting:** We use `flake8` to check for style issues. Please run it before submitting:
+      * **Linting & Formatting:** We use `ruff` for fast linting and formatting. Please run it before submitting:
         ```bash
-        flake8 . --count --max-complexity=10 --max-line-length=127 --statistics
+        # Linting
+        ruff check .
+        # Formatting (fix)
+        ruff format .
         ```
+  * **Security:** We perform security scanning on our codebase. Please run `bandit` to check for common security issues:
+    ```bash
+    bandit -r src/
+    ```
   * **Formatting:** This project uses `.editorconfig` and `.prettierrc` to maintain consistent formatting across non-Python files (Markdown, JSON, YAML).
 
 ### Testing

@@ -25,6 +25,39 @@ dependencies = [
     "python-nmap"
 ]
 
+[project.optional-dependencies]
+dev = [
+    "ruff",
+    "bandit",
+    "pytest",
+    "pytest-mock",
+    "pytest-cov"
+]
+
+[tool.ruff]
+line-length = 127
+target-version = "py311"
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "C",   # flake8-comprehensions
+    "B",   # flake8-bugbear
+    "UP",  # pyupgrade
+    "S",   # flake8-bandit (security)
+]
+ignore = [
+    "E501", # line too long (already handled by line-length)
+]
+
+[tool.ruff.per-file-ignores]
+"tests/*" = ["S101"] # assert used in tests is fine
+
+[tool.bandit]
+exclude_dirs = ["tests", ".venv", "venv"]
+skips = ["B101"] # skip assert check (common in python, but captured by ruff S101 too)
+
 [project.scripts]
 network-triage = "network_triage.app:run"
 
