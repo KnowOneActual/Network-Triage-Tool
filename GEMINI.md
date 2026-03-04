@@ -59,6 +59,12 @@ Python 3.11+, Textual (UI), Scapy, Netmiko, psutil, requests, speedtest-cli, pyt
 - **Dependabot:** Weekly updates for Pip and GitHub Actions.
 
 ## 📅 Roadmap Context (Current Phase: 4.3)
-- **Phase 4.4 (Planned):** Latency Analyzer widget.
-- **Phase 4.5 (Planned):** Results history and export.
-- **Phase 5 (Future):** Data visualization and cloud integration.
+- **Phase 4.4 (Next):** Live Path Analyzer (MTR-style) with live latency/loss per hop.
+- **Phase 4.5 (Planned):** Connection Monitor (Active TCP/UDP sockets and processes).
+- **Phase 4.6 (Planned):** LAN Bandwidth Tester (Iperf3-lite client).
+- **Phase 5 (Future):** Traffic Health (Broadcast traffic counters).
+
+## 🚫 Architectural Exclusions
+- **No Deep Packet Inspection:** We focus on counters/summaries, not full Wireshark-style viewing.
+- **No Heavy Scanning:** No aggressive Nmap NSE scripts or OS fingerprinting by default.
+- **No Heavy State:** Zero-config priority; no local database requirements.
