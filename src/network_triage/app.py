@@ -23,6 +23,14 @@ from textual.widgets import (
     TextArea,
 )
 
+# Phase 4 Widgets
+try:
+    from tui.widgets import DNSResolverWidget, PortScannerWidget
+except ImportError:
+    # Fallback for local development if tui is not in path correctly
+    sys.path.append(str(sys.path[0] + "/.."))
+    from tui.widgets import DNSResolverWidget, PortScannerWidget
+
 # ----------------------------------------------------------------------------
 # OS-Agnostic Import (Selects the correct toolkit based on your OS)
 # ----------------------------------------------------------------------------
@@ -509,69 +517,6 @@ class TracerouteTool(Container):
         self.query_one("#trace_log", Log).write("\n--- Finished ---")
 
 
-class DNSTool(Container):
-    def compose(self) -> ComposeResult:
-        with Horizontal(classes="tool_header"):
-            yield Input(placeholder="Domain (e.g. google.com)", id="dns_input", classes="input_field")
-            yield Button("Resolve IP", id="btn_dns", variant="warning")
-        yield Label("Result will appear here...", id="dns_result", classes="result_box")
-
-    def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.id == "btn_dns":
-            self.action_resolve()
-
-    def on_input_submitted(self, event: Input.Submitted) -> None:
-        """Run when Enter is pressed."""
-        self.action_resolve()
-
-    def action_resolve(self):
-        domain = self.query_one("#dns_input", Input).value
-        if not domain:
-            self.notify("Please enter a domain.", severity="error")
-            return
-
-        self.query_one("#dns_result", Label).update("Resolving...")
-        self.resolve_worker(domain)
-
-    @work(thread=True)
-    def resolve_worker(self, domain):
-        result = net_tool.dns_resolution_test(domain)
-        self.app.call_from_thread(self.query_one("#dns_result", Label).update, result)
-
-
-class PortTool(Container):
-    def compose(self) -> ComposeResult:
-        with Horizontal(id="port_form"):
-            yield Input(placeholder="Host/IP", id="port_host")
-            yield Input(placeholder="Port", id="port_num")
-            yield Button("Check Port", id="btn_port", variant="warning")
-        yield Label("Result will appear here...", id="port_result", classes="result_box")
-
-    def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.id == "btn_port":
-            self.action_check()
-
-    def on_input_submitted(self, event: Input.Submitted) -> None:
-        """Run when Enter is pressed."""
-        self.action_check()
-
-    def action_check(self):
-        host = self.query_one("#port_host", Input).value
-        port = self.query_one("#port_num", Input).value
-
-        if not host or not port:
-            self.notify("Please enter Host and Port.", severity="error")
-            return
-
-        self.query_one("#port_result", Label).update(f"Checking {host}:{port}...")
-        self.check_worker(host, port)
-
-    @work(thread=True)
-    def check_worker(self, host, port):
-        result = net_tool.port_connectivity_test(host, port)
-        self.app.call_from_thread(self.query_one("#port_result", Label).update, result)
-
-
 class UtilityTool(Container):
     """Holds the 3 sub-tools with a manual switcher."""
 
@@ -579,14 +524,14 @@ class UtilityTool(Container):
         # Internal Navigation Bar
         with Horizontal(id="util_nav"):
             yield Button("Traceroute", id="sub_trace", classes="util_btn")
-            yield Button("DNS Lookup", id="sub_dns", classes="util_btn")
-            yield Button("Port Check", id="sub_port", classes="util_btn")
+            yield Button("DNS Resolver", id="sub_dns", classes="util_btn")
+            yield Button("Port Scanner", id="sub_port", classes="util_btn")
 
         # Content Switcher for Sub-Tools
         with ContentSwitcher(initial="tool_trace", id="util_content"):
             yield TracerouteTool(id="tool_trace")
-            yield DNSTool(id="tool_dns")
-            yield PortTool(id="tool_port")
+            yield DNSResolverWidget(id="tool_dns")
+            yield PortScannerWidget(id="tool_port")
 
     def on_mount(self):
         self.query_one("#sub_trace").add_class("-active")
