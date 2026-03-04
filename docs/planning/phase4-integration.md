@@ -467,12 +467,13 @@ Q1 2026
 ├─ January: Foundation + DNS Integration (4.1, 4.2)
 ├─ February: Port Scanner + Latency (4.3, 4.4)
 └─ March: History/Export + Testing (4.5, 4.6)
-    └─ v0.4.0 Release
-```
+    ## Community Feedback
 
-## Conclusion
+    Input is welcome on:
+    ...
+    ## Conclusion
 
-Phase 4 will transform the Network Triage Tool from a powerful CLI utility into a comprehensive TUI application, making advanced diagnostics accessible to network professionals of all skill levels. By focusing on usability, performance, and reliability, we'll deliver a production-ready tool that enhances productivity and simplifies network troubleshooting.
+    Phase 4 transforms the Network Triage Tool from a powerful CLI utility into a comprehensive TUI application, making advanced diagnostics accessible to network professionals of all skill levels. Focused on usability, performance, and reliability, the tool enhances productivity and simplifies network troubleshooting.
 
 ---
 

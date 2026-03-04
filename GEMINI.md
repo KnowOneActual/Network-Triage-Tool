@@ -65,6 +65,6 @@ Python 3.11+, Textual (UI), Scapy, Netmiko, psutil, requests, speedtest-cli, pyt
 - **Phase 5 (Future):** Traffic Health (Broadcast traffic counters).
 
 ## 🚫 Architectural Exclusions
-- **No Deep Packet Inspection:** We focus on counters/summaries, not full Wireshark-style viewing.
+- **No Deep Packet Inspection:** Focus remains on counters/summaries, not full Wireshark-style viewing.
 - **No Heavy Scanning:** No aggressive Nmap NSE scripts or OS fingerprinting by default.
 - **No Heavy State:** Zero-config priority; no local database requirements.

@@ -4,7 +4,7 @@
 
 > [!IMPORTANT]
 > ### 🚀 Professional Roadmap Update (March 2026)
-> We have successfully integrated professional-grade linting, security scanning, and type checking into our CI pipeline. We are now executing on a new roadmap focused on high-utility triage tools. Our current focus is **Phase 4.4: Live Path Analyzer (MTR-style)**. Thank you for your incredible support!
+> Professional-grade linting, security scanning, and type checking are now integrated into the CI pipeline. Development is active on a new roadmap focused on high-utility triage tools. Current focus: **Phase 4.4: Live Path Analyzer (MTR-style)**. Thanks for the incredible support!
 >
 
 [![Status](https://img.shields.io/badge/status-Active-green)](https://github.com/knowoneactual/Network-Triage-Tool)
@@ -138,7 +138,7 @@ network-triage
 
 ## 🛡️ Code Quality & Security
 
-We maintain high engineering standards through automated CI/CD scans:
+High engineering standards are maintained through automated CI/CD scans:
 
 - **Linting & Formatting:** [Ruff](https://github.com/astral-sh/ruff) for near-instant linting and PEP 8 compliance.
 - **Type Checking:** [Mypy](http://mypy-lang.org/) for static type verification and catching subtle bugs.
@@ -146,7 +146,7 @@ We maintain high engineering standards through automated CI/CD scans:
 - **Secret Scanning:** [Gitleaks](https://github.com/gitleaks/gitleaks) to prevent accidental credential commits.
 - **Dependency Audit:** [pip-audit](https://github.com/pypa/pip-audit) for vulnerability scanning in third-party libraries.
 - **Spell Checking:** [Codespell](https://github.com/codespell-project/codespell) to ensure a professional, typo-free interface and documentation.
-- **Automated Updates:** [Dependabot](https://github.com/dependabot) for keeping our environment secure and modern.
+- **Automated Updates:** [Dependabot](https://github.com/dependabot) for keeping the environment secure and modern.
 
 ## 📊 Quality Metrics
 

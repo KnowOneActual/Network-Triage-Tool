@@ -29,24 +29,24 @@ To start contributing, you'll need to get the project running locally.
 If you find a bug or have an idea for a new feature, please check the [Issue Tracker](https://www.google.com/search?q=https://github.com/knowoneactual/Network-Triage-Tool/issues) first to see if it has already been reported.
 
   * **Bugs:** Open a new issue and describe the error, your OS version, and steps to reproduce it.
-  * **Features:** We welcome ideas\! Open a feature request and explain what you want to see and why it would be useful.
+  * **Features:** New ideas are welcome\! Open a feature request and explain the proposed feature and its utility.
 
 ## 💻 Development Guidelines
 
 ### Code Style
 
-We want to keep the codebase clean and consistent.
+The goal is a clean and consistent codebase.
 
-  * **Python:** We follow standard Python conventions (PEP 8).
+  * **Python:** Standard Python conventions (PEP 8) apply.
       * **Indentation:** Use **4 spaces** for Python files. (Note: The `.editorconfig` defaults to 2 spaces for other file types, but Python should remain 4).
-      * **Linting & Formatting:** We use `ruff` for fast linting and formatting. Please run it before submitting:
+      * **Linting & Formatting:** `ruff` handles fast linting and formatting. Run it before submitting:
         ```bash
         # Linting
         ruff check .
         # Formatting (fix)
         ruff format .
         ```
-  * **Security:** We perform security scanning on our codebase. Please run `bandit` to check for common security issues:
+  * **Security:** Automated security scanning is performed on the codebase. Run `bandit` to check for common security issues:
     ```bash
     bandit -r src/
     ```
@@ -54,7 +54,7 @@ We want to keep the codebase clean and consistent.
 
 ### Testing
 
-We use `pytest` for testing. Please ensure you run the existing tests (and add new ones if applicable) before submitting your changes.
+Testing is handled by `pytest`. Ensure existing tests pass (and add new ones if applicable) before submitting changes.
 
 ```bash
 pytest

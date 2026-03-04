@@ -74,8 +74,8 @@ Build a comprehensive, professional-grade Network Triage Tool with:
 
 To maintain focus and high performance, the following features are **explicitly excluded**:
 
-1.  **Full Packet Inspection (Deep DPI):** We will NOT implement a Wireshark-style full packet viewer. It causes "information overload" and is too heavy for a quick triage tool. We focus on counters and summaries only.
-2.  **Heavy Nmap Flags:** We will NOT support Nmap scripting engines (NSE) or aggressive OS fingerprinting by default. These are too slow and can trigger security alerts. We stay focused on "Is it open or closed?"
+1.  **Full Packet Inspection (Deep DPI):** A Wireshark-style full packet viewer will NOT be implemented. It causes "information overload" and is too heavy for a quick triage tool. Focus remains on counters and summaries only.
+2.  **Heavy Nmap Flags:** Nmap scripting engines (NSE) or aggressive OS fingerprinting are NOT supported by default. These are too slow and can trigger security alerts. Emphasis remains on "Is it open or closed?"
 3.  **Complex Configuration:** No heavy configuration files or database setups. The tool must be "Zero Config" and ready to run immediately.
 
 ---
