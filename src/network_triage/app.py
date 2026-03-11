@@ -702,6 +702,7 @@ def run():
 
     if len(sys.argv) > 1 and sys.argv[1] in ("--version", "-V"):
         import importlib.metadata
+
         try:
             version = importlib.metadata.version("network-triage")
         except importlib.metadata.PackageNotFoundError:
