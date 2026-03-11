@@ -159,21 +159,25 @@ def safe_socket_operation(
     try:
         # Set a timeout context (requires signal on Unix, not available on Windows)
         import signal
+        import threading
 
         def timeout_handler(signum, frame):
             raise TimeoutError(f"{operation_name} timed out after {timeout}s")
 
-        # Only use signal on Unix systems
+        # Only use signal on Unix systems and if we are in the main thread
         import platform
 
-        if platform.system() != "Windows":
+        is_main_thread = threading.current_thread() is threading.main_thread()
+        use_signal = platform.system() != "Windows" and is_main_thread
+
+        if use_signal:
             old_handler = signal.signal(signal.SIGALRM, timeout_handler)
             signal.setitimer(signal.ITIMER_REAL, float(timeout))
 
         try:
             return operation()
         finally:
-            if platform.system() != "Windows":
+            if use_signal:
                 signal.setitimer(signal.ITIMER_REAL, 0)  # Cancel timer
                 signal.signal(signal.SIGALRM, old_handler)
 
