@@ -20,8 +20,9 @@ except ImportError:
 class DNSResolverWidget(BaseWidget):
     """DNS Resolver Widget - resolves hostnames to IP addresses."""
 
-    def __init__(self):
-        super().__init__(name="DNSResolverWidget")
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.widget_name = "DNSResolverWidget"
 
     def compose(self) -> ComposeResult:
         """Compose the widget UI."""

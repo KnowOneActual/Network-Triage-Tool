@@ -168,13 +168,13 @@ def safe_socket_operation(
 
         if platform.system() != "Windows":
             old_handler = signal.signal(signal.SIGALRM, timeout_handler)
-            signal.alarm(int(timeout) + 1)  # +1 for safety
+            signal.setitimer(signal.ITIMER_REAL, float(timeout))
 
         try:
             return operation()
         finally:
             if platform.system() != "Windows":
-                signal.alarm(0)  # Cancel alarm
+                signal.setitimer(signal.ITIMER_REAL, 0)  # Cancel timer
                 signal.signal(signal.SIGALRM, old_handler)
 
     except TimeoutError as e:

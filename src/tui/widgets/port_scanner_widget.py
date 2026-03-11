@@ -33,8 +33,9 @@ except ImportError:
 class PortScannerWidget(BaseWidget):
     """Port Scanner Widget - scans and detects open ports."""
 
-    def __init__(self):
-        super().__init__(name="PortScannerWidget")
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.widget_name = "PortScannerWidget"
         self.scan_in_progress = False
 
     def compose(self) -> ComposeResult:

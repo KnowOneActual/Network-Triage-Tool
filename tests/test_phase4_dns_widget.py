@@ -22,6 +22,12 @@ class TestDNSResolverWidget:
         widget = DNSResolverWidget()
         assert widget.widget_name == "DNSResolverWidget"
 
+    def test_widget_initialization_with_id(self):
+        """Test widget initializes correctly with an id."""
+        widget = DNSResolverWidget(id="test_dns")
+        assert widget.id == "test_dns"
+        assert widget.widget_name == "DNSResolverWidget"
+
     def test_inherits_from_base_widget(self):
         """Test widget inherits from BaseWidget."""
         from tui.widgets.base import BaseWidget

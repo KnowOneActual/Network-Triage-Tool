@@ -22,6 +22,12 @@ class TestPortScannerWidgetInitialization:
         widget = PortScannerWidget()
         assert widget.widget_name == "PortScannerWidget"
 
+    def test_widget_initialization_with_id(self):
+        """Test widget initializes correctly with an id."""
+        widget = PortScannerWidget(id="test_port")
+        assert widget.id == "test_port"
+        assert widget.widget_name == "PortScannerWidget"
+
     def test_scan_in_progress_flag_initialized(self):
         """Test scan_in_progress flag is initialized to False."""
         widget = PortScannerWidget()

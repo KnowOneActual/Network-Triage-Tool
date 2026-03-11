@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1] - 2026-03-10
+
+### Added
+- **Package Entry Point:** Added `src/network_triage/__main__.py` to allow direct execution via `python -m network_triage`.
+
+### Fixed
+- **Widget Initialization:** Fixed `TypeError` in `DNSResolverWidget` and `PortScannerWidget` constructors by allowing standard Textual widget arguments (`*args`, `**kwargs`).
+- **IP Fetching Precision:** Improved `safe_socket_operation` in `utils.py` to use `signal.setitimer` for sub-second precision, resolving intermittent "Error fetching IP" on Dashboard.
+- **Test Coverage:** Added initialization tests with `id` for DNS and Port widgets to prevent regression.
+
 ## [0.5.0] - 2026-03-04
 
 ### Added
