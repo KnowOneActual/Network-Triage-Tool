@@ -3,7 +3,6 @@
 </p>
 
 > [!IMPORTANT]
-># Currently not working (Mar 10)
 > ### 🚀 Professional Roadmap Update (March 2026)
 > Professional-grade linting, security scanning, and type checking are now integrated into the CI pipeline. Development is active on a new roadmap focused on high-utility tools. Current focus: **Phase 4.4: Live Path Analyzer (MTR-style)**. Thanks for the incredible support and feedback!
 >
