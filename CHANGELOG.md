@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.3] - 2026-03-11
+
+### Added
+- **One-Liner Installation Scripts:** Added `install.sh` (macOS/Linux) and `install.ps1` (Windows) for rapid onboarding.
+- **CLI Version Flag:** Implemented `--version` and `-V` flags for quick version verification.
+
+### Changed
+- **Recommended Installation:** Promoted `pipx` as the primary and recommended installation method in documentation.
+- **README Clean-up:** Removed outdated "Currently not working" banner and updated badges to reflect current status (186/186 tests passing).
+- **Documentation Updates:** Updated `docs/getting-started/installation.md` with new installation flows and updated verification steps.
+
 ## [0.5.2] - 2026-03-10
 
 ### Fixed

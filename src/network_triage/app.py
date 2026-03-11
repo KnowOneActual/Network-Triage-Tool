@@ -698,6 +698,17 @@ class NetworkTriageApp(App):
 
 def run():
     """Entry point for the console script."""
+    import sys
+    
+    if len(sys.argv) > 1 and sys.argv[1] in ("--version", "-V"):
+        import importlib.metadata
+        try:
+            version = importlib.metadata.version("network-triage")
+        except importlib.metadata.PackageNotFoundError:
+            version = "unknown"
+        print(f"Network Triage Tool v{version}")
+        sys.exit(0)
+        
     app = NetworkTriageApp()
     app.run()
 

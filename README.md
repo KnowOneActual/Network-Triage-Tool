@@ -2,16 +2,11 @@
 <img src="img/assets/readme/Network-Triage-Tool_logo_v3.webp" alt="alt text" width="150">
 </p>
 
-> [!IMPORTANT]
-> ### 🚀 Professional Roadmap Update (March 2026)
-> Professional-grade linting, security scanning, and type checking are now integrated into the CI pipeline. Development is active on a new roadmap focused on high-utility tools. Current focus: **Phase 4.4: Live Path Analyzer (MTR-style)**. Thanks for the incredible support and feedback!
->
-
 [![Status](https://img.shields.io/badge/status-Active-green)](https://github.com/knowoneactual/Network-Triage-Tool)
-[![Version](https://img.shields.io/badge/version-0.5.0-blue)](https://github.com/knowoneactual/Network-Triage-Tool/releases)
+[![Version](https://img.shields.io/badge/version-0.5.2-blue)](https://github.com/knowoneactual/Network-Triage-Tool/releases)
 [![Python Version](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![UI Framework](https://img.shields.io/badge/UI-Textual-orange)](https://textual.textualize.io/)
-[![Tests](https://img.shields.io/badge/tests-106%2F106%20passing-success)](./tests/)
+[![Tests](https://img.shields.io/badge/tests-186%2F186%20passing-success)](./tests/)
 [![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-blue)](https://github.com/knowoneactual/Network-Triage-Tool/actions)
 [![Security Scan](https://github.com/knowoneactual/Network-Triage-Tool/actions/workflows/python-app.yml/badge.svg)](https://github.com/knowoneactual/Network-Triage-Tool/actions)
 
@@ -87,6 +82,28 @@ The application uses **Textual** to provide a modern, mouse-supportive terminal 
 * A terminal with 256-color support (Standard on macOS/Linux/Windows Terminal)
 
 ### Installation
+
+**Method 1: pipx (Recommended)**
+The easiest way to install and run Python CLI tools in isolated environments.
+
+```bash
+pipx install git+https://github.com/knowoneactual/Network-Triage-Tool.git
+```
+
+**Method 2: One-Liner Scripts**
+Quickly install the tool and set up a virtual environment.
+
+**macOS / Linux:**
+```bash
+curl -sSL https://raw.githubusercontent.com/knowoneactual/Network-Triage-Tool/main/install.sh | bash
+```
+
+**Windows (PowerShell):**
+```powershell
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/knowoneactual/Network-Triage-Tool/main/install.ps1" -UseBasicParsing | Invoke-Expression
+```
+
+**Method 3: Manual Installation (Development)**
 
 1.  **Clone the repository:**
     ```bash

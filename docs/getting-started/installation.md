@@ -78,51 +78,15 @@ pip install speedtest-cli
 
 ## Installation Methods
 
-### Method 1: Standard Installation (Recommended)
+### Method 1: pipx (Recommended)
 
-This method installs the tool as a Python package with a global command.
-
-#### Step 1: Clone Repository
+The easiest way to install and run Python CLI tools in isolated environments.
 
 ```bash
-git clone https://github.com/knowoneactual/Network-Triage-Tool.git
-cd Network-Triage-Tool
+pipx install git+https://github.com/knowoneactual/Network-Triage-Tool.git
 ```
 
-#### Step 2: Create Virtual Environment
-
-```bash
-python3 -m venv .venv
-```
-
-#### Step 3: Activate Virtual Environment
-
-**macOS/Linux:**
-```bash
-source .venv/bin/activate
-```
-
-**Windows (Command Prompt):**
-```cmd
-.venv\Scripts\activate.bat
-```
-
-**Windows (PowerShell):**
-```powershell
-.venv\Scripts\Activate.ps1
-```
-
-You should see `(.venv)` prefix in your terminal prompt.
-
-#### Step 4: Install Package
-
-```bash
-pip install -e .
-```
-
-The `-e` flag installs in "editable" mode, allowing you to modify the code while using the installed command.
-
-#### Step 5: Verify Installation
+#### Verify Installation
 
 ```bash
 network-triage --version
@@ -130,18 +94,24 @@ network-triage --version
 
 You should see:
 ```
-Network Triage Tool v0.5.0
+Network Triage Tool v0.5.2
 ```
 
-### Method 2: Direct Installation from Git
+### Method 2: One-Liner Scripts
 
-Install directly without cloning:
+Quickly install the tool and set up a virtual environment automatically.
 
+**macOS / Linux:**
 ```bash
-pip install git+https://github.com/knowoneactual/Network-Triage-Tool.git
+curl -sSL https://raw.githubusercontent.com/knowoneactual/Network-Triage-Tool/main/install.sh | bash
 ```
 
-### Method 3: Development Installation
+**Windows (PowerShell):**
+```powershell
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/knowoneactual/Network-Triage-Tool/main/install.ps1" -UseBasicParsing | Invoke-Expression
+```
+
+### Method 3: Manual Installation (Development)
 
 For contributors and developers who want to modify the code:
 
