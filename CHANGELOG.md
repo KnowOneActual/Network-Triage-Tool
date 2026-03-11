@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.4] - 2026-03-11
+
+### Added
+- **Phase 4.4: Live Path Analyzer Widget** — MTR-style latency and path analysis directly in the TUI.
+  - New `LatencyAnalyzerWidget` in the **Utilities** tab (`u` → Latency Analyzer).
+  - Per-hop `DataTable` showing: Hop #, IP Address, Hostname, Avg RTT (colour-coded green/yellow/red), Packet Loss.
+  - Aggregate ping statistics summary: Avg / Min / Max / Jitter / Loss % with colour coding.
+  - Runs entirely on a background thread (`@work(thread=True)`) — UI never freezes.
+  - Uses `mtr` if installed, falls back gracefully to `traceroute` / `tracert` via Phase 3 utilities.
+  - Concurrency guard prevents duplicate in-flight traces.
+  - 39 new tests (`tests/test_phase4_latency_widget.py`) — all passing.
+  - Pure static helpers (`validate_host`, `format_rtt`, `color_rtt`) for clean unit testing.
+
+### Changed
+- Wired `LatencyAnalyzerWidget` into `UtilityTool` nav bar and `ContentSwitcher` in `app.py`.
+- Exported `LatencyAnalyzerWidget` from the `tui.widgets` package.
+
 ## [0.5.3] - 2026-03-11
 
 ### Added

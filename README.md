@@ -3,10 +3,10 @@
 </p>
 
 [![Status](https://img.shields.io/badge/status-Active-green)](https://github.com/knowoneactual/Network-Triage-Tool)
-[![Version](https://img.shields.io/badge/version-0.5.3-blue)](https://github.com/knowoneactual/Network-Triage-Tool/releases)
+[![Version](https://img.shields.io/badge/version-0.5.4-blue)](https://github.com/knowoneactual/Network-Triage-Tool/releases)
 [![Python Version](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![UI Framework](https://img.shields.io/badge/UI-Textual-orange)](https://textual.textualize.io/)
-[![Tests](https://img.shields.io/badge/tests-186%2F186%20passing-success)](./tests/)
+[![Tests](https://img.shields.io/badge/tests-206%2F206%20passing-success)](./tests/)
 [![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-blue)](https://github.com/knowoneactual/Network-Triage-Tool/actions)
 [![Security Scan](https://github.com/knowoneactual/Network-Triage-Tool/actions/workflows/python-app.yml/badge.svg)](https://github.com/knowoneactual/Network-Triage-Tool/actions)
 
@@ -19,6 +19,18 @@ A cross-platform **Terminal User Interface (TUI)**
 Unlike the previous GUI version, this tool runs entirely in the terminal, making it lighter, faster, and fully capable of running over SSH sessions. **Now with comprehensive advanced diagnostics for DNS, ports, and latency measurement, plus integrated TUI widgets.**
 
 ## 🎯 Phase 4: TUI Widget Integration (In Progress)
+
+### ✅ Phase 4.4: Live Path Analyzer (March 11, 2026) - COMPLETE
+
+**New Latency Analyzer Widget:**
+- ✅ MTR-style per-hop path analysis in the TUI (Utilities tab)
+- ✅ Per-hop table: Hop #, IP, Hostname, Avg RTT, Packet Loss
+- ✅ RTT colour coding: green (<50ms), yellow (<150ms), red (≥150ms), dim for timeouts
+- ✅ Aggregate ping statistics: Avg / Min / Max / Jitter / Loss %
+- ✅ Non-blocking background worker (`@work(thread=True)`)
+- ✅ Uses `mtr` if available, falls back to `traceroute` / `tracert`
+- ✅ Concurrency guard prevents duplicate in-flight traces
+- ✅ **39 comprehensive tests (100% passing)**
 
 ### ✅ Phase 4.3: Port Scanner Widget (Dec 20, 2025) - COMPLETE
 
@@ -54,10 +66,11 @@ Unlike the previous GUI version, this tool runs entirely in the terminal, making
 - ✅ 5 Reusable Components (ResultsWidget, InputWidget, etc.)
 - ✅ **36 comprehensive tests (100% passing)**
 
-**Total Phase 4 Status: 106/106 tests passing (100%) 🎉**
+**Total Phase 4 Status: 145/145 tests passing (100%) 🎉**
 
-### 🚀 Phase 4.4+: Additional Widgets (Planned)
-- [ ] Latency Analyzer widget (ping + traceroute)
+### 🚀 Phase 4.5+: Additional Widgets (Planned)
+- [ ] Connection Monitor (active TCP/UDP sockets + owning process)
+- [ ] LAN Bandwidth Tester (iperf3-lite client)
 - [ ] Results history and export
 - [ ] v0.4.0 final release
 
@@ -172,12 +185,12 @@ High standards are maintained through automated CI/CD scans:
 
 | Metric | Value |
 |--------|-------|
-| **Test Coverage** | 106/106 tests passing (100%) |
+| **Test Coverage** | 206/206 tests passing (100%) |
 | **Platform Support** | Ubuntu, macOS, Windows (CI/CD verified) |
 | **Python Versions** | 3.11, 3.12, 3.13 (all tested) |
 | **Code Quality** | 100% type hints, ~94% coverage |
 | **Dependencies** | Zero external (Phase 3 uses stdlib only) |
-| **Widget Tests** | Phase 4.1: 36, Phase 4.2: 21, Phase 4.3: 49 |
+| **Widget Tests** | Phase 4.1: 36, Phase 4.2: 21, Phase 4.3: 49, Phase 4.4: 39 |
 | **Execution Time** | 0.41s (Full test suite) |
 
 ## 📚 Phase 3 Usage
@@ -314,6 +327,15 @@ This architecture eliminates code duplication and enables shipping new widgets i
 - [x] 21 comprehensive tests
 - [x] Production ready
 
+**Phase 4.4: Live Path Analyzer** ✅ COMPLETE
+- [x] MTR-style per-hop path analysis widget
+- [x] Per-hop DataTable with colour-coded RTTs
+- [x] Aggregate ping statistics (avg/min/max/jitter/loss)
+- [x] Non-blocking background worker
+- [x] `mtr` + `traceroute` / `tracert` fallback
+- [x] 39 comprehensive tests
+- [x] Production ready
+
 **Phase 4.3: Port Scanner Widget** ✅ COMPLETE
 - [x] Complete Textual widget implementation
 - [x] Full Phase 3 port utilities integration
@@ -325,17 +347,14 @@ This architecture eliminates code duplication and enables shipping new widgets i
 - [x] Complete documentation and examples
 - [x] Production ready
 
-**Phase 4.4: Latency Analyzer Widget** (Planned - 1-2 weeks)
-- [ ] Ping statistics display
-- [ ] Traceroute with per-hop latency
-- [ ] MTR-style analysis
+**Phase 4.5: Connection Monitor** (Planned - 1-2 weeks)
+- [ ] Live active TCP/UDP sockets and owning processes
+- [ ] Per-socket state and remote endpoint display
 - [ ] 20+ tests
 
-**Phase 4.5: Results History & Export** (Planned - 2-3 weeks)
-- [ ] Session result caching
-- [ ] CSV/JSON export
-- [ ] Comparison views
-- [ ] Report generation
+**Phase 4.6: LAN Bandwidth Tester** (Planned)
+- [ ] iperf3-lite client integration
+- [ ] Upload/download throughput measurement
 
 ### 🎯 Phase 5+: Advanced Features (Future)
 - [ ] Data visualization and charts

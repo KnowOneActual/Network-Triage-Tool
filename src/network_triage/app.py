@@ -25,11 +25,11 @@ from textual.widgets import (
 
 # Phase 4 Widgets
 try:
-    from tui.widgets import DNSResolverWidget, PortScannerWidget
+    from tui.widgets import DNSResolverWidget, LatencyAnalyzerWidget, PortScannerWidget
 except ImportError:
     # Fallback for local development if tui is not in path correctly
     sys.path.append(str(sys.path[0] + "/.."))
-    from tui.widgets import DNSResolverWidget, PortScannerWidget
+    from tui.widgets import DNSResolverWidget, LatencyAnalyzerWidget, PortScannerWidget
 
 # ----------------------------------------------------------------------------
 # OS-Agnostic Import (Selects the correct toolkit based on your OS)
@@ -518,7 +518,7 @@ class TracerouteTool(Container):
 
 
 class UtilityTool(Container):
-    """Holds the 3 sub-tools with a manual switcher."""
+    """Holds the sub-tools with a manual switcher."""
 
     def compose(self) -> ComposeResult:
         # Internal Navigation Bar
@@ -526,12 +526,14 @@ class UtilityTool(Container):
             yield Button("Traceroute", id="sub_trace", classes="util_btn")
             yield Button("DNS Resolver", id="sub_dns", classes="util_btn")
             yield Button("Port Scanner", id="sub_port", classes="util_btn")
+            yield Button("Latency Analyzer", id="sub_latency", classes="util_btn")
 
         # Content Switcher for Sub-Tools
         with ContentSwitcher(initial="tool_trace", id="util_content"):
             yield TracerouteTool(id="tool_trace")
             yield DNSResolverWidget(id="tool_dns")
             yield PortScannerWidget(id="tool_port")
+            yield LatencyAnalyzerWidget(id="tool_latency")
 
     def on_mount(self):
         self.query_one("#sub_trace").add_class("-active")
@@ -539,7 +541,12 @@ class UtilityTool(Container):
     def on_button_pressed(self, event: Button.Pressed) -> None:
         btn_id = event.button.id
         if btn_id and btn_id.startswith("sub_"):
-            target_map = {"sub_trace": "tool_trace", "sub_dns": "tool_dns", "sub_port": "tool_port"}
+            target_map = {
+                "sub_trace": "tool_trace",
+                "sub_dns": "tool_dns",
+                "sub_port": "tool_port",
+                "sub_latency": "tool_latency",
+            }
             if btn_id in target_map:
                 # Switch Content
                 self.query_one("#util_content", ContentSwitcher).current = target_map[btn_id]
