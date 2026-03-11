@@ -11,7 +11,7 @@
 [![Security Scan](https://github.com/knowoneactual/Network-Triage-Tool/actions/workflows/python-app.yml/badge.svg)](https://github.com/knowoneactual/Network-Triage-Tool/actions)
 
 > [!NOTE]
-> **This is an active, ongoing project.** While the tool is highly stable and feature-rich, it is still in the "pre-production" phase as we finalize the remaining TUI widgets and comprehensive reporting features. It is very close to a 1.0 release, but for now, it should be used for diagnostics and testing rather than in critical production environments.
+> **This is an active, ongoing project. While the tool is highly stable and feature-rich, it is still in the "pre-production" phase as I finalizes the remaining TUI widgets and comprehensive reporting features. It is very close to a 1.0 release, but for now, it should be used for testing rather than in critical production environments.
 
 A cross-platform **Terminal User Interface (TUI)**
  designed for network professionals to diagnose and troubleshoot connectivity issues efficiently.
