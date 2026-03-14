@@ -25,11 +25,11 @@ from textual.widgets import (
 
 # Phase 4 Widgets
 try:
-    from tui.widgets import ConnectionMonitorWidget, DNSResolverWidget, LatencyAnalyzerWidget, PortScannerWidget
+    from tui.widgets import ConnectionMonitorWidget, DNSResolverWidget, LanBandwidthWidget, LatencyAnalyzerWidget, PortScannerWidget
 except ImportError:
     # Fallback for local development if tui is not in path correctly
     sys.path.append(str(sys.path[0] + "/.."))
-    from tui.widgets import ConnectionMonitorWidget, DNSResolverWidget, LatencyAnalyzerWidget, PortScannerWidget
+    from tui.widgets import ConnectionMonitorWidget, DNSResolverWidget, LanBandwidthWidget, LatencyAnalyzerWidget, PortScannerWidget
 
 # ----------------------------------------------------------------------------
 # OS-Agnostic Import (Selects the correct toolkit based on your OS)
@@ -528,6 +528,7 @@ class UtilityTool(Container):
             yield Button("Port Scanner", id="sub_port", classes="util_btn")
             yield Button("Latency Analyzer", id="sub_latency", classes="util_btn")
             yield Button("Connection Monitor", id="sub_connmon", classes="util_btn")
+            yield Button("LAN Bandwidth", id="sub_bandwidth", classes="util_btn")
 
         # Content Switcher for Sub-Tools
         with ContentSwitcher(initial="tool_trace", id="util_content"):
@@ -536,6 +537,7 @@ class UtilityTool(Container):
             yield PortScannerWidget(id="tool_port")
             yield LatencyAnalyzerWidget(id="tool_latency")
             yield ConnectionMonitorWidget(id="tool_connmon")
+            yield LanBandwidthWidget(id="tool_bandwidth")
 
     def on_mount(self):
         self.query_one("#sub_trace").add_class("-active")
@@ -549,6 +551,7 @@ class UtilityTool(Container):
                 "sub_port": "tool_port",
                 "sub_latency": "tool_latency",
                 "sub_connmon": "tool_connmon",
+                "sub_bandwidth": "tool_bandwidth",
             }
             if btn_id in target_map:
                 # Switch Content

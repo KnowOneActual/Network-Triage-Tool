@@ -20,6 +20,7 @@ from .base import AsyncOperationMixin, BaseWidget
 from .components import ProgressWidget, ResultsWidget, StatusIndicator
 from .connection_monitor_widget import ConnectionMonitorWidget
 from .dns_resolver_widget import DNSResolverWidget
+from .lan_bandwidth_widget import LanBandwidthWidget
 from .latency_analyzer_widget import LatencyAnalyzerWidget
 from .port_scanner_widget import PortScannerWidget
 
@@ -31,6 +32,7 @@ __all__ = [
     "StatusIndicator",
     "ConnectionMonitorWidget",
     "DNSResolverWidget",
+    "LanBandwidthWidget",
     "LatencyAnalyzerWidget",
     "PortScannerWidget",
 ]

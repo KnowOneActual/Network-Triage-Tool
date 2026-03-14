@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.6] - 2026-03-13
+
+### Added
+- **Phase 4.6: LAN Bandwidth Tester Widget** — live network I/O throughput monitor that requires no external tools.
+  - New `LanBandwidthWidget` in the **Utilities** tab (`u` → LAN Bandwidth).
+  - Interface selector: measure a specific adapter (e.g. `en0`, `eth0`) or aggregate across **All Interfaces**.
+  - Duration selector: 5 / 10 / 30 / 60-second sampling window.
+  - `DataTable` streams live RX / TX Mbps per second with Rich colour-coding:
+    - 🟢 **Green** ≥ 100 Mbps · 🟡 **Yellow** ≥ 10 Mbps · 🔴 **Red** < 10 Mbps
+  - Auto-formatting: values ≥ 1 000 Mbps displayed as Gbps.
+  - Summary panel after test completes: Avg RX / Avg TX / Peak RX / Peak TX.
+  - **Stop** button cancels an in-flight test gracefully via `workers.cancel_all()`.
+  - Runs entirely on a background thread (`@work(thread=True)`) — UI never blocks.
+  - Uses `psutil.net_io_counters()` only — **zero external dependencies**.
+  - Pure static helpers (`list_interfaces`, `get_io_counters`, `bytes_to_mbps`, `format_mbps`, `color_mbps`, `build_interface_options`, `run_bandwidth_test`) for clean unit testing.
+  - 64 new tests (`tests/test_phase4_lan_bandwidth.py`) — all passing.
+
+### Changed
+- Wired `LanBandwidthWidget` into `UtilityTool` nav bar and `ContentSwitcher` in `app.py`.
+- Exported `LanBandwidthWidget` from the `tui.widgets` package.
+
 ## [0.5.5] - 2026-03-13
 
 ### Added
