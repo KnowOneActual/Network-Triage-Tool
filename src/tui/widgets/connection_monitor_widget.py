@@ -357,9 +357,7 @@ class ConnectionMonitorWidget(BaseWidget):
         if self._auto_refresh_enabled:
             btn.label = "⏱ Auto-Refresh: ON"
             btn.variant = "success"
-            self._auto_refresh_timer = self.set_interval(
-                self.AUTO_REFRESH_INTERVAL, self._do_refresh
-            )
+            self._auto_refresh_timer = self.set_interval(self.AUTO_REFRESH_INTERVAL, self._do_refresh)
         else:
             btn.label = "⏱ Auto-Refresh: OFF"
             btn.variant = "default"

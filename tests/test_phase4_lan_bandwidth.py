@@ -26,7 +26,6 @@ from tui.widgets.lan_bandwidth_widget import (
     run_bandwidth_test,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -245,7 +244,7 @@ class TestBytesToMbps:
     def test_large_byte_count(self):
         """Does not overflow or error on large byte values."""
         # 10 GiB in 10 seconds
-        result = bytes_to_mbps(10 * 1024 ** 3, 10.0)
+        result = bytes_to_mbps(10 * 1024**3, 10.0)
         assert result > 0
 
     def test_result_is_float(self):
@@ -570,15 +569,15 @@ class TestRunBandwidthTest:
 
         # Baseline + 2 subsequent reads (enough for 1 sample then stop)
         counter_values = [
-            (0, 0),           # baseline
+            (0, 0),  # baseline
             (1_250_000, 500_000),  # tick 1 -> ~10 Mbps RX, ~4 Mbps TX
-            None,             # none → break loop
+            None,  # none → break loop
         ]
 
         mono_values = [
-            start_mono,                 # prev_time initial
-            start_mono + 1.0,           # after sleep tick 1
-            start_mono + 6.0,           # after sleep tick 2 (exceeds duration=5)
+            start_mono,  # prev_time initial
+            start_mono + 1.0,  # after sleep tick 1
+            start_mono + 6.0,  # after sleep tick 2 (exceeds duration=5)
         ]
 
         def fake_counters(interface):
@@ -617,12 +616,14 @@ class TestLanBandwidthWidgetInit:
     def test_can_instantiate(self):
         """Widget can be created without error."""
         from tui.widgets.lan_bandwidth_widget import LanBandwidthWidget
+
         widget = LanBandwidthWidget()
         assert widget.widget_name == "LanBandwidthWidget"
 
     def test_can_instantiate_with_id(self):
         """Widget accepts a custom id."""
         from tui.widgets.lan_bandwidth_widget import LanBandwidthWidget
+
         widget = LanBandwidthWidget(id="bw-test")
         assert widget.id == "bw-test"
 
@@ -630,18 +631,21 @@ class TestLanBandwidthWidgetInit:
         """Widget is a subclass of BaseWidget."""
         from tui.widgets.base import BaseWidget
         from tui.widgets.lan_bandwidth_widget import LanBandwidthWidget
+
         widget = LanBandwidthWidget()
         assert isinstance(widget, BaseWidget)
 
     def test_test_running_is_false(self):
         """_test_running starts False."""
         from tui.widgets.lan_bandwidth_widget import LanBandwidthWidget
+
         widget = LanBandwidthWidget()
         assert widget._test_running is False
 
     def test_last_result_is_none(self):
         """_last_result starts as None."""
         from tui.widgets.lan_bandwidth_widget import LanBandwidthWidget
+
         widget = LanBandwidthWidget()
         assert widget._last_result is None
 
@@ -656,6 +660,7 @@ class TestLanBandwidthWidgetMethods:
 
     def _widget(self):
         from tui.widgets.lan_bandwidth_widget import LanBandwidthWidget
+
         return LanBandwidthWidget()
 
     def test_has_compose(self):
@@ -710,6 +715,7 @@ class TestDocstrings:
 
     def test_module_docstring(self):
         import tui.widgets.lan_bandwidth_widget as mod
+
         assert mod.__doc__ is not None and len(mod.__doc__) > 0
 
     def test_bandwidth_sample_docstring(self):
@@ -741,6 +747,7 @@ class TestDocstrings:
 
     def test_widget_class_docstring(self):
         from tui.widgets.lan_bandwidth_widget import LanBandwidthWidget
+
         assert LanBandwidthWidget.__doc__ is not None
 
 
@@ -754,8 +761,10 @@ class TestPackageExport:
 
     def test_importable_from_package(self):
         from tui.widgets import LanBandwidthWidget
+
         assert LanBandwidthWidget is not None
 
     def test_in_all_list(self):
         import tui.widgets as pkg
+
         assert "LanBandwidthWidget" in pkg.__all__

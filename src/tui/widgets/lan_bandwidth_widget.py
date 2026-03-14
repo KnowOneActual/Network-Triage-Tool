@@ -415,9 +415,7 @@ class LanBandwidthWidget(BaseWidget):
 
         baseline = get_io_counters(interface)
         if baseline is None:
-            self.app.call_from_thread(
-                self._on_error, f"Cannot read counters for interface '{interface}'"
-            )
+            self.app.call_from_thread(self._on_error, f"Cannot read counters for interface '{interface}'")
             return
 
         prev_rx, prev_tx = baseline
@@ -450,9 +448,7 @@ class LanBandwidthWidget(BaseWidget):
             result.samples.append(sample)
 
             # Push sample to UI (non-blocking)
-            self.app.call_from_thread(
-                self._on_sample, sample, tick, duration
-            )
+            self.app.call_from_thread(self._on_sample, sample, tick, duration)
 
             prev_rx, prev_tx = curr_rx, curr_tx
             prev_time = now
@@ -485,10 +481,7 @@ class LanBandwidthWidget(BaseWidget):
         self._last_result = result
         self._reset_controls()
         self.display_success(f"Test complete — {result.sample_count} samples collected")
-        self._update_status(
-            f"✅ Done — {result.sample_count} samples over {result.duration}s "
-            f"on {result.interface}"
-        )
+        self._update_status(f"✅ Done — {result.sample_count} samples over {result.duration}s on {result.interface}")
         self._show_summary(result)
 
     def _on_error(self, message: str) -> None:

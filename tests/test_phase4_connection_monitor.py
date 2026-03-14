@@ -25,7 +25,6 @@ from tui.widgets.connection_monitor_widget import (
     gather_connections,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helpers for building test data
 # ---------------------------------------------------------------------------
@@ -198,8 +197,8 @@ class TestApplyProcessFilter:
     def _entries(self) -> list[ConnectionEntry]:
         return [
             make_entry(process_name="python3", local_addr="127.0.0.1"),
-            make_entry(process_name="nginx", local_addr="0.0.0.0"),
-            make_entry(process_name="sshd", local_addr="0.0.0.0"),
+            make_entry(process_name="nginx", local_addr="0.0.0.0"),  # noqa: S104
+            make_entry(process_name="sshd", local_addr="0.0.0.0"),  # noqa: S104
             make_entry(process_name="Python", local_addr="192.168.1.100"),
         ]
 
@@ -336,8 +335,9 @@ class TestFormatConnectionCount:
 class TestGatherConnections:
     """Tests for the gather_connections() function with mocked psutil."""
 
-    def _make_mock_conn(self, kind="SOCK_STREAM", laddr=("127.0.0.1", 8080),
-                        raddr=("93.184.216.34", 443), status="ESTABLISHED", pid=100):
+    def _make_mock_conn(
+        self, kind="SOCK_STREAM", laddr=("127.0.0.1", 8080), raddr=("93.184.216.34", 443), status="ESTABLISHED", pid=100
+    ):
         """Create a mock psutil connection namedtuple."""
         conn = MagicMock()
         conn.type = MagicMock()
@@ -391,7 +391,7 @@ class TestGatherConnections:
     def test_addresses_parsed_correctly(self):
         """Local and remote addresses are extracted correctly."""
         mock_conn = self._make_mock_conn(
-            laddr=("0.0.0.0", 22),
+            laddr=("0.0.0.0", 22),  # noqa: S104
             raddr=("10.0.0.5", 54321),
             status="ESTABLISHED",
         )
@@ -401,7 +401,7 @@ class TestGatherConnections:
         ):
             mock_proc.return_value.name.return_value = "sshd"
             result = gather_connections()
-        assert result[0].local_addr == "0.0.0.0"
+        assert result[0].local_addr == "0.0.0.0"  # noqa: S104
         assert result[0].local_port == 22
         assert result[0].remote_addr == "10.0.0.5"
         assert result[0].remote_port == 54321
@@ -420,6 +420,7 @@ class TestGatherConnections:
     def test_access_denied_returns_empty(self):
         """AccessDenied from psutil returns an empty list, not an exception."""
         import psutil as _psutil
+
         with patch(
             "tui.widgets.connection_monitor_widget.psutil.net_connections",
             side_effect=_psutil.AccessDenied(pid=0),
@@ -439,6 +440,7 @@ class TestGatherConnections:
     def test_no_such_process_handled(self):
         """NoSuchProcess on Process.name() is handled gracefully."""
         import psutil as _psutil
+
         mock_conn = self._make_mock_conn(pid=9999)
         with (
             patch("tui.widgets.connection_monitor_widget.psutil.net_connections", return_value=[mock_conn]),
@@ -471,12 +473,14 @@ class TestConnectionMonitorWidgetInitialization:
     def test_widget_can_be_instantiated(self):
         """Widget can be created without error."""
         from tui.widgets.connection_monitor_widget import ConnectionMonitorWidget
+
         widget = ConnectionMonitorWidget()
         assert widget.widget_name == "ConnectionMonitorWidget"
 
     def test_widget_with_id(self):
         """Widget can be created with a custom id."""
         from tui.widgets.connection_monitor_widget import ConnectionMonitorWidget
+
         widget = ConnectionMonitorWidget(id="test_conn_mon")
         assert widget.id == "test_conn_mon"
 
@@ -484,24 +488,28 @@ class TestConnectionMonitorWidgetInitialization:
         """Widget inherits from BaseWidget."""
         from tui.widgets.base import BaseWidget
         from tui.widgets.connection_monitor_widget import ConnectionMonitorWidget
+
         widget = ConnectionMonitorWidget()
         assert isinstance(widget, BaseWidget)
 
     def test_refresh_in_progress_false_by_default(self):
         """_refresh_in_progress flag starts False."""
         from tui.widgets.connection_monitor_widget import ConnectionMonitorWidget
+
         widget = ConnectionMonitorWidget()
         assert widget._refresh_in_progress is False
 
     def test_auto_refresh_disabled_by_default(self):
         """Auto-refresh is off by default."""
         from tui.widgets.connection_monitor_widget import ConnectionMonitorWidget
+
         widget = ConnectionMonitorWidget()
         assert widget._auto_refresh_enabled is False
 
     def test_all_connections_empty_on_init(self):
         """_all_connections starts as an empty list."""
         from tui.widgets.connection_monitor_widget import ConnectionMonitorWidget
+
         widget = ConnectionMonitorWidget()
         assert widget._all_connections == []
 
@@ -516,6 +524,7 @@ class TestConnectionMonitorWidgetMethods:
 
     def _widget(self):
         from tui.widgets.connection_monitor_widget import ConnectionMonitorWidget
+
         return ConnectionMonitorWidget()
 
     def test_has_compose(self):
@@ -558,6 +567,7 @@ class TestDocstrings:
 
     def test_module_has_docstring(self):
         import tui.widgets.connection_monitor_widget as mod
+
         assert mod.__doc__ is not None and len(mod.__doc__) > 0
 
     def test_connection_entry_has_docstring(self):
@@ -580,6 +590,7 @@ class TestDocstrings:
 
     def test_widget_class_has_docstring(self):
         from tui.widgets.connection_monitor_widget import ConnectionMonitorWidget
+
         assert ConnectionMonitorWidget.__doc__ is not None
 
 
@@ -593,8 +604,10 @@ class TestPackageExport:
 
     def test_importable_from_package(self):
         from tui.widgets import ConnectionMonitorWidget
+
         assert ConnectionMonitorWidget is not None
 
     def test_in_all_list(self):
         import tui.widgets as pkg
+
         assert "ConnectionMonitorWidget" in pkg.__all__
