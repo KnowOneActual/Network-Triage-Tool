@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.5] - 2026-03-13
+
+### Added
+- **Phase 4.5: Connection Monitor Widget** — live TCP/UDP socket monitor with process attribution.
+  - New `ConnectionMonitorWidget` in the **Utilities** tab (`u` → Connection Monitor).
+  - `DataTable` showing: Protocol, Local Address, Remote Address, Status (colour-coded), PID, Process Name.
+  - Filter dropdown: All / ESTABLISHED / LISTEN / TCP only / UDP only.
+  - Real-time search bar filtering by process name or local address (case-insensitive).
+  - Auto-Refresh toggle (10-second interval) with clear ON/OFF button state.
+  - Row click copies the remote address to clipboard.
+  - Runs entirely on a background thread (`@work(thread=True)`) — UI never blocks.
+  - Uses `psutil.net_connections` with a per-run PID→name cache to minimise `Process()` calls.
+  - Graceful handling of `AccessDenied` and `NoSuchProcess` (common when running without elevated privileges).
+  - Pure static helpers (`gather_connections`, `apply_filter`, `apply_process_filter`, `color_status`, `format_connection_count`) for clean unit testing.
+  - 71 new tests (`tests/test_phase4_connection_monitor.py`) — all passing.
+
+### Changed
+- Wired `ConnectionMonitorWidget` into `UtilityTool` nav bar and `ContentSwitcher` in `app.py`.
+- Exported `ConnectionMonitorWidget` from the `tui.widgets` package.
+
 ## [0.5.4] - 2026-03-11
 
 ### Added
