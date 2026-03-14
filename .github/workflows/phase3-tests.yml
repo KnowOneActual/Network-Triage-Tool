@@ -20,6 +20,9 @@ on:
       - 'src/shared/latency_utils.py'
       - 'tests/test_phase3_diagnostics.py'
 
+permissions:
+  contents: read
+
 jobs:
   test:
     name: Test on ${{ matrix.os }} - Python ${{ matrix.python-version }}
