@@ -87,6 +87,9 @@ __pycache__/
 # For example:
 # /my-secret-folder/
 
+.coverage
+conductor/
+
 # My Personal shorthands (original file)
 # ==============================================
 _hold
