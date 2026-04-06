@@ -4,9 +4,9 @@
 
 This PR introduces **Phase 3: Advanced Diagnostics**, extending the Network-Triage-Tool with enterprise-grade network diagnostic utilities. Three new independent modules provide comprehensive DNS resolution, port connectivity, and latency measurement capabilities.
 
-**Status**: ✅ Ready for Review  
-**Branch**: `feature/phase3-advanced-diagnostics`  
-**Base**: `main`  
+**Status**: ✅ Ready for Review
+**Branch**: `feature/phase3-advanced-diagnostics`
+**Base**: `main`
 
 ---
 

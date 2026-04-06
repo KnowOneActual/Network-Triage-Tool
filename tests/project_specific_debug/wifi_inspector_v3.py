@@ -244,8 +244,7 @@ class NetworkTriageToolkit:
                 result = sock.connect_ex((host, port_num))
                 if result == 0:
                     return f"Port {port_num} on {host} is OPEN."
-                else:
-                    return f"Port {port_num} on {host} is CLOSED or filtered."
+                return f"Port {port_num} on {host} is CLOSED or filtered."
         except ValueError:
             return "Invalid port number. Please enter an integer."
         except socket.gaierror:

@@ -1,8 +1,8 @@
 # Phase 4.1: Widget Foundation Architecture
 
-**Status:** ✅ COMPLETE  
-**Target:** v0.4.0  
-**Timeline:** March 2026  
+**Status:** ✅ COMPLETE
+**Target:** v0.4.0
+**Timeline:** March 2026
 
 ---
 
@@ -32,7 +32,7 @@ class DNSResolverWidget(BaseWidget):
     def compose(self) -> ComposeResult:
         yield Input(id="hostname-input", placeholder="example.com")
         yield Button("Resolve", id="resolve-btn")
-    
+
     async def on_button_pressed(self, event):
         if event.button.id == "resolve-btn":
             hostname = self.query_one("#hostname-input").value
@@ -70,12 +70,12 @@ class MyWidget(BaseWidget, AsyncOperationMixin):
     async def long_operation(self) -> OperationResult[str]:
         try:
             self.show_loading("Processing...")
-            
+
             # Run in thread to avoid blocking UI
             result = await self.run_in_thread(expensive_function)
-            
+
             return OperationResult(success=True, data=result)
-        
+
         except Exception as e:
             return self.handle_error(e, "Operation failed")
 ```
@@ -141,7 +141,7 @@ class PortScannerWidget(BaseWidget):
         ]
         self.results = ResultsWidget(columns=columns)
         yield self.results
-    
+
     def add_result(self, port: int, service: str, status: str, time: str):
         self.results.add_row(
             port=port,
@@ -149,7 +149,7 @@ class PortScannerWidget(BaseWidget):
             status=status,
             time=time
         )
-    
+
     def get_all_results(self):
         return self.results.get_results()
 ```
@@ -165,7 +165,7 @@ class MyWidget(BaseWidget):
     def compose(self) -> ComposeResult:
         self.progress = ProgressWidget()
         yield self.progress
-    
+
     async def long_operation(self):
         total = 100
         for i in range(total):
@@ -185,7 +185,7 @@ class MyWidget(BaseWidget):
     def compose(self) -> ComposeResult:
         self.status = StatusIndicator(status="pending", text="Waiting...")
         yield self.status
-    
+
     async def operation(self):
         self.status.set_status("pending", "Running operation...")
         # Do work
@@ -203,7 +203,7 @@ class MyWidget(BaseWidget):
     def compose(self) -> ComposeResult:
         self.error_display = ErrorDisplay()
         yield self.error_display
-    
+
     async def operation(self):
         try:
             # Do work
@@ -226,11 +226,11 @@ class PortScannerWidget(BaseWidget):
     def compose(self) -> ComposeResult:
         self.summary = SummaryWidget()
         yield self.summary
-    
+
     def display_results(self, results):
         open_ports = len([r for r in results if r['status'] == 'OPEN'])
         closed_ports = len([r for r in results if r['status'] == 'CLOSED'])
-        
+
         self.summary.add_stat("Open", str(open_ports), color="green")
         self.summary.add_stat("Closed", str(closed_ports), color="red")
         self.summary.add_stat("Total", str(len(results)))
@@ -250,10 +250,10 @@ from src.tui.widgets.components import ResultsWidget, ResultColumn
 
 class DNSResolverWidget(WidgetTemplate):
     """DNS Resolver Widget - Template example."""
-    
+
     def __init__(self):
         super().__init__(name="DNSResolver")
-    
+
     def compose(self) -> ComposeResult:
         yield Input(id="hostname-input", placeholder="example.com")
         yield Button("Resolve", id="resolve-btn")
@@ -264,30 +264,30 @@ class DNSResolverWidget(WidgetTemplate):
             ],
             id="results-table"
         )
-    
+
     async def on_button_pressed(self, event):
         if event.button.id == "resolve-btn":
             hostname = self.query_one("#hostname-input").value
             await self.resolve_hostname(hostname)
-    
+
     async def resolve_hostname(self, hostname: str) -> None:
         try:
             self.show_loading(f"Resolving {hostname}...")
-            
+
             # Import Phase 3 utilities
             from shared.dns_utils import resolve_hostname
-            
+
             result = await self.run_in_thread(resolve_hostname, hostname)
-            
+
             # Display results
             results_table = self.query_one("#results-table", ResultsWidget)
             for ipv4 in result.ipv4_addresses:
                 results_table.add_row(type="A", address=ipv4)
             for ipv6 in result.ipv6_addresses:
                 results_table.add_row(type="AAAA", address=ipv6)
-            
+
             self.display_success(f"Resolved {hostname}")
-        
+
         except Exception as e:
             self.display_error(str(e))
 ```
@@ -333,7 +333,7 @@ async def operation(self, key: str) -> OperationResult[dict]:
     cached = self.get_cached(key)
     if cached:
         return OperationResult(success=True, data=cached)
-    
+
     try:
         self.show_loading("Executing...")
         result = await self.run_in_thread(expensive_function, key)
@@ -357,7 +357,7 @@ def test_base_widget_error_display():
     """Test error display."""
     widget = BaseWidget()
     widget.display_error("Test error")
-    
+
     assert widget.error_message == "Test error"
     assert widget.current_status == "Error"
 
@@ -365,14 +365,14 @@ def test_base_widget_loading_state():
     """Test loading state."""
     widget = BaseWidget()
     widget.show_loading("Processing...")
-    
+
     assert widget.is_loading is True
     assert widget.current_status == "Processing..."
 
 def test_operation_result():
     """Test OperationResult."""
     result = OperationResult(success=True, data="test_data", duration_ms=100)
-    
+
     assert result.success is True
     assert result.data == "test_data"
     assert result.duration_ms == 100
@@ -385,11 +385,11 @@ def test_operation_result():
 def test_dns_resolver_widget():
     """Test DNS Resolver widget."""
     widget = DNSResolverWidget()
-    
+
     # Test initialization
     assert widget.widget_name == "DNSResolver"
     assert widget.is_loading is False
-    
+
     # Test cache functionality
     widget.cache_result("example.com", ["93.184.216.34"])
     cached = widget.get_cached("example.com")
@@ -500,4 +500,3 @@ With Phase 4.1 Foundation, 4.2 DNS Resolver, and 4.3 Port Scanner complete:
 - [Textual Widgets Guide](https://textual.textualize.io/guide/widgets/)
 - [Phase 3 Diagnostics API](./phase3-diagnostics-api.md)
 - [Error Handling Guide](./error-handling.md)
-

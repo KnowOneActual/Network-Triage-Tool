@@ -137,7 +137,7 @@ class TestDNSResolverIntegration:
             assert widget is not None
             assert isinstance(widget, DNSResolverWidget)
         except Exception as e:
-            pytest.fail(f"Widget instantiation failed: {str(e)}")
+            pytest.fail(f"Widget instantiation failed: {e!s}")
 
 
 class TestDNSResolution:

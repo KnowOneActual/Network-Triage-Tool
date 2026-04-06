@@ -4,8 +4,6 @@ import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 # Add src to path
 src_path = Path(__file__).parent.parent / "src"
 if str(src_path) not in sys.path:
@@ -336,7 +334,12 @@ class TestGatherConnections:
     """Tests for the gather_connections() function with mocked psutil."""
 
     def _make_mock_conn(
-        self, kind="SOCK_STREAM", laddr=("127.0.0.1", 8080), raddr=("93.184.216.34", 443), status="ESTABLISHED", pid=100
+        self,
+        kind="SOCK_STREAM",
+        laddr=("127.0.0.1", 8080),
+        raddr=("93.184.216.34", 443),
+        status="ESTABLISHED",
+        pid=100,
     ):
         """Create a mock psutil connection namedtuple."""
         conn = MagicMock()

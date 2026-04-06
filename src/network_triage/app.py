@@ -76,12 +76,12 @@ class InfoBox(Static):
         yield Label(self.title_text, classes="label-title")
         yield Label(self.value_text, classes="label-value")
 
-    def watch_title_text(self, new_val):
+    def watch_title_text(self, new_val: str) -> None:
         if not self.is_mounted:
             return
         self.query_one(".label-title", Label).update(new_val)
 
-    def watch_value_text(self, new_val):
+    def watch_value_text(self, new_val: str) -> None:
         if not self.is_mounted:
             return
         self.query_one(".label-value", Label).update(new_val)
@@ -103,17 +103,17 @@ class Dashboard(Container):
         yield InfoBox("Gateway", id="info_gateway")
         yield InfoBox("Public IP", id="info_public_ip")
 
-    def on_mount(self):
+    def on_mount(self) -> None:
         self.refresh_data()
         self.set_interval(60, self.refresh_data)
 
     @work(thread=True)
-    def refresh_data(self):
+    def refresh_data(self) -> None:
         sys_info = net_tool.get_system_info()
         ip_info = net_tool.get_ip_info()
         self.app.call_from_thread(self._update_ui, sys_info, ip_info)
 
-    def _update_ui(self, sys_info, ip_info):
+    def _update_ui(self, sys_info: dict[str, str], ip_info: dict[str, str]) -> None:
         self.query_one("#info_hostname", InfoBox).value_text = sys_info.get("Hostname", "N/A")
         self.query_one("#info_os", InfoBox).value_text = sys_info.get("OS", "N/A")
         self.query_one("#info_internal_ip", InfoBox).value_text = ip_info.get("Internal IP", "N/A")
@@ -145,7 +145,7 @@ class ConnectionTool(Container):
             yield InfoBox("Signal", id="wifi_signal")
             yield InfoBox("Noise", id="wifi_noise")
 
-    def on_mount(self):
+    def on_mount(self) -> None:
         self.refresh_connection()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -153,15 +153,15 @@ class ConnectionTool(Container):
             self.refresh_connection()
 
     @work(thread=True)
-    def refresh_connection(self):
+    def refresh_connection(self) -> None:
         self.app.call_from_thread(self.query_one("#conn_status", Label).update, "Scanning interface...")
         details = net_tool.get_connection_details()
         self.app.call_from_thread(self.update_ui, details)
 
-    def update_ui(self, details):
+    def update_ui(self, details: dict[str, str]) -> None:
         self.query_one("#conn_status", Label).update("Updated.")
 
-        def set_val(widget_id, key):
+        def set_val(widget_id: str, key: str) -> None:
             self.query_one(f"#{widget_id}", InfoBox).value_text = details.get(key, "N/A")
 
         set_val("iface_name", "Interface")
@@ -214,14 +214,16 @@ class PingTool(Container):
         self.query_one("#ping_input", Input).disabled = False
 
     @work(thread=True, group="ping_job")
-    def start_ping_worker(self, host):
-        def write_to_log(line):
+    def start_ping_worker(self, host: str) -> None:
+        def write_to_log(line: str) -> None:
             self.app.call_from_thread(self.query_one("#ping_log", Log).write, line)
 
         net_tool.continuous_ping(host, write_to_log)
 
 
 class LLDPTool(Container):
+    scan_active: bool = False
+
     def compose(self) -> ComposeResult:
         with Horizontal(classes="tool_header"):
             yield Button("Start Scan (60s)", id="btn_lldp_start", variant="success")
@@ -244,7 +246,7 @@ class LLDPTool(Container):
         log = self.query_one("#lldp_log", Log)
         log.clear()
         log.write("--- Starting LLDP/CDP Capture (60s timeout) ---\n")
-        # log.write("Note: This may require root/admin privileges to see packets.\n")
+        log.write("Note: This may require root/admin privileges to see packets.\n")
 
         self.start_lldp_worker()
 
@@ -257,10 +259,10 @@ class LLDPTool(Container):
         self.query_one("#lldp_log", Log).write("\n--- Scan Stopped ---\n")
 
     @work(thread=True)
-    def start_lldp_worker(self):
+    def start_lldp_worker(self) -> None:
         self.scan_active = True
 
-        def write_to_log(line):
+        def write_to_log(line: str) -> None:
             if "requires administrator privileges" in line:
                 self.app.call_from_thread(
                     self.notify,
@@ -275,10 +277,10 @@ class LLDPTool(Container):
         if self.scan_active:
             self.app.call_from_thread(self.scan_finished)
 
-    def update_log(self, line):
+    def update_log(self, line: str) -> None:
         self.query_one("#lldp_log", Log).write(line)
 
-    def scan_finished(self):
+    def scan_finished(self) -> None:
         self.query_one("#btn_lldp_start", Button).disabled = False
         self.query_one("#btn_lldp_stop", Button).disabled = True
         self.query_one("#lldp_status", Label).update("Scan Complete.")

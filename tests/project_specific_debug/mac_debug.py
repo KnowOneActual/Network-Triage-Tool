@@ -3,8 +3,7 @@ import subprocess
 
 
 def run_final_debug():
-    """
-    Runs the two failing macOS-specific commands to gather raw data
+    """Runs the two failing macOS-specific commands to gather raw data
     for a definitive diagnosis.
     """
     if platform.system() != "Darwin":

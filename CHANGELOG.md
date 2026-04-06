@@ -302,7 +302,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **API Documentation Location:** Moved `docs/PHASE3_DIAGNOSTICS.md` to `docs/guides/phase3-diagnostics-api.md` for better categorization
-- **Historical Documents Archived:** 
+- **Historical Documents Archived:**
   - Moved `docs/Postmortem_Pyinstaller.md` to `docs/archive/`
   - Moved `docs/Postmortem_TUI_Migration.md` to `docs/archive/`
   - Moved `docs/TODO.md` to `docs/archive/`
@@ -343,7 +343,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Moved legacy GUI application (`Network-Triage.app/`)
   - Archived `PHASE3_PR_SUMMARY.md`, `warp.md`, `__init__.py`, `start.command`
 
-- **Updated All Documentation Links:** 
+- **Updated All Documentation Links:**
   - Updated all references in main `README.md` to point to new documentation locations
   - Added descriptive link text for better navigation
   - Organized documentation section with clear categories (Getting Started, API Reference, Project Documentation)

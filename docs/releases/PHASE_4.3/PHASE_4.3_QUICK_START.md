@@ -1,7 +1,7 @@
 # Phase 4.3: Port Scanner Widget - Quick Start Guide
 
-> **Status:** Implementation Complete ✅  
-> **Date:** December 20, 2025  
+> **Status:** Implementation Complete ✅
+> **Date:** December 20, 2025
 > **Next Step:** Run Tests & Verify Integration
 
 ## What Was Just Created
@@ -162,7 +162,7 @@ widget.parse_ports_input("80,99999,443", "multiple")
 
 1. **Get Inputs:**
    - Host: "localhost"
-   - Scan Mode: "common" 
+   - Scan Mode: "common"
    - Timeout: 3 seconds
 
 2. **Parse Ports:**

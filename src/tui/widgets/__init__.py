@@ -1,5 +1,4 @@
-"""
-TUI Widgets Package
+"""TUI Widgets Package
 
 This package contains all Textual widgets for the Network Triage Tool.
 Phase 4 integrates Phase 3 diagnostics utilities into interactive widgets.
@@ -25,14 +24,14 @@ from .latency_analyzer_widget import LatencyAnalyzerWidget
 from .port_scanner_widget import PortScannerWidget
 
 __all__ = [
-    "BaseWidget",
     "AsyncOperationMixin",
-    "ResultsWidget",
-    "ProgressWidget",
-    "StatusIndicator",
+    "BaseWidget",
     "ConnectionMonitorWidget",
     "DNSResolverWidget",
     "LanBandwidthWidget",
     "LatencyAnalyzerWidget",
     "PortScannerWidget",
+    "ProgressWidget",
+    "ResultsWidget",
+    "StatusIndicator",
 ]

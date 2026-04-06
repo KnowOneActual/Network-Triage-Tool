@@ -38,10 +38,10 @@ def parse_ports_input(self, port_input: str, mode: str) -> Optional[List[int]]:
 def parse_ports_input(self, port_input: str, mode: str) -> Optional[List[int]]:
     """
     Parse port input based on scan mode.
-    
+
     Returns None if invalid, or a list of valid port numbers.
     Does NOT call display_error - caller should handle None return.
-    
+
     Args:
         port_input: Raw port input string
         mode: Scan mode (single, multiple, range)
@@ -121,7 +121,7 @@ elif mode == "multiple":
         if not port_input:  # ← Added check
             logger.warning("Empty port input")
             return None
-        
+
         ports = []
         for port_str in port_input.split(","):
             port_str = port_str.strip()
@@ -133,11 +133,11 @@ elif mode == "multiple":
             else:
                 logger.warning(f"Port {port} out of range (1-65535)")  # ← Log only
                 return None
-        
+
         if not ports:
             logger.warning("No valid ports provided")  # ← Log only
             return None
-        
+
         return sorted(list(set(ports)))
     except ValueError as e:
         logger.warning(f"Invalid port format: {port_input} - {e}")  # ← Log only
@@ -163,23 +163,23 @@ elif mode == "range":
     if not match:
         self.display_error("Invalid range format. Use: start-end (e.g. 1-1024)")  # ← UI call
         return None
-    
+
     try:
         start = int(match.group(1))
         end = int(match.group(2))
-        
+
         if not (1 <= start <= 65535 and 1 <= end <= 65535):
             self.display_error("Ports must be between 1 and 65535")  # ← UI call
             return None
-        
+
         if start > end:
             start, end = end, start
-        
+
         port_count = end - start + 1
         if port_count > 5000:
             self.display_error(f"Range too large ({port_count} ports). Max 5000.")  # ← UI call
             return None
-        
+
         return list(range(start, end + 1))
     except ValueError:
         self.display_error("Invalid port range")  # ← UI call
@@ -192,28 +192,28 @@ elif mode == "range":
     if not port_input:  # ← Added check
         logger.warning("Empty range input")
         return None
-    
+
     match = re.match(r"^(\d+)\s*-\s*(\d+)$", port_input)
     if not match:
         logger.warning(f"Invalid range format: {port_input}")  # ← Log only
         return None
-    
+
     try:
         start = int(match.group(1))
         end = int(match.group(2))
-        
+
         if not (1 <= start <= 65535 and 1 <= end <= 65535):
             logger.warning(f"Range ports out of bounds: {start}-{end}")  # ← Log only
             return None
-        
+
         if start > end:
             start, end = end, start
-        
+
         port_count = end - start + 1
         if port_count > 5000:
             logger.warning(f"Range too large: {port_count} ports (max 5000)")  # ← Log only
             return None
-        
+
         return list(range(start, end + 1))
     except ValueError as e:
         logger.warning(f"Error parsing range: {e}")  # ← Log only

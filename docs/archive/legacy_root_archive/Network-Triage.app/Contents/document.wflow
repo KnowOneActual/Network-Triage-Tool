@@ -54,19 +54,19 @@
 					<string>on run {input, parameters}
 	-- Get the path to this Automator application, which should be in the project root
 	set appPath to path to me
-	
+
 	-- Find the project's root directory
 	tell application "Finder"
 		set projectPath to POSIX path of (container of appPath as alias)
 	end tell
-	
+
 	-- Construct the path to the Python executable inside the virtual environment
 	set pythonExecutable to quoted form of (projectPath &amp; ".venv/bin/python3")
-	
+
 	-- Create the full command to run. First, change into the project directory,
 	-- then execute the Python module.
 	set commandToRun to "cd " &amp; quoted form of projectPath &amp; " &amp;&amp; " &amp; pythonExecutable &amp; " -m src.macos.main_app"
-	
+
 	-- Run the command in the background.
 	-- Your Python script's own code will now trigger the graphical password prompt.
 	do shell script commandToRun
@@ -106,9 +106,9 @@ end run</string>
 					<dict>
 						<key>default value</key>
 						<string>on run {input, parameters}
-	
+
 	(* Your script goes here *)
-	
+
 	return input
 end run</string>
 						<key>name</key>

@@ -331,6 +331,6 @@ See [Contributing](../CONTRIBUTING.md) for the contribution process.
 
 ---
 
-**Last Updated:** March 4, 2026 (v0.5.0)  
-**Maintained By:** Network Triage Tool Contributors  
+**Last Updated:** March 4, 2026 (v0.5.0)
+**Maintained By:** Network Triage Tool Contributors
 **Questions?** Open a [discussion](https://github.com/knowoneactual/Network-Triage-Tool/discussions) on GitHub

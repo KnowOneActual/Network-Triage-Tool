@@ -70,8 +70,7 @@ class NetworkTriageToolkitBase:
                 result = sock.connect_ex((host, port_num))
                 if result == 0:
                     return f"Port {port_num} on {host} is OPEN."
-                else:
-                    return f"Port {port_num} on {host} is CLOSED or filtered."
+                return f"Port {port_num} on {host} is CLOSED or filtered."
         except ValueError:
             return "Invalid port number. Please enter an integer."
         except socket.gaierror:
@@ -206,10 +205,7 @@ class NetworkTriageToolkitBase:
             return {"Error": f"Speed test failed: {e}"}
 
     def run_network_scan(self, target, arguments="-F", callback=None):
-        """
-        Performs an Nmap scan by running it as a subprocess and parsing the XML output.
-        """
-
+        """Performs an Nmap scan by running it as a subprocess and parsing the XML output."""
         # dynamic path resolution
         nmap_path = shutil.which("nmap")
         if not nmap_path:
@@ -228,7 +224,7 @@ class NetworkTriageToolkitBase:
                     "mac": "",
                     "vendor": "",
                     "details": {},
-                }
+                },
             ]
 
         try:
@@ -245,7 +241,7 @@ class NetworkTriageToolkitBase:
                         "mac": "",
                         "vendor": "",
                         "details": {},
-                    }
+                    },
                 ]
 
             # ... (The rest of your XML parsing logic remains exactly the same) ...

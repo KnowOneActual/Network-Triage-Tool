@@ -1,0 +1,105 @@
+# Docker Compose configuration for Network Triage Tool
+# Usage:
+#   Development: docker-compose up dev
+#   Production: docker-compose up prod
+#   Tests: docker-compose run --rm test
+
+version: '3.8'
+
+services:
+  # Development environment
+  dev:
+    build:
+      context: .
+      target: dev
+    container_name: network-triage-dev
+    volumes:
+      - ./src:/app/src
+      - ./tests:/app/tests
+      - ./pyproject.toml:/app/pyproject.toml
+      - ./uv.lock:/app/uv.lock
+      - ./README.md:/app/README.md
+    environment:
+      - PYTHONPATH=/app/src
+      - PYTHONUNBUFFERED=1
+      - WATCHFILES_FORCE_POLLING=1
+    stdin_open: true
+    tty: true
+    command: uv run ipython
+    networks:
+      - network-triage-net
+    # Required for network tools to work
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    privileged: true
+
+  # Production environment
+  prod:
+    build:
+      context: .
+      target: runtime
+    container_name: network-triage
+    environment:
+      - PYTHONUNBUFFERED=1
+    networks:
+      - network-triage-net
+    # Required for network tools to work
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    privileged: true
+
+  # Test runner
+  test:
+    build:
+      context: .
+      target: dev
+    container_name: network-triage-test
+    volumes:
+      - ./src:/app/src
+      - ./tests:/app/tests
+      - ./pyproject.toml:/app/pyproject.toml
+      - ./uv.lock:/app/uv.lock
+    environment:
+      - PYTHONPATH=/app/src
+      - PYTHONUNBUFFERED=1
+    command: uv run pytest -v --cov=src --cov-report=term-missing
+    networks:
+      - network-triage-net
+
+  # Linter
+  lint:
+    build:
+      context: .
+      target: dev
+    container_name: network-triage-lint
+    volumes:
+      - ./src:/app/src
+      - ./tests:/app/tests
+      - ./pyproject.toml:/app/pyproject.toml
+    environment:
+      - PYTHONPATH=/app/src
+    command: uv run ruff check . --fix
+    networks:
+      - network-triage-net
+
+  # Type checker
+  type:
+    build:
+      context: .
+      target: dev
+    container_name: network-triage-type
+    volumes:
+      - ./src:/app/src
+      - ./tests:/app/tests
+      - ./pyproject.toml:/app/pyproject.toml
+    environment:
+      - PYTHONPATH=/app/src
+    command: uv run mypy src/
+    networks:
+      - network-triage-net
+
+networks:
+  network-triage-net:
+    driver: bridge

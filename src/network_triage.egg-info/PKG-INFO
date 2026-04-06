@@ -1,51 +1,77 @@
 Metadata-Version: 2.4
 Name: network-triage
-Version: 0.5.1
+Version: 0.5.6
 Summary: A terminal-based network diagnostic tool.
 Author-email: Your Name <you@example.com>
+Project-URL: Homepage, https://github.com/knowoneactual/Network-Triage-Tool
+Project-URL: Repository, https://github.com/knowoneactual/Network-Triage-Tool
+Project-URL: Issues, https://github.com/knowoneactual/Network-Triage-Tool/issues
+Project-URL: Changelog, https://github.com/knowoneactual/Network-Triage-Tool/blob/main/CHANGELOG.md
 Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Programming Language :: Python :: 3.14
 Classifier: Operating System :: OS Independent
-Requires-Python: >=3.8
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: System Administrators
+Classifier: Topic :: System :: Networking :: Monitoring
+Classifier: License :: OSI Approved :: MIT License
+Requires-Python: >=3.12
 Description-Content-Type: text/markdown
 License-File: LICENSE
-Requires-Dist: netmiko
-Requires-Dist: scapy
-Requires-Dist: psutil
-Requires-Dist: requests
-Requires-Dist: speedtest-cli
-Requires-Dist: textual
-Requires-Dist: python-nmap
+Requires-Dist: netmiko>=4.3.0
+Requires-Dist: scapy>=2.5.0
+Requires-Dist: psutil>=5.9.0
+Requires-Dist: requests>=2.31.0
+Requires-Dist: speedtest-cli>=2.1.3
+Requires-Dist: textual>=0.52.0
+Requires-Dist: python-nmap>=0.7.1
 Provides-Extra: dev
-Requires-Dist: ruff; extra == "dev"
-Requires-Dist: bandit; extra == "dev"
-Requires-Dist: pytest; extra == "dev"
-Requires-Dist: pytest-mock; extra == "dev"
-Requires-Dist: pytest-cov; extra == "dev"
-Requires-Dist: pip-audit; extra == "dev"
-Requires-Dist: mypy; extra == "dev"
-Requires-Dist: types-requests; extra == "dev"
-Requires-Dist: types-psutil; extra == "dev"
-Requires-Dist: types-PyYAML; extra == "dev"
-Requires-Dist: codespell; extra == "dev"
+Requires-Dist: ruff>=0.15.0; extra == "dev"
+Requires-Dist: bandit>=1.7.0; extra == "dev"
+Requires-Dist: pytest>=8.0.0; extra == "dev"
+Requires-Dist: pytest-mock>=3.12.0; extra == "dev"
+Requires-Dist: pytest-cov>=5.0.0; extra == "dev"
+Requires-Dist: pytest-asyncio>=0.23.0; extra == "dev"
+Requires-Dist: pip-audit>=2.7.0; extra == "dev"
+Requires-Dist: mypy>=1.8.0; extra == "dev"
+Requires-Dist: types-requests>=2.31.0; extra == "dev"
+Requires-Dist: types-psutil>=5.9.0; extra == "dev"
+Requires-Dist: types-PyYAML>=6.0.0; extra == "dev"
+Requires-Dist: codespell>=2.3.0; extra == "dev"
+Requires-Dist: pre-commit>=3.6.0; extra == "dev"
+Requires-Dist: pydantic>=2.6.0; extra == "dev"
+Requires-Dist: pytest-benchmark>=4.0.0; extra == "dev"
+Provides-Extra: test
+Requires-Dist: pytest>=8.0.0; extra == "test"
+Requires-Dist: pytest-mock>=3.12.0; extra == "test"
+Requires-Dist: pytest-cov>=5.0.0; extra == "test"
+Requires-Dist: pytest-asyncio>=0.23.0; extra == "test"
+Provides-Extra: lint
+Requires-Dist: ruff>=0.15.0; extra == "lint"
+Requires-Dist: mypy>=1.8.0; extra == "lint"
+Requires-Dist: codespell>=2.3.0; extra == "lint"
+Provides-Extra: type
+Requires-Dist: mypy>=1.8.0; extra == "type"
+Requires-Dist: types-requests>=2.31.0; extra == "type"
+Requires-Dist: types-psutil>=5.9.0; extra == "type"
+Requires-Dist: types-PyYAML>=6.0.0; extra == "type"
 Dynamic: license-file
 
 <p align="center">
 <img src="img/assets/readme/Network-Triage-Tool_logo_v3.webp" alt="alt text" width="150">
 </p>
 
-> [!IMPORTANT]
-># Currently not working (Mar 10)
-> ### 🚀 Professional Roadmap Update (March 2026)
-> Professional-grade linting, security scanning, and type checking are now integrated into the CI pipeline. Development is active on a new roadmap focused on high-utility tools. Current focus: **Phase 4.4: Live Path Analyzer (MTR-style)**. Thanks for the incredible support and feedback!
->
-
 [![Status](https://img.shields.io/badge/status-Active-green)](https://github.com/knowoneactual/Network-Triage-Tool)
-[![Version](https://img.shields.io/badge/version-0.5.0-blue)](https://github.com/knowoneactual/Network-Triage-Tool/releases)
+[![Version](https://img.shields.io/badge/version-0.5.4-blue)](https://github.com/knowoneactual/Network-Triage-Tool/releases)
 [![Python Version](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![UI Framework](https://img.shields.io/badge/UI-Textual-orange)](https://textual.textualize.io/)
-[![Tests](https://img.shields.io/badge/tests-106%2F106%20passing-success)](./tests/)
+[![Tests](https://img.shields.io/badge/tests-206%2F206%20passing-success)](./tests/)
 [![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-blue)](https://github.com/knowoneactual/Network-Triage-Tool/actions)
 [![Security Scan](https://github.com/knowoneactual/Network-Triage-Tool/actions/workflows/python-app.yml/badge.svg)](https://github.com/knowoneactual/Network-Triage-Tool/actions)
+
+> [!NOTE]
+> **This is an active, ongoing project. While the tool is highly stable and feature-rich, it is still in the "pre-production" phase as I finalizes the remaining TUI widgets and comprehensive reporting features. It is very close to a 1.0 release, but for now, it should be used for testing rather than in critical production environments.
 
 A cross-platform **Terminal User Interface (TUI)**
  designed for network professionals to diagnose and troubleshoot connectivity issues efficiently.
@@ -53,6 +79,18 @@ A cross-platform **Terminal User Interface (TUI)**
 Unlike the previous GUI version, this tool runs entirely in the terminal, making it lighter, faster, and fully capable of running over SSH sessions. **Now with comprehensive advanced diagnostics for DNS, ports, and latency measurement, plus integrated TUI widgets.**
 
 ## 🎯 Phase 4: TUI Widget Integration (In Progress)
+
+### ✅ Phase 4.4: Live Path Analyzer (March 11, 2026) - COMPLETE
+
+**New Latency Analyzer Widget:**
+- ✅ MTR-style per-hop path analysis in the TUI (Utilities tab)
+- ✅ Per-hop table: Hop #, IP, Hostname, Avg RTT, Packet Loss
+- ✅ RTT colour coding: green (<50ms), yellow (<150ms), red (≥150ms), dim for timeouts
+- ✅ Aggregate ping statistics: Avg / Min / Max / Jitter / Loss %
+- ✅ Non-blocking background worker (`@work(thread=True)`)
+- ✅ Uses `mtr` if available, falls back to `traceroute` / `tracert`
+- ✅ Concurrency guard prevents duplicate in-flight traces
+- ✅ **39 comprehensive tests (100% passing)**
 
 ### ✅ Phase 4.3: Port Scanner Widget (Dec 20, 2025) - COMPLETE
 
@@ -88,10 +126,11 @@ Unlike the previous GUI version, this tool runs entirely in the terminal, making
 - ✅ 5 Reusable Components (ResultsWidget, InputWidget, etc.)
 - ✅ **36 comprehensive tests (100% passing)**
 
-**Total Phase 4 Status: 106/106 tests passing (100%) 🎉**
+**Total Phase 4 Status: 145/145 tests passing (100%) 🎉**
 
-### 🚀 Phase 4.4+: Additional Widgets (Planned)
-- [ ] Latency Analyzer widget (ping + traceroute)
+### 🚀 Phase 4.5+: Additional Widgets (Planned)
+- [ ] Connection Monitor (active TCP/UDP sockets + owning process)
+- [ ] LAN Bandwidth Tester (iperf3-lite client)
 - [ ] Results history and export
 - [ ] v0.4.0 final release
 
@@ -115,28 +154,65 @@ The application uses **Textual** to provide a modern, mouse-supportive terminal 
 
 ### Prerequisites
 
-* Python 3.11+
+* **Python 3.12+** (3.14.3 recommended)
 * A terminal with 256-color support (Standard on macOS/Linux/Windows Terminal)
+* **uv** (Ultra-fast Python package manager) - [Installation Guide](https://docs.astral.sh/uv/getting-started/installation/)
 
 ### Installation
 
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/knowoneactual/Network-Triage-Tool.git
-    cd Network-Triage-Tool
-    ```
+**Method 1: uv (Recommended - Modern & Fast)**
+The fastest way to install with the latest Python package manager.
 
-2.  **Create a virtual environment:**
-    ```bash
-    python3 -m venv .venv
-    source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-    ```
+```bash
+# Install uv if you haven't already
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
-3.  **Install in Editable Mode:**
-    This installs the dependencies and creates the `network-triage` command while allowing you to edit code live.
-    ```bash
-    pip install -e .
-    ```
+# Clone and install
+git clone https://github.com/knowoneactual/Network-Triage-Tool.git
+cd Network-Triage-Tool
+uv sync --all-extras
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+network-triage
+```
+
+**Method 2: pipx (Traditional)**
+For isolated environments using traditional pip.
+
+```bash
+pipx install git+https://github.com/knowoneactual/Network-Triage-Tool.git
+```
+
+**Method 3: Docker (Containerized)**
+Run in an isolated container with all dependencies.
+
+```bash
+# Build and run
+docker build -t network-triage .
+docker run -it --rm --cap-add=NET_ADMIN --cap-add=NET_RAW --privileged network-triage
+
+# Or use docker-compose
+docker-compose up prod
+```
+
+**Method 4: Development Setup**
+For contributors and developers.
+
+```bash
+git clone https://github.com/knowoneactual/Network-Triage-Tool.git
+cd Network-Triage-Tool
+
+# Install uv if needed
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Setup development environment
+uv venv
+uv sync --all-extras
+uv run pre-commit install
+source .venv/bin/activate
+
+# Run the application
+uv run network-triage
+```
 
 ### Running the Tool
 
@@ -162,34 +238,70 @@ network-triage
 
 ## 🛠️ Tech Stack
 
-  * **UI Framework:** [Textual](https://github.com/Textualize/textual) (CSS-driven TUI)
-  * **Networking:** `scapy`, `netmiko`, `python-nmap`
-  * **System Info:** `psutil`, `requests`
-  * **Testing:** `pytest`, `pytest-mock` (106 comprehensive tests)
-  * **Advanced Diagnostics:** Pure Python stdlib (Phase 3)
+### Core Framework
+* **UI Framework:** [Textual](https://github.com/Textualize/textual) (CSS-driven TUI)
+* **Package Manager:** [uv](https://github.com/astral-sh/uv) (Ultra-fast Python package manager)
+* **Linting & Formatting:** [Ruff](https://github.com/astral-sh/ruff) (Replaces black, isort, flake8)
+
+### Networking
+* **Packet Manipulation:** `scapy`
+* **Network Automation:** `netmiko`
+* **Port Scanning:** `python-nmap`
+* **HTTP Requests:** `requests`
+
+### System & Utilities
+* **System Info:** `psutil`
+* **Data Validation:** `pydantic` (Phase 2+)
+* **Async Operations:** `asyncio`, `textual.work`
+
+### Development & Quality
+* **Testing:** `pytest`, `pytest-mock`, `pytest-cov`, `pytest-asyncio`
+* **Type Checking:** `mypy`, `pyright`
+* **Security:** `bandit`, `pip-audit`
+* **Code Quality:** `pre-commit`, `codespell`
+
+### Modern Python Features
+* **Python 3.14+**: Match statements, improved error messages, performance optimizations
+* **Type Hints**: 100% coverage on public APIs
+* **Async/Await**: Non-blocking network operations
+* **Dataclasses**: Clean data structures
 
 ## 🛡️ Code Quality & Security
 
-High standards are maintained through automated CI/CD scans:
+High standards are maintained through modern automated tooling:
 
-- **Linting & Formatting:** [Ruff](https://github.com/astral-sh/ruff) for near-instant linting and PEP 8 compliance.
-- **Type Checking:** [Mypy](http://mypy-lang.org/) for static type verification and catching subtle bugs.
-- **Security Scanning:** [Bandit](https://github.com/PyCQA/bandit) for detecting common security vulnerabilities.
-- **Secret Scanning:** [Gitleaks](https://github.com/gitleaks/gitleaks) to prevent accidental credential commits.
-- **Dependency Audit:** [pip-audit](https://github.com/pypa/pip-audit) for vulnerability scanning in third-party libraries.
-- **Spell Checking:** [Codespell](https://github.com/codespell-project/codespell) to ensure a professional, typo-free interface and documentation.
-- **Automated Updates:** [Dependabot](https://github.com/dependabot) for keeping the environment secure and modern.
+### Development Workflow
+- **Package Management:** [uv](https://github.com/astral-sh/uv) for ultra-fast dependency resolution and installation
+- **Pre-commit Hooks:** Automated checks on every commit (linting, typing, security, spelling)
+- **Containerized Development:** Docker support for reproducible environments
+
+### Code Quality
+- **Linting & Formatting:** [Ruff](https://github.com/astral-sh/ruff) for near-instant linting and PEP 8 compliance (replaces black, isort, flake8)
+- **Type Checking:** [Mypy](http://mypy-lang.org/) with strict mode enabled for robust type safety
+- **Modern Python:** Python 3.14+ features including match statements and improved error messages
+
+### Security & Safety
+- **Security Scanning:** [Bandit](https://github.com/PyCQA/bandit) for detecting common security vulnerabilities
+- **Secret Scanning:** [Gitleaks](https://github.com/gitleaks/gitleaks) to prevent accidental credential commits
+- **Dependency Audit:** [pip-audit](https://github.com/pypa/pip-audit) for vulnerability scanning in third-party libraries
+- **Spell Checking:** [Codespell](https://github.com/codespell-project/codespell) for professional, typo-free code
+
+### Testing & Coverage
+- **Test Framework:** pytest with async support and comprehensive fixtures
+- **Coverage:** 51%+ test coverage with 80% target for all modules
+- **Benchmarking:** pytest-benchmark for performance regression testing
+- **CI/CD:** GitHub Actions with automated testing on 3 OS × 3 Python versions
 
 ## 📊 Quality Metrics
 
 | Metric | Value |
 |--------|-------|
-| **Test Coverage** | 106/106 tests passing (100%) |
+| **Test Coverage** | 206/206 tests passing (100%) |
 | **Platform Support** | Ubuntu, macOS, Windows (CI/CD verified) |
 | **Python Versions** | 3.11, 3.12, 3.13 (all tested) |
 | **Code Quality** | 100% type hints, ~94% coverage |
 | **Dependencies** | Zero external (Phase 3 uses stdlib only) |
-| **Widget Tests** | Phase 4.1: 36, Phase 4.2: 21, Phase 4.3: 49 |
+| **Widget Tests** | Phase 4.1: 36, Phase 4.2: 21, Phase 4.3: 49, Phase 4.4: 39 |
 | **Execution Time** | 0.41s (Full test suite) |
 
 ## 📚 Phase 3 Usage
@@ -326,6 +438,15 @@ This architecture eliminates code duplication and enables shipping new widgets i
 - [x] 21 comprehensive tests
 - [x] Production ready
 
+**Phase 4.4: Live Path Analyzer** ✅ COMPLETE
+- [x] MTR-style per-hop path analysis widget
+- [x] Per-hop DataTable with colour-coded RTTs
+- [x] Aggregate ping statistics (avg/min/max/jitter/loss)
+- [x] Non-blocking background worker
+- [x] `mtr` + `traceroute` / `tracert` fallback
+- [x] 39 comprehensive tests
+- [x] Production ready
+
 **Phase 4.3: Port Scanner Widget** ✅ COMPLETE
 - [x] Complete Textual widget implementation
 - [x] Full Phase 3 port utilities integration
@@ -337,17 +458,14 @@ This architecture eliminates code duplication and enables shipping new widgets i
 - [x] Complete documentation and examples
 - [x] Production ready
 
-**Phase 4.4: Latency Analyzer Widget** (Planned - 1-2 weeks)
-- [ ] Ping statistics display
-- [ ] Traceroute with per-hop latency
-- [ ] MTR-style analysis
+**Phase 4.5: Connection Monitor** (Planned - 1-2 weeks)
+- [ ] Live active TCP/UDP sockets and owning processes
+- [ ] Per-socket state and remote endpoint display
 - [ ] 20+ tests
 
-**Phase 4.5: Results History & Export** (Planned - 2-3 weeks)
-- [ ] Session result caching
-- [ ] CSV/JSON export
-- [ ] Comparison views
-- [ ] Report generation
+**Phase 4.6: LAN Bandwidth Tester** (Planned)
+- [ ] iperf3-lite client integration
+- [ ] Upload/download throughput measurement
 
 ### 🎯 Phase 5+: Advanced Features (Future)
 - [ ] Data visualization and charts

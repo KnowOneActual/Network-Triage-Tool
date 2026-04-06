@@ -11,8 +11,7 @@ except ImportError:
 
 
 def inspect_all_wifi_methods():
-    """
-    Runs a comprehensive suite of macOS Wi-Fi commands and library calls
+    """Runs a comprehensive suite of macOS Wi-Fi commands and library calls
     to definitively diagnose data retrieval issues.
     """
     if platform.system() != "Darwin":

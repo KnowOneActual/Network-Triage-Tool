@@ -4,9 +4,7 @@ import subprocess
 
 
 def inspect_wifi_output_v2():
-    """
-    Runs multiple native macOS commands for Wi-Fi details and prints their raw output.
-    """
+    """Runs multiple native macOS commands for Wi-Fi details and prints their raw output."""
     if platform.system() != "Darwin":
         print(f"This inspector is designed for macOS. Your OS: {platform.system()}.")
         return

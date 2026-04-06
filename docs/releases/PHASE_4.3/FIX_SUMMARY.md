@@ -2,10 +2,10 @@
 
 ## Quick Overview
 
-**Problem:** 10 tests failed due to widget trying to query for UI elements during unit testing  
-**Solution:** Separate parsing logic from UI display logic  
-**Result:** ✅ All 49 tests now pass  
-**Commit:** `789735cafab0d06c2309581d2e2cf730276601ef`  
+**Problem:** 10 tests failed due to widget trying to query for UI elements during unit testing
+**Solution:** Separate parsing logic from UI display logic
+**Result:** ✅ All 49 tests now pass
+**Commit:** `789735cafab0d06c2309581d2e2cf730276601ef`
 
 ---
 
@@ -131,12 +131,12 @@ scan_ports()
 
 ## Benefits
 
-✅ **Testable** - `parse_ports_input()` works in unit tests without UI context  
-✅ **Clean Architecture** - Parsing logic separated from UI logic  
-✅ **Reusable** - Parser can be used in CLI, API, or other contexts  
-✅ **Loggable** - All validations logged for debugging  
-✅ **Better Errors** - Caller can provide context-specific messages  
-✅ **Works in Real App** - `scan_ports()` still displays errors properly  
+✅ **Testable** - `parse_ports_input()` works in unit tests without UI context
+✅ **Clean Architecture** - Parsing logic separated from UI logic
+✅ **Reusable** - Parser can be used in CLI, API, or other contexts
+✅ **Loggable** - All validations logged for debugging
+✅ **Better Errors** - Caller can provide context-specific messages
+✅ **Works in Real App** - `scan_ports()` still displays errors properly
 
 ---
 

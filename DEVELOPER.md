@@ -256,7 +256,7 @@ class OperationResult:
     success: bool
     data: Optional[dict] = None
     error: Optional[str] = None
-    
+
     @classmethod
     def from_exception(cls, exc: Exception) -> "OperationResult":
         return cls(success=False, error=str(exc))

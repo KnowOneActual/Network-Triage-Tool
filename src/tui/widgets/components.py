@@ -1,5 +1,4 @@
-"""
-Reusable Widget Components for Phase 4
+"""Reusable Widget Components for Phase 4
 
 Provides common UI elements that all Phase 4 widgets use:
 - ResultsWidget: Standardized results table with filtering and sorting
@@ -28,8 +27,7 @@ class ResultColumn:
 
 
 class ResultsWidget(DataTable):
-    """
-    Standardized results table for Phase 4 widgets.
+    """Standardized results table for Phase 4 widgets.
 
     Features:
     - Sortable columns
@@ -104,7 +102,6 @@ class ResultsWidget(DataTable):
         """Filter results by column value."""
         # Custom filtering implementation as Textual DataTable lacks built-in filtering
         # This would be implemented with a custom filter in subclasses
-        pass
 
     def clear_results(self) -> None:
         """Clear all results from table."""
@@ -113,8 +110,7 @@ class ResultsWidget(DataTable):
 
 
 class ProgressWidget(Container):
-    """
-    Standardized progress display for long-running operations.
+    """Standardized progress display for long-running operations.
 
     Features:
     - Percentage display
@@ -170,8 +166,7 @@ class ProgressWidget(Container):
 
 
 class StatusIndicator(Static):
-    """
-    Status/health indicator widget.
+    """Status/health indicator widget.
 
     Features:
     - Color-coded status (green/yellow/red)
@@ -215,8 +210,7 @@ class StatusIndicator(Static):
 
 
 class ErrorDisplay(Static):
-    """
-    Consistent error message display.
+    """Consistent error message display.
 
     Features:
     - Error icon and formatting
@@ -268,8 +262,7 @@ class ErrorDisplay(Static):
 
 
 class SummaryWidget(Static):
-    """
-    Summary statistics widget for operation results.
+    """Summary statistics widget for operation results.
 
     Features:
     - Key-value pairs display

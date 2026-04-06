@@ -203,7 +203,7 @@ class TestBandwidthResult:
         assert r.peak_tx_mbps == pytest.approx(33.3)
 
     def test_samples_field_is_list(self):
-        """samples attribute is a list by default (not None)."""
+        """Samples attribute is a list by default (not None)."""
         r = BandwidthResult(interface="lo", duration=5)
         assert isinstance(r.samples, list)
 

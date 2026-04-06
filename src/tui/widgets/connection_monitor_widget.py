@@ -100,6 +100,7 @@ def gather_connections() -> list[ConnectionEntry]:
     Returns:
         List of ConnectionEntry objects for all TCP and UDP sockets.
         Returns an empty list if psutil is unavailable or access is denied.
+
     """
     entries: list[ConnectionEntry] = []
     try:
@@ -120,7 +121,7 @@ def gather_connections() -> list[ConnectionEntry]:
                 if pid not in pid_cache:
                     try:
                         proc_name = psutil.Process(pid).name()
-                    except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    except psutil.NoSuchProcess, psutil.AccessDenied:
                         proc_name = "<unknown>"
                     pid_cache[pid] = proc_name
                 else:
@@ -136,7 +137,7 @@ def gather_connections() -> list[ConnectionEntry]:
 
             laddr, lport = (c.laddr.ip, c.laddr.port) if c.laddr else ("", 0)
             raddr, rport = (c.raddr.ip, c.raddr.port) if c.raddr else ("", 0)
-            status = c.status if c.status else "NONE"
+            status = c.status or "NONE"
 
             entries.append(
                 ConnectionEntry(
@@ -148,7 +149,7 @@ def gather_connections() -> list[ConnectionEntry]:
                     status=status,
                     pid=pid,
                     process_name=proc_name,
-                )
+                ),
             )
     except psutil.AccessDenied:
         logger.warning("Access denied when reading network connections — try running with elevated privileges")
@@ -167,6 +168,7 @@ def apply_filter(entries: list[ConnectionEntry], filter_value: str) -> list[Conn
 
     Returns:
         Filtered list.
+
     """
     if filter_value == FILTER_ALL:
         return entries
@@ -193,6 +195,7 @@ def apply_process_filter(entries: list[ConnectionEntry], search: str) -> list[Co
 
     Returns:
         Filtered list.
+
     """
     if not search.strip():
         return entries
@@ -208,6 +211,7 @@ def color_status(status: str) -> str:
 
     Returns:
         Rich markup string.
+
     """
     color = STATUS_COLORS.get(status, "white")
     return f"[{color}]{status}[/{color}]"
@@ -222,6 +226,7 @@ def format_connection_count(total: int, shown: int) -> str:
 
     Returns:
         Summary string.
+
     """
     if total == shown:
         return f"{total} connection{'s' if total != 1 else ''}"
@@ -412,6 +417,7 @@ class ConnectionMonitorWidget(BaseWidget):
 
         Args:
             connections: Filtered list of ConnectionEntry objects to display.
+
         """
         table = self.query_one("#connections-table", DataTable)
         table.clear()

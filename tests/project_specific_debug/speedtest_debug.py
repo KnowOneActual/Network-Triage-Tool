@@ -4,9 +4,7 @@ import speedtest
 
 
 def run_speedtest_debug():
-    """
-    Runs a speed test and prints the entire raw results dictionary for debugging.
-    """
+    """Runs a speed test and prints the entire raw results dictionary for debugging."""
     print("🚀 Starting speed test... This may take a moment.")
 
     try:

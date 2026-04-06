@@ -112,6 +112,7 @@ def list_interfaces() -> list[str]:
 
     Returns:
         Sorted list of interface name strings.
+
     """
     try:
         return sorted(psutil.net_if_stats().keys())
@@ -128,6 +129,7 @@ def get_io_counters(interface: str) -> tuple[int, int] | None:
 
     Returns:
         Tuple of (bytes_recv, bytes_sent), or None on failure.
+
     """
     try:
         if interface == "all":
@@ -154,6 +156,7 @@ def bytes_to_mbps(byte_delta: int, elapsed_seconds: float) -> float:
 
     Returns:
         Throughput in Mbit/s, or 0.0 if elapsed_seconds is zero.
+
     """
     if elapsed_seconds <= 0:
         return 0.0
@@ -168,6 +171,7 @@ def format_mbps(value: float) -> str:
 
     Returns:
         Human-readable string such as '12.34 Mbps' or '1.20 Gbps'.
+
     """
     if value >= 1000:
         return f"{value / 1000:.2f} Gbps"
@@ -187,6 +191,7 @@ def color_mbps(value: float) -> str:
 
     Returns:
         Rich markup string with colour tags.
+
     """
     text = format_mbps(value)
     if value >= 100:
@@ -202,6 +207,7 @@ def build_interface_options() -> list[tuple[str, str]]:
     Returns:
         List of (label, value) tuples including an 'All Interfaces' aggregate
         option as the first entry.
+
     """
     ifaces = list_interfaces()
     options: list[tuple[str, str]] = [("All Interfaces", "all")]
@@ -224,6 +230,7 @@ def run_bandwidth_test(interface: str, duration: int) -> BandwidthResult:
 
     Returns:
         BandwidthResult containing all samples.
+
     """
     result = BandwidthResult(interface=interface, duration=duration)
 
@@ -297,26 +304,25 @@ class LanBandwidthWidget(BaseWidget):
         """Compose the LAN Bandwidth Tester UI."""
         yield Label("[bold]LAN Bandwidth Tester[/bold]", id="bw-title")
 
-        with Vertical(id="bw-controls"):
-            with Horizontal(id="bw-top-bar"):
-                yield Label("Interface:", id="bw-iface-label")
-                yield Select(
-                    options=build_interface_options(),
-                    allow_blank=False,
-                    value="all",
-                    id="bw-iface-select",
-                )
+        with Vertical(id="bw-controls"), Horizontal(id="bw-top-bar"):
+            yield Label("Interface:", id="bw-iface-label")
+            yield Select(
+                options=build_interface_options(),
+                allow_blank=False,
+                value="all",
+                id="bw-iface-select",
+            )
 
-                yield Label("Duration:", id="bw-dur-label")
-                yield Select(
-                    options=DURATION_OPTIONS,
-                    allow_blank=False,
-                    value="10",
-                    id="bw-dur-select",
-                )
+            yield Label("Duration:", id="bw-dur-label")
+            yield Select(
+                options=DURATION_OPTIONS,
+                allow_blank=False,
+                value="10",
+                id="bw-dur-select",
+            )
 
-                yield Button("▶ Start Test", id="bw-start-btn", variant="success")
-                yield Button("⏹ Stop", id="bw-stop-btn", variant="error", disabled=True)
+            yield Button("▶ Start Test", id="bw-start-btn", variant="success")
+            yield Button("⏹ Stop", id="bw-stop-btn", variant="error", disabled=True)
 
         yield Label("", id="bw-status-label")
         yield DataTable(id="bw-table")

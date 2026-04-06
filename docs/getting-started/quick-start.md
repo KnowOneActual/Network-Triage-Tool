@@ -142,7 +142,7 @@ if stats.status.value == 'success':
     print(f"Loss: {stats.packet_loss_percent:.1f}%")
     print(f"Latency (min/avg/max): {stats.min_ms:.2f}/{stats.avg_ms:.2f}/{stats.max_ms:.2f}ms")
     print(f"Jitter (stddev): {stats.stddev_ms:.2f}ms")
-    
+
     # Interpret jitter
     if stats.stddev_ms < 2:
         print("✅ Network quality: Excellent (stable latency)")

@@ -377,7 +377,8 @@ class AdvancedDiagnostics(ttk.Frame):
         self.pass_entry.grid(row=2, column=1, sticky="ew", padx=5, pady=2)
         ttk.Label(conn_frame, text="Device Type:").grid(row=3, column=0, sticky="w", padx=5, pady=2)
         self.device_type_combo = ttk.Combobox(
-            conn_frame, values=["cisco_ios", "cisco_xr", "cisco_nxos", "arista_eos", "juniper_junos"]
+            conn_frame,
+            values=["cisco_ios", "cisco_xr", "cisco_nxos", "arista_eos", "juniper_junos"],
         )
         self.device_type_combo.grid(row=3, column=1, sticky="ew", padx=5, pady=2)
         self.device_type_combo.set("cisco_ios")
@@ -547,7 +548,10 @@ class NetworkScanTab(ttk.Frame):
         ttk.Label(control_frame, text="Scan Type:").grid(row=1, column=0, padx=(0, 5), pady=5, sticky="w")
         # --- NEW: Add "Custom" to the scan types ---
         self.scan_type = ttk.Combobox(
-            control_frame, values=["Ping Scan", "Fast Scan", "Intense Scan", "Custom"], width=12, state="readonly"
+            control_frame,
+            values=["Ping Scan", "Fast Scan", "Intense Scan", "Custom"],
+            width=12,
+            state="readonly",
         )
         self.scan_type.grid(row=1, column=1, pady=5, sticky="w")
         self.scan_type.set("Fast Scan")
@@ -733,7 +737,7 @@ class NetworkScanTab(ttk.Frame):
                         port.get("protocol", "N/A"),
                         port.get("state", "N/A"),
                         port.get("name", "N/A"),
-                        product_version if product_version else "N/A",
+                        product_version or "N/A",
                     ),
                 )
         else:
@@ -743,7 +747,9 @@ class NetworkScanTab(ttk.Frame):
     def export_to_csv(self):
         try:
             file_path = filedialog.asksaveasfilename(
-                defaultextension=".csv", filetypes=[("CSV files", "*.csv"), ("All files", "*.*")], title="Export Scan Results"
+                defaultextension=".csv",
+                filetypes=[("CSV files", "*.csv"), ("All files", "*.*")],
+                title="Export Scan Results",
             )
             if not file_path:
                 return
@@ -834,7 +840,7 @@ class MainApplication(tk.Window):
             values = self.network_scan_tab.results_tree.item(item, "values")
             if len(values) == 5:
                 report_content.append(
-                    f"IP: {values[0]}, Hostname: {values[1]}, Status: {values[2]}, MAC: {values[3]}, Vendor: {values[4]}"
+                    f"IP: {values[0]}, Hostname: {values[1]}, Status: {values[2]}, MAC: {values[3]}, Vendor: {values[4]}",
                 )
 
         # Physical Layer
@@ -847,7 +853,9 @@ class MainApplication(tk.Window):
 
         try:
             file_path = filedialog.asksaveasfilename(
-                defaultextension=".txt", filetypes=[("Text files", "*.txt"), ("All files", "*.*")], title="Save Network Report"
+                defaultextension=".txt",
+                filetypes=[("Text files", "*.txt"), ("All files", "*.*")],
+                title="Save Network Report",
             )
             if file_path:
                 with open(file_path, "w", encoding="utf-8") as f:

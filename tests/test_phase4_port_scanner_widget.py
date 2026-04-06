@@ -614,7 +614,7 @@ class TestPortScannerIntegration:
             assert widget is not None
             assert isinstance(widget, PortScannerWidget)
         except Exception as e:
-            pytest.fail(f"Widget instantiation failed: {str(e)}")
+            pytest.fail(f"Widget instantiation failed: {e!s}")
 
     def test_port_status_enum_available(self):
         """Test that PortStatus enum from Phase 3 is available."""

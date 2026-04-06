@@ -2,9 +2,9 @@
 
 ## TL;DR
 
-**Problem:** 10 tests failed - widget tried to query UI during unit tests  
-**Fix:** Separated parsing logic from UI display logic  
-**Result:** All tests now pass ✅  
+**Problem:** 10 tests failed - widget tried to query UI during unit tests
+**Fix:** Separated parsing logic from UI display logic
+**Result:** All tests now pass ✅
 
 ---
 
@@ -162,12 +162,12 @@ pytest tests/test_phase4*.py -v
 
 ## Success Criteria
 
-✅ **All 49 tests pass**  
-✅ **No breaking changes**  
-✅ **Real app still works**  
-✅ **Code is cleaner**  
-✅ **Better separation of concerns**  
-✅ **Easier to test in future**  
+✅ **All 49 tests pass**
+✅ **No breaking changes**
+✅ **Real app still works**
+✅ **Code is cleaner**
+✅ **Better separation of concerns**
+✅ **Easier to test in future**
 
 ---
 

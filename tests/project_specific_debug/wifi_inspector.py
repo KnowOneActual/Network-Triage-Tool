@@ -4,9 +4,7 @@ import subprocess
 
 
 def inspect_wifi_output():
-    """
-    Runs the native OS command for Wi-Fi details and prints the raw output.
-    """
+    """Runs the native OS command for Wi-Fi details and prints the raw output."""
     system = platform.system()
     print(f"--- Running Wi-Fi inspection for {system} ---")
 

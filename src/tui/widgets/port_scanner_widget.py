@@ -109,11 +109,9 @@ class PortScannerWidget(BaseWidget):
         """Handle scan mode changes."""
         # Update UI based on selected scan mode
         # This could be enhanced to show/hide port input based on mode
-        pass
 
     def parse_ports_input(self, port_input: str, mode: str) -> list[int] | None:
-        """
-        Parse port input based on scan mode.
+        """Parse port input based on scan mode.
 
         Returns None if invalid, or a list of valid port numbers.
         Does NOT call display_error - caller should handle None return.
@@ -124,6 +122,7 @@ class PortScannerWidget(BaseWidget):
 
         Returns:
             List of port numbers or None if invalid
+
         """
         port_input = port_input.strip()
 
@@ -132,9 +131,8 @@ class PortScannerWidget(BaseWidget):
                 port = int(port_input)
                 if 1 <= port <= 65535:
                     return [port]
-                else:
-                    logger.warning(f"Port {port} out of range (1-65535)")
-                    return None
+                logger.warning(f"Port {port} out of range (1-65535)")
+                return None
             except ValueError:
                 logger.warning(f"Invalid port number: {port_input}")
                 return None
@@ -317,7 +315,7 @@ class PortScannerWidget(BaseWidget):
                 self.set_status(
                     f"✓ Scanned {host} - {summary['open_count']} open, "
                     f"{summary['closed_count']} closed, "
-                    f"{summary['filtered_count']} filtered"
+                    f"{summary['filtered_count']} filtered",
                 )
             else:
                 self.display_error("No results from scan")
@@ -326,8 +324,8 @@ class PortScannerWidget(BaseWidget):
             self.scan_in_progress = False
 
         except Exception as e:
-            self.display_error(f"Scan error: {str(e)}")
-            self.set_status(f"Error: {str(e)}")
+            self.display_error(f"Scan error: {e!s}")
+            self.set_status(f"Error: {e!s}")
             self.scan_in_progress = False
 
     def clear_results(self) -> None:
@@ -353,4 +351,4 @@ class PortScannerWidget(BaseWidget):
             self.display_success("Cleared all results")
 
         except Exception as e:
-            self.display_error(f"Error clearing: {str(e)}")
+            self.display_error(f"Error clearing: {e!s}")

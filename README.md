@@ -15,32 +15,32 @@
 
 > [!IMPORTANT]
 > **Modernization & Refactoring in Progress** (April 2026)
-> 
+>
 > I'm currently refactoring and modernizing the development tooling to make this project more stable and improve performance. Here's what's happening:
-> 
+>
 > **🚀 Switching to UV (Ultra-fast Python Package Manager)**
 > - **Why UV?** uv is 10-100x faster than pip, written in Rust, and supports modern Python workflows
 > - **Benefits:** Faster dependency resolution, better reproducibility with lockfiles, modern Python package management
 > - **Status:** ✅ Migration complete - uv.lock file created, installation instructions updated
-> 
+>
 > **🔧 Development Workflow Improvements**
 > - ✅ Comprehensive pre-commit hooks for automated quality checks
 > - ✅ Modern Makefile with 20+ development commands
 > - ✅ Environment configuration templates (.env.example)
 > - ✅ Type safety improvements with mypy
-> 
+>
 > **📈 Performance & Stability Goals**
 > - Reduce dependency installation time by 50%+
 > - Improve code quality with stricter linting rules
 > - Enhance type safety throughout the codebase
 > - Modernize to Python 3.12+ features
-> 
+>
 > **⚠️ Temporary Hiccups**
 > You might encounter some temporary issues during this transition period. Please bear with me as I work through:
 > - Type annotation fixes (mypy errors)
 > - Code quality improvements
 > - Dependency updates
-> 
+>
 > The end result will be a more stable, performant, and maintainable Network Triage Tool!
 
 A cross-platform **Terminal User Interface (TUI)**

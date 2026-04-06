@@ -1,5 +1,4 @@
-"""
-Port Connectivity Utilities Module
+"""Port Connectivity Utilities Module
 
 Provides comprehensive port scanning and connectivity testing capabilities,
 including TCP probes, service detection, and concurrent port checking.
@@ -80,8 +79,7 @@ class PortCheckResult:
 
 
 def check_port_open(host: str, port: int, timeout: int = 3, grab_banner: bool = False) -> PortCheckResult:
-    """
-    Check if a single port is open using TCP connection attempt.
+    """Check if a single port is open using TCP connection attempt.
 
     Args:
         host: Hostname or IP address to check
@@ -96,6 +94,7 @@ def check_port_open(host: str, port: int, timeout: int = 3, grab_banner: bool = 
         >>> result = check_port_open('localhost', 22)
         >>> print(result.status.value)
         'open'
+
     """
     start_time = time.time()
     result = PortCheckResult(
@@ -127,7 +126,7 @@ def check_port_open(host: str, port: int, timeout: int = 3, grab_banner: bool = 
                 try:
                     banner = sock.recv(1024).decode("utf-8", errors="ignore").strip()
                     result.banner = banner[:100]  # Limit to 100 chars
-                except (TimeoutError, OSError):
+                except TimeoutError, OSError:
                     pass  # Banner grab optional
 
         except TimeoutError:
@@ -142,13 +141,11 @@ def check_port_open(host: str, port: int, timeout: int = 3, grab_banner: bool = 
         except socket.gaierror as e:
             # Name resolution failed
             result.status = PortStatus.ERROR
-            result.error_message = f"DNS resolution failed: {str(e)}"
+            result.error_message = f"DNS resolution failed: {e!s}"
 
         except OSError as e:
             # Other OS errors (host unreachable, etc.)
-            if "Network is unreachable" in str(e):
-                result.status = PortStatus.FILTERED
-            elif "No route to host" in str(e):
+            if "Network is unreachable" in str(e) or "No route to host" in str(e):
                 result.status = PortStatus.FILTERED
             else:
                 result.status = PortStatus.ERROR
@@ -163,15 +160,14 @@ def check_port_open(host: str, port: int, timeout: int = 3, grab_banner: bool = 
 
     except Exception as e:
         result.status = PortStatus.ERROR
-        result.error_message = f"Socket creation error: {str(e)}"
+        result.error_message = f"Socket creation error: {e!s}"
 
     result.response_time_ms = (time.time() - start_time) * 1000
     return result
 
 
 def check_multiple_ports(host: str, ports: list[int], timeout: int = 3, max_workers: int = 10) -> list[PortCheckResult]:
-    """
-    Check multiple ports concurrently.
+    """Check multiple ports concurrently.
 
     Args:
         host: Hostname or IP address
@@ -185,6 +181,7 @@ def check_multiple_ports(host: str, ports: list[int], timeout: int = 3, max_work
     Example:
         >>> results = check_multiple_ports('localhost', [22, 80, 443, 3306])
         >>> open_ports = [r for r in results if r.status == PortStatus.OPEN]
+
     """
     results = []
 
@@ -208,7 +205,7 @@ def check_multiple_ports(host: str, ports: list[int], timeout: int = 3, max_work
                         service_name=COMMON_SERVICE_PORTS.get(port),
                         response_time_ms=(time.time() - time.time()) * 1000,
                         error_message=str(e),
-                    )
+                    ),
                 )
 
     # Sort by port number
@@ -217,8 +214,7 @@ def check_multiple_ports(host: str, ports: list[int], timeout: int = 3, max_work
 
 
 def scan_common_ports(host: str, timeout: int = 3, max_workers: int = 10) -> list[PortCheckResult]:
-    """
-    Scan all common service ports.
+    """Scan all common service ports.
 
     Args:
         host: Hostname or IP address
@@ -233,15 +229,19 @@ def scan_common_ports(host: str, timeout: int = 3, max_workers: int = 10) -> lis
         >>> for result in results:
         ...     if result.status == PortStatus.OPEN:
         ...         print(f"Port {result.port} ({result.service_name}) is open")
+
     """
     return check_multiple_ports(host, list(COMMON_SERVICE_PORTS.keys()), timeout, max_workers)
 
 
 def scan_port_range(
-    host: str, start_port: int = 1, end_port: int = 1024, timeout: int = 2, max_workers: int = 20
+    host: str,
+    start_port: int = 1,
+    end_port: int = 1024,
+    timeout: int = 2,
+    max_workers: int = 20,
 ) -> list[PortCheckResult]:
-    """
-    Scan a range of ports (useful for finding unexpected services).
+    """Scan a range of ports (useful for finding unexpected services).
 
     Args:
         host: Hostname or IP address
@@ -260,6 +260,7 @@ def scan_port_range(
     Example:
         >>> results = scan_port_range('192.168.1.100', 1, 1024)
         >>> print(f"Found {len(results)} open ports")
+
     """
     if not (1 <= start_port <= 65535 and 1 <= end_port <= 65535):
         raise ValueError("Port numbers must be between 1 and 65535")
@@ -275,8 +276,7 @@ def scan_port_range(
 
 
 def get_service_name(port: int) -> str:
-    """
-    Get service name for a port number.
+    """Get service name for a port number.
 
     Args:
         port: Port number
@@ -287,13 +287,13 @@ def get_service_name(port: int) -> str:
     Example:
         >>> get_service_name(22)
         'SSH'
+
     """
     return COMMON_SERVICE_PORTS.get(port, "Unknown")
 
 
 def get_common_service_ports() -> dict[int, str]:
-    """
-    Return dictionary of all common service ports.
+    """Return dictionary of all common service ports.
 
     Returns:
         Dictionary mapping port number to service name
@@ -301,13 +301,13 @@ def get_common_service_ports() -> dict[int, str]:
     Example:
         >>> ports = get_common_service_ports()
         >>> print(f"Monitoring {len(ports)} common ports")
+
     """
     return COMMON_SERVICE_PORTS.copy()
 
 
 def summarize_port_scan(results: list[PortCheckResult]) -> dict[str, Any]:
-    """
-    Generate summary statistics from port scan results.
+    """Generate summary statistics from port scan results.
 
     Args:
         results: List of PortCheckResult objects
@@ -319,6 +319,7 @@ def summarize_port_scan(results: list[PortCheckResult]) -> dict[str, Any]:
         >>> results = check_multiple_ports('localhost', [22, 80, 443, 3306])
         >>> summary = summarize_port_scan(results)
         >>> print(summary['open_count'])
+
     """
     open_ports = [r for r in results if r.status == PortStatus.OPEN]
     closed_ports = [r for r in results if r.status == PortStatus.CLOSED]

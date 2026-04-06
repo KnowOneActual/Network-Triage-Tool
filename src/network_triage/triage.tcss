@@ -4,9 +4,9 @@ Screen {
     layout: vertical;
     background: #121212;
     color: #ffffff;
-    
+
     /* Layout Spacing Fix: Ensures Header doesn't overlap Nav Bar */
-    padding-top: 2; 
+    padding-top: 2;
 }
 
 /* 1. Header */
@@ -46,12 +46,12 @@ ContentSwitcher {
     /* THE FIX: Let padding define the height */
     height: auto;
     padding: 1 2; /* 1 line top/bottom, 2 cols left/right */
-    
+
     background: #333333;
     color: #aaaaaa;
     border: none;
     min-width: 15;
-    
+
     /* Ensure text is centered horizontally */
     content-align: center middle;
 }
@@ -114,7 +114,7 @@ Label, .label-value, .label-title { color: #ffffff; }
     width: 1fr;
     margin-right: 1;
     background: #3c3c3c;
-    border: tall #007acc; 
+    border: tall #007acc;
     color: #ffffff;
 }
 
@@ -177,7 +177,7 @@ LLDPTool {
     width: 3fr;
     margin-right: 1;
     background: #3c3c3c;
-    border: tall #007acc; 
+    border: tall #007acc;
     color: #ffffff;
 }
 
@@ -185,7 +185,7 @@ LLDPTool {
     width: 1fr;
     margin-right: 1;
     background: #3c3c3c;
-    border: tall #007acc; 
+    border: tall #007acc;
     color: #ffffff;
 }
 
@@ -215,7 +215,7 @@ DataTable > .datatable--cursor {
     dock: top;
     margin-bottom: 1;
     /* Use layout: horizontal to force left-to-right flow */
-    layout: horizontal; 
+    layout: horizontal;
 }
 
 /* 2. The Target Input (Flexible width) */
@@ -223,7 +223,7 @@ DataTable > .datatable--cursor {
     width: 2fr; /* Takes up 2 shares of available space */
     margin-right: 1;
     background: #3c3c3c;
-    border: tall #007acc; 
+    border: tall #007acc;
     color: #ffffff;
 }
 

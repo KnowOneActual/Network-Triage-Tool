@@ -129,7 +129,7 @@ class LatencyAnalyzerWidget(BaseWidget):
             self.set_status("Ready")
             self.display_success("Cleared all results")
         except Exception as e:
-            self.display_error(f"Error clearing: {str(e)}")
+            self.display_error(f"Error clearing: {e!s}")
 
     # ------------------------------------------------------------------
     # Pure helpers (no app/widget context needed — easy to test)
@@ -144,6 +144,7 @@ class LatencyAnalyzerWidget(BaseWidget):
 
         Returns:
             Tuple of (is_valid, error_message). error_message is empty when valid.
+
         """
         host = host.strip()
         if not host:
@@ -164,6 +165,7 @@ class LatencyAnalyzerWidget(BaseWidget):
 
         Returns:
             Human-readable string, e.g. "12.3 ms" or "***" for timeout.
+
         """
         if ms is None:
             return "***"
@@ -184,6 +186,7 @@ class LatencyAnalyzerWidget(BaseWidget):
 
         Returns:
             Rich markup string with colour applied.
+
         """
         if ms is None:
             return "[dim]***[/dim]"

@@ -1,5 +1,4 @@
-"""
-Unit tests for Phase 3 Advanced Diagnostics modules.
+"""Unit tests for Phase 3 Advanced Diagnostics modules.
 
 Tests DNS utilities, port connectivity, and latency measurement functions.
 Uses mocking to avoid network calls and ensure fast test execution.
@@ -205,10 +204,14 @@ class TestPortUtils(unittest.TestCase):
         """Test port scan result summarization."""
         # Create mock results
         open_result = type(
-            "obj", (object,), {"port": 22, "status": PortStatus.OPEN, "response_time_ms": 15.5, "service_name": "SSH"}
+            "obj",
+            (object,),
+            {"port": 22, "status": PortStatus.OPEN, "response_time_ms": 15.5, "service_name": "SSH"},
         )
         closed_result = type(
-            "obj", (object,), {"port": 23, "status": PortStatus.CLOSED, "response_time_ms": 2.1, "service_name": "TELNET"}
+            "obj",
+            (object,),
+            {"port": 23, "status": PortStatus.CLOSED, "response_time_ms": 2.1, "service_name": "TELNET"},
         )
 
         results = [open_result, closed_result]

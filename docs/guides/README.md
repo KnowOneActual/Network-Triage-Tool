@@ -29,5 +29,5 @@ Technical guides for using and developing the Network Triage Tool.
 
 ---
 
-**Last Updated:** December 19, 2025  
+**Last Updated:** December 19, 2025
 **Questions?** Open a [discussion](https://github.com/knowoneactual/Network-Triage-Tool/discussions)

@@ -101,12 +101,12 @@ class DNSStatus(Enum):
 def resolve_hostname(hostname: str, timeout: int = 5, include_reverse_dns: bool = True) -> DNSLookupResult:
     """
     Resolve hostname to IP addresses with comprehensive error handling.
-    
+
     Args:
         hostname: Domain name to resolve
         timeout: Maximum time to wait (seconds)
         include_reverse_dns: Whether to perform reverse DNS lookup
-    
+
     Returns:
         DNSLookupResult with status and addresses or error message
     """
@@ -117,11 +117,11 @@ def resolve_hostname(hostname: str, timeout: int = 5, include_reverse_dns: bool 
             status=DNSStatus.ERROR,
             error_message="Hostname must be a non-empty string"
         )
-    
+
     # Set timeout for socket operations
     socket.setdefaulttimeout(timeout)
     start_time = time.time()
-    
+
     try:
         # Attempt IPv4 resolution
         ipv4_addresses = []
@@ -134,7 +134,7 @@ def resolve_hostname(hostname: str, timeout: int = 5, include_reverse_dns: bool 
                 pass
             else:
                 raise
-        
+
         # Attempt IPv6 resolution
         ipv6_addresses = []
         try:
@@ -142,7 +142,7 @@ def resolve_hostname(hostname: str, timeout: int = 5, include_reverse_dns: bool 
             ipv6_addresses = [normalize_ipv6(addr[4][0]) for addr in ipv6_info]
         except socket.gaierror:
             pass  # IPv6 not available
-        
+
         # Check if we found anything
         if not ipv4_addresses and not ipv6_addresses:
             return DNSLookupResult(
@@ -150,7 +150,7 @@ def resolve_hostname(hostname: str, timeout: int = 5, include_reverse_dns: bool 
                 status=DNSStatus.NOT_FOUND,
                 error_message=f"Domain '{hostname}' not found (NXDOMAIN)"
             )
-        
+
         # Success - optionally get reverse DNS
         reverse_dns = None
         if include_reverse_dns and ipv4_addresses:
@@ -158,9 +158,9 @@ def resolve_hostname(hostname: str, timeout: int = 5, include_reverse_dns: bool 
                 reverse_dns = socket.gethostbyaddr(ipv4_addresses[0])[0]
             except (socket.herror, socket.gaierror):
                 pass  # Reverse DNS optional
-        
+
         lookup_time = (time.time() - start_time) * 1000
-        
+
         return DNSLookupResult(
             host=hostname,
             ipv4_addresses=ipv4_addresses,
@@ -169,21 +169,21 @@ def resolve_hostname(hostname: str, timeout: int = 5, include_reverse_dns: bool 
             status=DNSStatus.SUCCESS,
             lookup_time_ms=lookup_time
         )
-    
+
     except socket.timeout:
         return DNSLookupResult(
             host=hostname,
             status=DNSStatus.TIMEOUT,
             error_message=f"DNS lookup timed out after {timeout} seconds. Try increasing timeout or check DNS server."
         )
-    
+
     except socket.gaierror as e:
         return DNSLookupResult(
             host=hostname,
             status=DNSStatus.ERROR,
             error_message=f"DNS resolution failed: {e.strerror}"
         )
-    
+
     except Exception as e:
         logger.error(f"Unexpected error resolving {hostname}: {e}", exc_info=True)
         return DNSLookupResult(
@@ -218,12 +218,12 @@ class PortStatus(Enum):
 def check_port_open(host: str, port: int, timeout: float = 3.0) -> PortCheckResult:
     """
     Check if a TCP port is open with detailed error classification.
-    
+
     Args:
         host: Target hostname or IP
         port: Port number (1-65535)
         timeout: Connection timeout in seconds
-    
+
     Returns:
         PortCheckResult with status and optional error message
     """
@@ -235,7 +235,7 @@ def check_port_open(host: str, port: int, timeout: float = 3.0) -> PortCheckResu
             status=PortStatus.ERROR,
             error_message="Host cannot be empty"
         )
-    
+
     if not isinstance(port, int) or port < 1 or port > 65535:
         return PortCheckResult(
             host=host,
@@ -243,19 +243,19 @@ def check_port_open(host: str, port: int, timeout: float = 3.0) -> PortCheckResu
             status=PortStatus.ERROR,
             error_message=f"Port must be between 1-65535, got {port}"
         )
-    
+
     start_time = time.time()
     sock = None
-    
+
     try:
         # Create TCP socket
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(timeout)
-        
+
         # Attempt connection
         result = sock.connect_ex((host, port))
         response_time = (time.time() - start_time) * 1000
-        
+
         if result == 0:
             # Port is open
             service_name = get_service_name(port)
@@ -274,7 +274,7 @@ def check_port_open(host: str, port: int, timeout: float = 3.0) -> PortCheckResu
                 status=PortStatus.CLOSED,
                 response_time_ms=response_time
             )
-    
+
     except socket.timeout:
         # Timeout suggests firewall filtering
         response_time = (time.time() - start_time) * 1000
@@ -285,7 +285,7 @@ def check_port_open(host: str, port: int, timeout: float = 3.0) -> PortCheckResu
             response_time_ms=response_time,
             error_message=f"Connection timed out after {timeout}s (likely filtered by firewall)"
         )
-    
+
     except socket.gaierror as e:
         # DNS resolution failed
         return PortCheckResult(
@@ -294,7 +294,7 @@ def check_port_open(host: str, port: int, timeout: float = 3.0) -> PortCheckResu
             status=PortStatus.ERROR,
             error_message=f"Cannot resolve hostname '{host}': {e.strerror}"
         )
-    
+
     except OSError as e:
         # Network unreachable, host down, etc.
         return PortCheckResult(
@@ -303,7 +303,7 @@ def check_port_open(host: str, port: int, timeout: float = 3.0) -> PortCheckResu
             status=PortStatus.ERROR,
             error_message=f"Network error: {e.strerror}"
         )
-    
+
     except Exception as e:
         logger.error(f"Unexpected error checking {host}:{port}: {e}", exc_info=True)
         return PortCheckResult(
@@ -312,7 +312,7 @@ def check_port_open(host: str, port: int, timeout: float = 3.0) -> PortCheckResu
             status=PortStatus.ERROR,
             error_message=f"Unexpected error: {str(e)}"
         )
-    
+
     finally:
         # Always close socket
         if sock:
@@ -333,21 +333,21 @@ def check_multiple_ports(
 ) -> list[PortCheckResult]:
     """
     Scan multiple ports concurrently with individual error handling.
-    
+
     Args:
         host: Target hostname or IP
         ports: List of port numbers to check
         timeout: Per-port timeout in seconds
         max_workers: Maximum concurrent threads
-    
+
     Returns:
         List of PortCheckResult (one per port, never raises)
     """
     if not ports:
         return []
-    
+
     results = []
-    
+
     # Use ThreadPoolExecutor for concurrent scanning
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
         # Submit all port checks
@@ -355,7 +355,7 @@ def check_multiple_ports(
             executor.submit(check_port_open, host, port, timeout): port
             for port in ports
         }
-        
+
         # Collect results as they complete
         for future in concurrent.futures.as_completed(future_to_port):
             try:
@@ -371,7 +371,7 @@ def check_multiple_ports(
                     status=PortStatus.ERROR,
                     error_message=f"Thread execution error: {str(e)}"
                 ))
-    
+
     # Sort by port number for consistent output
     return sorted(results, key=lambda r: r.port)
 ```
@@ -405,13 +405,13 @@ def ping_statistics(
 ) -> PingStatistics:
     """
     Execute ping and parse results with cross-platform support.
-    
+
     Args:
         host: Target hostname or IP
         count: Number of ping packets
         timeout: Maximum wait time per packet
         interval: Time between packets
-    
+
     Returns:
         PingStatistics with latency data or error status
     """
@@ -422,20 +422,20 @@ def ping_statistics(
             status=LatencyStatus.ERROR,
             error_message="Host cannot be empty"
         )
-    
+
     if count < 1:
         return PingStatistics(
             host=host,
             status=LatencyStatus.ERROR,
             error_message=f"Count must be at least 1, got {count}"
         )
-    
+
     # Build platform-specific ping command
     if platform.system().lower() == 'windows':
         cmd = ['ping', '-n', str(count), '-w', str(timeout * 1000), host]
     else:  # Linux, macOS
         cmd = ['ping', '-c', str(count), '-W', str(timeout), '-i', str(interval), host]
-    
+
     try:
         # Execute ping command
         result = subprocess.run(
@@ -444,13 +444,13 @@ def ping_statistics(
             text=True,
             timeout=timeout * count + 10  # Allow extra time for subprocess
         )
-        
+
         # Parse output based on platform
         if platform.system().lower() == 'windows':
             stats = _parse_ping_windows(result.stdout, result.stderr)
         else:
             stats = _parse_ping_unix(result.stdout, result.stderr)
-        
+
         # Check if ping succeeded
         if stats['packets_received'] == 0:
             return PingStatistics(
@@ -461,7 +461,7 @@ def ping_statistics(
                 status=LatencyStatus.TIMEOUT,
                 error_message=f"All {count} packets lost. Host may be down or blocking ICMP."
             )
-        
+
         # Calculate jitter (standard deviation)
         if len(stats['individual_rtts']) > 1:
             mean = statistics.mean(stats['individual_rtts'])
@@ -469,7 +469,7 @@ def ping_statistics(
             stddev = math.sqrt(variance)
         else:
             stddev = 0.0
-        
+
         return PingStatistics(
             host=host,
             packets_sent=stats['packets_sent'],
@@ -482,21 +482,21 @@ def ping_statistics(
             individual_rtts=stats['individual_rtts'],
             status=LatencyStatus.SUCCESS
         )
-    
+
     except subprocess.TimeoutExpired:
         return PingStatistics(
             host=host,
             status=LatencyStatus.TIMEOUT,
             error_message=f"Ping command timed out after {timeout * count + 10} seconds"
         )
-    
+
     except FileNotFoundError:
         return PingStatistics(
             host=host,
             status=LatencyStatus.ERROR,
             error_message="Ping command not found. Ensure 'ping' is installed and in PATH."
         )
-    
+
     except Exception as e:
         logger.error(f"Unexpected error pinging {host}: {e}", exc_info=True)
         return PingStatistics(
@@ -516,14 +516,14 @@ def _parse_ping_unix(stdout: str, stderr: str) -> dict:
         'max_ms': 0.0,
         'individual_rtts': []
     }
-    
+
     try:
         # Extract individual RTTs
         for line in stdout.split('\n'):
             match = re.search(r'time[=<](\d+\.?\d*)\s*ms', line)
             if match:
                 stats['individual_rtts'].append(float(match.group(1)))
-        
+
         # Extract summary statistics
         summary_match = re.search(
             r'(\d+) packets transmitted, (\d+) (?:packets )?received, ([\d.]+)% packet loss',
@@ -533,17 +533,17 @@ def _parse_ping_unix(stdout: str, stderr: str) -> dict:
             stats['packets_sent'] = int(summary_match.group(1))
             stats['packets_received'] = int(summary_match.group(2))
             stats['packet_loss_percent'] = float(summary_match.group(3))
-        
+
         # Extract min/avg/max
         rtt_match = re.search(r'min/avg/max[/\w]* = ([\d.]+)/([\d.]+)/([\d.]+)', stdout)
         if rtt_match:
             stats['min_ms'] = float(rtt_match.group(1))
             stats['avg_ms'] = float(rtt_match.group(2))
             stats['max_ms'] = float(rtt_match.group(3))
-    
+
     except (ValueError, AttributeError) as e:
         logger.warning(f"Error parsing ping output: {e}")
-    
+
     return stats
 ```
 
@@ -564,19 +564,19 @@ Always validate inputs before performing operations:
 def validate_inputs(host: str, port: int, timeout: float) -> Optional[str]:
     """
     Validate inputs and return error message if invalid.
-    
+
     Returns:
         Error message string if invalid, None if valid
     """
     if not host or not isinstance(host, str):
         return "Host must be a non-empty string"
-    
+
     if not isinstance(port, int) or not (1 <= port <= 65535):
         return f"Port must be an integer between 1-65535, got {port}"
-    
+
     if not isinstance(timeout, (int, float)) or timeout <= 0:
         return f"Timeout must be a positive number, got {timeout}"
-    
+
     return None  # All valid
 ```
 
@@ -618,7 +618,7 @@ def network_operation(
 ) -> Result:
     """
     Perform network operation with configurable timeout.
-    
+
     Default timeout of 5 seconds works for most cases,
     but users can increase for slow connections.
     """
@@ -633,19 +633,19 @@ Provide partial results when full operation fails:
 def resolve_hostname(hostname: str) -> DNSLookupResult:
     ipv4_addresses = []
     ipv6_addresses = []
-    
+
     # Try IPv4
     try:
         ipv4_addresses = get_ipv4_addresses(hostname)
     except Exception as e:
         logger.warning(f"IPv4 resolution failed: {e}")
-    
+
     # Try IPv6 (independent of IPv4 result)
     try:
         ipv6_addresses = get_ipv6_addresses(hostname)
     except Exception as e:
         logger.warning(f"IPv6 resolution failed: {e}")
-    
+
     # Return whatever we got
     if ipv4_addresses or ipv6_addresses:
         return DNSLookupResult(
@@ -689,7 +689,7 @@ def risky_operation(host: str) -> Result:
         # Complex operation
         result = complex_network_call(host)
         return Result(status="success", data=result)
-    
+
     except SpecificNetworkError as e:
         # Log full details for debugging
         logger.error(
@@ -697,7 +697,7 @@ def risky_operation(host: str) -> Result:
             exc_info=True,
             extra={'host': host, 'error_code': e.code}
         )
-        
+
         # Return simple message to user
         return Result(
             status="error",
@@ -717,33 +717,33 @@ from unittest.mock import patch, MagicMock
 import socket
 
 class TestDNSErrorHandling(unittest.TestCase):
-    
+
     @patch('socket.getaddrinfo')
     def test_dns_timeout(self, mock_getaddrinfo):
         """Test that DNS timeout is handled correctly."""
         mock_getaddrinfo.side_effect = socket.timeout("Timed out")
-        
+
         result = resolve_hostname('example.com', timeout=5)
-        
+
         self.assertEqual(result.status, DNSStatus.TIMEOUT)
         self.assertIn("timed out", result.error_message.lower())
         self.assertIsNone(result.ipv4_addresses)
-    
+
     @patch('socket.getaddrinfo')
     def test_dns_not_found(self, mock_getaddrinfo):
         """Test NXDOMAIN handling."""
         error = socket.gaierror(socket.EAI_NONAME, "Name or service not known")
         mock_getaddrinfo.side_effect = error
-        
+
         result = resolve_hostname('nonexistent.invalid')
-        
+
         self.assertEqual(result.status, DNSStatus.NOT_FOUND)
         self.assertIn("not found", result.error_message.lower())
-    
+
     def test_invalid_hostname(self):
         """Test empty hostname validation."""
         result = resolve_hostname('')
-        
+
         self.assertEqual(result.status, DNSStatus.ERROR)
         self.assertIn("empty", result.error_message.lower())
 ```
@@ -754,26 +754,26 @@ Test real error scenarios:
 
 ```python
 class TestPortScanningIntegration(unittest.TestCase):
-    
+
     def test_unreachable_host(self):
         """Test scanning a known unreachable IP."""
         # 192.0.2.1 is reserved for documentation (TEST-NET-1)
         result = check_port_open('192.0.2.1', 80, timeout=1)
-        
+
         # Should timeout or error, not crash
         self.assertIn(result.status, [PortStatus.TIMEOUT, PortStatus.FILTERED, PortStatus.ERROR])
-    
+
     def test_closed_port_on_localhost(self):
         """Test scanning a closed port on localhost."""
         # Port 1 should be closed on most systems
         result = check_port_open('127.0.0.1', 1, timeout=2)
-        
+
         self.assertEqual(result.status, PortStatus.CLOSED)
-    
+
     def test_invalid_port_range(self):
         """Test port number validation."""
         result = check_port_open('127.0.0.1', 70000, timeout=2)
-        
+
         self.assertEqual(result.status, PortStatus.ERROR)
         self.assertIn("65535", result.error_message)
 ```

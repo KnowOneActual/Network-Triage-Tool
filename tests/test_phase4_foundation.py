@@ -1,5 +1,4 @@
-"""
-Phase 4.1 Foundation Tests
+"""Phase 4.1 Foundation Tests
 
 Tests for:
 - BaseWidget class

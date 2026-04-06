@@ -118,7 +118,7 @@ for result in results:
         status_display = "[red]✗ CLOSED[/red]"    # Red
     elif result.status == FILTERED:
         status_display = "[yellow]⚠ FILTERED[/yellow]"  # Yellow
-    
+
     self.results_widget.add_row(
         port=str(result.port),
         service=result.service_name or "Unknown",
@@ -428,14 +428,14 @@ Esc     Close/minimize widget
 
 The Port Scanner Widget in the real TUI:
 
-✓ **Accepts user input** via form fields  
-✓ **Validates all inputs** before processing  
-✓ **Parses ports** using pure logic (testable!)  
-✓ **Scans concurrently** (non-blocking)  
-✓ **Displays results** with color coding  
-✓ **Shows statistics** and feedback  
-✓ **Handles errors** gracefully  
-✓ **Integrates seamlessly** with main app  
+✓ **Accepts user input** via form fields
+✓ **Validates all inputs** before processing
+✓ **Parses ports** using pure logic (testable!)
+✓ **Scans concurrently** (non-blocking)
+✓ **Displays results** with color coding
+✓ **Shows statistics** and feedback
+✓ **Handles errors** gracefully
+✓ **Integrates seamlessly** with main app
 
 **All 49 unit tests pass!** ✅
 

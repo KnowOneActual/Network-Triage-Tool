@@ -1,7 +1,7 @@
 # Phase 4: TUI Integration Roadmap
 
-**Target Version:** v0.4.0  
-**Status:** Active  
+**Target Version:** v0.4.0
+**Status:** Active
 **Expected Release:** Q1 2026
 
 ## Overview

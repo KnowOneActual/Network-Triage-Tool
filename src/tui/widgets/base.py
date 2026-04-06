@@ -1,5 +1,4 @@
-"""
-Base Widget Classes for Phase 4 TUI Integration
+"""Base Widget Classes for Phase 4 TUI Integration
 
 This module provides the foundation for all Phase 4 widgets.
 All widgets should inherit from BaseWidget to ensure consistency in:
@@ -42,8 +41,7 @@ class OperationResult(Generic[T]):
 
 
 class AsyncOperationMixin:
-    """
-    Mixin for widgets that perform async operations.
+    """Mixin for widgets that perform async operations.
 
     Provides:
     - Safe worker execution
@@ -110,8 +108,7 @@ class AsyncOperationMixin:
 
 
 class BaseWidget(Container, AsyncOperationMixin):
-    """
-    Base class for all Phase 4 widgets.
+    """Base class for all Phase 4 widgets.
 
     Provides:
     - Consistent layout and styling
@@ -141,6 +138,7 @@ class BaseWidget(Container, AsyncOperationMixin):
                     self.display_success(result)
                 except Exception as e:
                     self.display_error(str(e))
+
     """
 
     # Reactive attributes for UI updates
@@ -218,8 +216,7 @@ class BaseWidget(Container, AsyncOperationMixin):
 
 
 class WidgetTemplate(BaseWidget):
-    """
-    Template for creating new Phase 4 widgets.
+    """Template for creating new Phase 4 widgets.
 
     Copy this class and customize:
     1. Update widget_name in __init__
@@ -236,6 +233,7 @@ class WidgetTemplate(BaseWidget):
                 yield Input(id="input-field")
                 yield Button("Execute", id="execute-btn")
                 yield DataTable(id="results-table")
+
     """
 
     def __init__(self, name: str = "WidgetTemplate"):
@@ -243,8 +241,7 @@ class WidgetTemplate(BaseWidget):
         self.widget_name = name
 
     async def async_operation(self, input_data: str) -> OperationResult[str]:
-        """
-        Template for async operations.
+        """Template for async operations.
 
         Override this in subclasses with actual operation logic.
         """

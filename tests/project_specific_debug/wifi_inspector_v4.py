@@ -9,8 +9,7 @@ except ImportError:
 
 
 def inspect_wifi_library_output():
-    """
-    Directly queries the CoreWLAN library to see exactly what interfaces
+    """Directly queries the CoreWLAN library to see exactly what interfaces
     and SSIDs it is reporting, with no other logic.
     """
     if platform.system() != "Darwin":

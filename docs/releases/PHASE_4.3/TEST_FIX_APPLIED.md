@@ -101,12 +101,12 @@ def parse_ports_input(self, port_input: str, mode: str) -> Optional[List[int]]:
 
 ## Benefits of This Approach
 
-✅ **Pure Unit Testing** - `parse_ports_input()` can be tested without UI context  
-✅ **Separation of Concerns** - Parsing logic is separate from UI display  
-✅ **Better Error Messages** - Caller can provide context-specific messages  
-✅ **Logging Audit Trail** - All validations are logged for debugging  
-✅ **Real App Still Works** - `scan_ports()` still displays errors properly  
-✅ **Reusable** - Parser can be used in CLI, API, or other contexts  
+✅ **Pure Unit Testing** - `parse_ports_input()` can be tested without UI context
+✅ **Separation of Concerns** - Parsing logic is separate from UI display
+✅ **Better Error Messages** - Caller can provide context-specific messages
+✅ **Logging Audit Trail** - All validations are logged for debugging
+✅ **Real App Still Works** - `scan_ports()` still displays errors properly
+✅ **Reusable** - Parser can be used in CLI, API, or other contexts
 
 ---
 
@@ -232,11 +232,11 @@ This fix follows the proven pattern:
 
 ### Benefits
 
-✅ **Testability** - Functions can be tested without mocking UI  
-✅ **Reusability** - Same function works in CLI, API, TUI  
-✅ **Maintainability** - Clear what each method does  
-✅ **Error Handling** - Caller can provide context-specific messages  
-✅ **Logging** - All operations logged for debugging  
+✅ **Testability** - Functions can be tested without mocking UI
+✅ **Reusability** - Same function works in CLI, API, TUI
+✅ **Maintainability** - Clear what each method does
+✅ **Error Handling** - Caller can provide context-specific messages
+✅ **Logging** - All operations logged for debugging
 
 ---
 

@@ -117,7 +117,10 @@ def resolve_hostname(hostname: str, timeout: int = 5, include_reverse_dns: bool 
                         result.ipv6_addresses.append(ipv6_clean)
                         result.records.append(
                             DNSRecord(
-                                record_type="AAAA", value=ipv6_clean, query_time_ms=query_time, status=DNSStatus.SUCCESS
+                                record_type="AAAA",
+                                value=ipv6_clean,
+                                query_time_ms=query_time,
+                                status=DNSStatus.SUCCESS,
                             ),
                         )
 
