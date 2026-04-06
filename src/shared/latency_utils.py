@@ -214,7 +214,7 @@ def mtr_style_trace(host: str, max_hops: int = 30, timeout: int = 5, min_hops: i
         ...     print(f"Hop {hop.hop_number}: {hop.ip_address} ({hop.avg_rtt_ms():.1f}ms)")
 
     """
-    hops: list[TraceHop] = []
+    hops: list[TracerouteHop] = []
     system = platform.system()
 
     # Try MTR first if available

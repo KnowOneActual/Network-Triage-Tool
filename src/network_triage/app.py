@@ -1,7 +1,10 @@
 import datetime
+import importlib.metadata
 import ipaddress
 import platform
 import sys
+from pathlib import Path
+from typing import ClassVar
 
 from textual import work
 from textual.app import App, ComposeResult
@@ -304,7 +307,7 @@ class SpeedTestTool(Container):
         if event.button.id == "btn_speed":
             self.start_test()
 
-    def start_test(self):
+    def start_test(self) -> None:
         self.query_one("#btn_speed", Button).disabled = True
         self.query_one("#speed_status", Label).update("Running test (this may take 20-30s)...")
 
@@ -317,11 +320,11 @@ class SpeedTestTool(Container):
         self.run_speedtest_worker()
 
     @work(thread=True)
-    def run_speedtest_worker(self):
+    def run_speedtest_worker(self) -> None:
         results = net_tool.run_speed_test()
         self.app.call_from_thread(self.display_results, results)
 
-    def display_results(self, results):
+    def display_results(self, results: dict[str, str]) -> None:
         self.query_one("#btn_speed", Button).disabled = False
 
         # Hide animation
@@ -334,7 +337,7 @@ class SpeedTestTool(Container):
             return
 
         # Helper to set values
-        def set_val(uid, key):
+        def set_val(uid: str, key: str) -> None:
             self.query_one(f"#{uid}", InfoBox).value_text = results.get(key, "N/A")
 
         set_val("spd_download", "Download")
@@ -345,11 +348,13 @@ class SpeedTestTool(Container):
 
 
 class NmapTool(Container):
-    BINDINGS = [
+    BINDINGS: ClassVar[list[Binding]] = [
         Binding("escape", "cancel_input", "Exit Input"),
     ]
 
-    scan_data = []
+    def __init__(self) -> None:
+        super().__init__()
+        self.scan_data: list[dict[str, str]] = []
 
     def compose(self) -> ComposeResult:
         with Horizontal(classes="tool_header"):
@@ -375,7 +380,7 @@ class NmapTool(Container):
         yield ProgressBar(id="nmap_progress", total=None, show_eta=False, classes="hidden")
         yield DataTable(id="nmap_table")
 
-    def on_mount(self):
+    def on_mount(self) -> None:
         table = self.query_one(DataTable)
         table.add_columns("IP Address", "Hostname", "Status", "MAC Address", "Vendor")
         table.cursor_type = "row"
@@ -394,13 +399,13 @@ class NmapTool(Container):
         if event.button.id == "btn_nmap_start":
             self.action_start_scan()
 
-    def action_cancel_input(self):
+    def action_cancel_input(self) -> None:
         self.query_one("#btn_nmap_start").focus()
 
-    def on_input_submitted(self, event: Input.Submitted):
+    def on_input_submitted(self, _event: Input.Submitted) -> None:
         self.action_start_scan()
 
-    def on_data_table_row_selected(self, event: DataTable.RowSelected):
+    def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
         """When a row is clicked, copy the IP Address (Column 0)."""
         table = self.query_one(DataTable)
         row_data = table.get_row(event.row_key)
@@ -411,7 +416,7 @@ class NmapTool(Container):
             self.notify(f"Copied IP: {ip_addr}", title="Clipboard", severity="information")
 
     @work(thread=True)
-    def detect_subnet_worker(self):
+    def detect_subnet_worker(self) -> None:
         details = net_tool.get_connection_details()
         ip = details.get("IP Address")
         mask = details.get("Netmask")
@@ -423,10 +428,10 @@ class NmapTool(Container):
             except ValueError:
                 pass
 
-    def update_target_field(self, subnet):
+    def update_target_field(self, subnet: str) -> None:
         self.query_one("#nmap_input", Input).value = subnet
 
-    def action_start_scan(self):
+    def action_start_scan(self) -> None:
         target = self.query_one("#nmap_input", Input).value
         preset = self.query_one("#nmap_select", Select).value
         args = self.query_one("#nmap_custom_args", Input).value if preset == "custom" else preset
@@ -447,11 +452,11 @@ class NmapTool(Container):
         self.run_scan_worker(target, args)
 
     @work(thread=True)
-    def run_scan_worker(self, target, args):
+    def run_scan_worker(self, target: str, args: str) -> None:
         results = net_tool.run_network_scan(target, args)
         self.app.call_from_thread(self.display_results, results)
 
-    def display_results(self, results):
+    def display_results(self, results: list[dict[str, str]]) -> None:
         self.query_one("#btn_nmap_start", Button).disabled = False
 
         # Stop Progress Bar
@@ -505,11 +510,11 @@ class TracerouteTool(Container):
         if event.button.id == "btn_trace":
             self.action_run_trace()
 
-    def on_input_submitted(self, event: Input.Submitted) -> None:
+    def on_input_submitted(self, _event: Input.Submitted) -> None:
         """Run when Enter is pressed."""
         self.action_run_trace()
 
-    def action_run_trace(self):
+    def action_run_trace(self) -> None:
         host = self.query_one("#trace_input", Input).value
         if not host:
             self.notify("Please enter a host.", severity="error")
@@ -524,11 +529,11 @@ class TracerouteTool(Container):
         self.run_trace_worker(host)
 
     @work(thread=True)
-    def run_trace_worker(self, host):
+    def run_trace_worker(self, host: str) -> None:
         result = net_tool.traceroute_test(host)
         self.app.call_from_thread(self.display_result, result)
 
-    def display_result(self, result):
+    def display_result(self, result: str) -> None:
         self.query_one("#btn_trace", Button).disabled = False
         self.query_one("#trace_log", Log).write(result)
         self.query_one("#trace_log", Log).write("\n--- Finished ---")
@@ -556,7 +561,7 @@ class UtilityTool(Container):
             yield ConnectionMonitorWidget(id="tool_connmon")
             yield LanBandwidthWidget(id="tool_bandwidth")
 
-    def on_mount(self):
+    def on_mount(self) -> None:
         self.query_one("#sub_trace").add_class("-active")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -584,7 +589,7 @@ class NetworkTriageApp(App):
 
     CSS_PATH = "triage.tcss"
 
-    BINDINGS = [
+    BINDINGS: ClassVar[list[Binding]] = [
         Binding("q", "quit", "Quit"),
         Binding("ctrl+s", "save_report", "Save Report"),
         Binding("d", "switch_tab('dashboard')", "Dashboard"),
@@ -622,7 +627,7 @@ class NetworkTriageApp(App):
 
         yield Footer()
 
-    def on_mount(self):
+    def on_mount(self) -> None:
         self.query_one("#tab_dashboard").add_class("-active")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -637,73 +642,118 @@ class NetworkTriageApp(App):
             btn.remove_class("-active")
         self.query_one(f"#tab_{tab_id}", Button).add_class("-active")
 
-    def action_save_report(self):
+    def action_save_report(self) -> None:
         """Gathers data from all widgets and saves to a file."""
         self.notify("Generating report...")
 
-        timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        timestamp = datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%d_%H-%M-%S")
         filename = f"Triage_Report_{timestamp}.txt"
 
-        # 1. Gather Dashboard Info
-        dash = self.query_one(Dashboard)
-        hostname = dash.query_one("#info_hostname", InfoBox).value_text
-        os_sys = dash.query_one("#info_os", InfoBox).value_text
-        int_ip = dash.query_one("#info_internal_ip", InfoBox).value_text
-        pub_ip = dash.query_one("#info_public_ip", InfoBox).value_text
+        # Gather all data
+        dashboard_data = self._gather_dashboard_data()
+        connection_data = self._gather_connection_data()
+        speed_data = self._gather_speed_data()
+        nmap_data = self._gather_nmap_data()
+        notes = self._gather_notes()
 
-        # 2. Gather Connection Details
+        # Build the report
+        report = self._build_report(timestamp, dashboard_data, connection_data, speed_data, nmap_data, notes)
+
+        # Write to file
+        self._write_report(filename, report)
+
+    def _gather_dashboard_data(self) -> dict[str, str]:
+        """Gather dashboard information."""
+        dash = self.query_one(Dashboard)
+        return {
+            "hostname": dash.query_one("#info_hostname", InfoBox).value_text,
+            "os_sys": dash.query_one("#info_os", InfoBox).value_text,
+            "int_ip": dash.query_one("#info_internal_ip", InfoBox).value_text,
+            "pub_ip": dash.query_one("#info_public_ip", InfoBox).value_text,
+        }
+
+    def _gather_connection_data(self) -> dict[str, str]:
+        """Gather connection details."""
         conn = self.query_one(ConnectionTool)
 
-        # Helper to extract value safely
-        def get_conn(idx):
+        def get_conn(idx: str) -> str:
             return conn.query_one(f"#{idx}", InfoBox).value_text
 
-        # 3. Gather Speed Test
+        return {
+            "iface_name": get_conn("iface_name"),
+            "iface_type": get_conn("iface_type"),
+            "iface_status": get_conn("iface_status"),
+            "iface_speed": get_conn("iface_speed"),
+            "iface_mtu": get_conn("iface_mtu"),
+            "iface_dns": get_conn("iface_dns"),
+            "wifi_ssid": get_conn("wifi_ssid"),
+            "wifi_channel": get_conn("wifi_channel"),
+        }
+
+    def _gather_speed_data(self) -> dict[str, str]:
+        """Gather speed test results."""
         speed = self.query_one(SpeedTestTool)
-        dl = speed.query_one("#spd_download", InfoBox).value_text
-        ul = speed.query_one("#spd_upload", InfoBox).value_text
-        ping = speed.query_one("#spd_ping", InfoBox).value_text
+        return {
+            "dl": speed.query_one("#spd_download", InfoBox).value_text,
+            "ul": speed.query_one("#spd_upload", InfoBox).value_text,
+            "ping": speed.query_one("#spd_ping", InfoBox).value_text,
+        }
 
-        # 4. Gather Nmap Data (from class variable)
+    def _gather_nmap_data(self) -> list[dict[str, str]]:
+        """Gather Nmap scan data."""
         nmap_tool = self.query_one(NmapTool)
-        scan_data = nmap_tool.scan_data
+        return nmap_tool.scan_data
 
-        # 5. Gather Notes
-        notes = self.query_one("#notes_area", TextArea).text
+    def _gather_notes(self) -> str:
+        """Gather user notes."""
+        return self.query_one("#notes_area", TextArea).text
 
-        # Build the Report String
+    def _build_report(
+        self,
+        timestamp: str,
+        dashboard_data: dict[str, str],
+        connection_data: dict[str, str],
+        speed_data: dict[str, str],
+        nmap_data: list[dict[str, str]],
+        notes: str,
+    ) -> list[str]:
+        """Build the report string from gathered data."""
         report = []
         report.append("=" * 50)
         report.append(f"NETWORK TRIAGE REPORT - {timestamp}")
         report.append("=" * 50 + "\n")
 
+        # System info
         report.append("SYSTEM INFO")
-        report.append(f"Hostname:    {hostname}")
-        report.append(f"OS:          {os_sys}")
-        report.append(f"Internal IP: {int_ip}")
-        report.append(f"Public IP:   {pub_ip}\n")
+        report.append(f"Hostname:    {dashboard_data['hostname']}")
+        report.append(f"OS:          {dashboard_data['os_sys']}")
+        report.append(f"Internal IP: {dashboard_data['int_ip']}")
+        report.append(f"Public IP:   {dashboard_data['pub_ip']}\n")
 
+        # Connection details
         report.append("CONNECTION DETAILS")
-        report.append(f"Interface:   {get_conn('iface_name')}")
-        report.append(f"Type:        {get_conn('iface_type')}")
-        report.append(f"Status:      {get_conn('iface_status')}")
-        report.append(f"Speed/MTU:   {get_conn('iface_speed')} / {get_conn('iface_mtu')}")
-        report.append(f"DNS:         {get_conn('iface_dns')}")
-        if get_conn("wifi_ssid") != "N/A":
-            report.append(f"Wi-Fi:       {get_conn('wifi_ssid')} (Ch: {get_conn('wifi_channel')})")
+        report.append(f"Interface:   {connection_data['iface_name']}")
+        report.append(f"Type:        {connection_data['iface_type']}")
+        report.append(f"Status:      {connection_data['iface_status']}")
+        report.append(f"Speed/MTU:   {connection_data['iface_speed']} / {connection_data['iface_mtu']}")
+        report.append(f"DNS:         {connection_data['iface_dns']}")
+        if connection_data["wifi_ssid"] != "N/A":
+            report.append(f"Wi-Fi:       {connection_data['wifi_ssid']} (Ch: {connection_data['wifi_channel']})")
         report.append("")
 
-        if dl != "...":
+        # Speed test
+        if speed_data["dl"] != "...":
             report.append("SPEED TEST")
-            report.append(f"Download:    {dl}")
-            report.append(f"Upload:      {ul}")
-            report.append(f"Ping:        {ping}\n")
+            report.append(f"Download:    {speed_data['dl']}")
+            report.append(f"Upload:      {speed_data['ul']}")
+            report.append(f"Ping:        {speed_data['ping']}\n")
 
-        if scan_data:
+        # Nmap results
+        if nmap_data:
             report.append("NMAP SCAN RESULTS")
             report.append(f"{'IP':<16} {'HOSTNAME':<25} {'STATUS':<10} {'VENDOR'}")
             report.append("-" * 70)
-            for host in scan_data:
+            for host in nmap_data:
                 ip = host.get("ip", "N/A")
                 name = host.get("hostname", "")[:24]  # Truncate long names
                 status = host.get("status", "")
@@ -711,28 +761,28 @@ class NetworkTriageApp(App):
                 report.append(f"{ip:<16} {name:<25} {status:<10} {vendor}")
             report.append("")
 
+        # User notes
         if notes.strip():
             report.append("USER NOTES")
             report.append("-" * 50)
             report.append(notes)
             report.append("-" * 50)
 
-        # Write to file
+        return report
+
+    def _write_report(self, filename: str, report: list[str]) -> None:
+        """Write the report to a file."""
         try:
-            with open(filename, "w", encoding="utf-8") as f:
+            with Path(filename).open("w", encoding="utf-8") as f:
                 f.write("\n".join(report))
             self.notify(f"Report saved to {filename}", severity="information", timeout=5)
-        except Exception as e:
+        except (OSError, PermissionError, UnicodeEncodeError) as e:
             self.notify(f"Failed to save: {e}", severity="error")
 
 
-def run():
+def run() -> None:
     """Entry point for the console script."""
-    import sys
-
     if len(sys.argv) > 1 and sys.argv[1] in ("--version", "-V"):
-        import importlib.metadata
-
         try:
             version = importlib.metadata.version("network-triage")
         except importlib.metadata.PackageNotFoundError:
