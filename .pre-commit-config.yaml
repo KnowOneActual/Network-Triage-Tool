@@ -1,0 +1,118 @@
+# Pre-commit configuration for Network Triage Tool
+# Install with: uv run pre-commit install
+
+repos:
+  # Ruff for linting and formatting
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.5
+    hooks:
+      - id: ruff
+        args: [--fix]
+        name: "Ruff: Lint and auto-fix"
+      - id: ruff-format
+        name: "Ruff: Format"
+
+  # Type checking with mypy
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.19.1
+    hooks:
+      - id: mypy
+        args: [--config-file=pyproject.toml]
+        additional_dependencies: [
+          "types-requests",
+          "types-psutil",
+          "types-PyYAML",
+        ]
+        name: "Mypy: Type checking"
+
+  # Security scanning with bandit
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.9
+    hooks:
+      - id: bandit
+        args: ["-r", "src", "-c", "pyproject.toml"]
+        name: "Bandit: Security scanning"
+
+  # Spell checking with codespell
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.4.2
+    hooks:
+      - id: codespell
+        args: ["--skip=*.json,*.zip,.git,venv,.*venv,temp,docs/archive,build,dist", "--ignore-words-list=nd,toolk"]
+        name: "Codespell: Spell checking"
+
+  # Check for large files
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-added-large-files
+        args: ["--maxkb=500"]
+        name: "Check for large files"
+      - id: check-merge-conflict
+        name: "Check for merge conflicts"
+      - id: check-yaml
+        name: "Check YAML files"
+      - id: end-of-file-fixer
+        name: "Fix end of files"
+      - id: trailing-whitespace
+        name: "Trim trailing whitespace"
+      - id: mixed-line-ending
+        args: ["--fix=lf"]
+        name: "Fix mixed line endings"
+
+  # Check commit message format
+  - repo: https://github.com/alessandrojcm/commitlint-pre-commit-hook
+    rev: v9.18.0
+    hooks:
+      - id: commitlint
+        stages: [commit-msg]
+        additional_dependencies: ["@commitlint/config-conventional"]
+        name: "Commitlint: Check commit message"
+
+  # Check for secrets
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.24.0
+    hooks:
+      - id: gitleaks
+        name: "Gitleaks: Secret detection"
+
+  # Update uv.lock when dependencies change
+  - repo: local
+    hooks:
+      - id: uv-lock
+        name: "Update uv.lock"
+        entry: uv lock
+        language: system
+        files: ^(pyproject\.toml|requirements\.txt)$
+        pass_filenames: false
+
+# Default configuration
+default_language_version:
+  python: python3.14
+
+default_stages: [pre-commit, pre-push]
+
+# Files to exclude from all hooks
+exclude: |
+  (?x)^(
+    .*\.egg-info/.*|
+    .*\.pyc$|
+    .*\.pyd$|
+    .*\.so$|
+    .*\.dll$|
+    .*\.dylib$|
+    build/.*|
+    dist/.*|
+    .venv/.*|
+    venv/.*|
+    node_modules/.*|
+    .git/.*|
+    __pycache__/.*|
+    \.mypy_cache/.*|
+    \.pytest_cache/.*|
+    \.ruff_cache/.*|
+    htmlcov/.*|
+    coverage\.xml$|
+    \.coverage$|
+    database\.db.*
+  )$

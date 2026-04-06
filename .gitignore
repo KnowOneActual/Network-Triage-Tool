@@ -101,3 +101,5 @@ _scratch.*
 start-work.sh
 
 temp/
+AGENTS.md 
+GEMINI.md

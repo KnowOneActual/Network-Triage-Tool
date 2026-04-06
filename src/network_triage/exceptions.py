@@ -8,8 +8,6 @@ making it easier to debug and handle errors gracefully.
 class NetworkTriageException(Exception):
     """Base exception for all Network Triage Tool errors."""
 
-    pass
-
 
 class NetworkCommandError(NetworkTriageException):
     """Raised when a system network command fails to execute.
@@ -18,9 +16,8 @@ class NetworkCommandError(NetworkTriageException):
         - ping command not found
         - ifconfig fails
         - system_profiler returns error
-    """
 
-    pass
+    """
 
 
 class NetworkTimeoutError(NetworkTriageException):
@@ -30,9 +27,8 @@ class NetworkTimeoutError(NetworkTriageException):
         - Speed test takes too long
         - DNS lookup timeout
         - Connection attempt timeout
-    """
 
-    pass
+    """
 
 
 class PrivilegeError(NetworkTriageException):
@@ -41,9 +37,8 @@ class PrivilegeError(NetworkTriageException):
     Examples:
         - Packet capture requires root
         - Nmap service detection requires sudo
-    """
 
-    pass
+    """
 
 
 class CommandNotFoundError(NetworkTriageException):
@@ -52,9 +47,8 @@ class CommandNotFoundError(NetworkTriageException):
     Examples:
         - nmap not installed
         - traceroute not found
-    """
 
-    pass
+    """
 
 
 class ParseError(NetworkTriageException):
@@ -63,9 +57,8 @@ class ParseError(NetworkTriageException):
     Examples:
         - XML parsing fails
         - Regex pattern doesn't match
-    """
 
-    pass
+    """
 
 
 class NetworkConnectivityError(NetworkTriageException):
@@ -75,6 +68,5 @@ class NetworkConnectivityError(NetworkTriageException):
         - Cannot reach public IP address
         - DNS server unreachable
         - Gateway unreachable
-    """
 
-    pass
+    """

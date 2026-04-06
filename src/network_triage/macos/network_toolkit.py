@@ -46,6 +46,7 @@ class NetworkTriageToolkit(NetworkTriageToolkitBase):
 
         Examples:
             {'OS': 'macOS Sonoma (Darwin 23.1.0)', 'Hostname': 'MacBook.local'}
+
         """
         try:
             os_string = f"{platform.system()} {platform.release()}"
@@ -104,6 +105,7 @@ class NetworkTriageToolkit(NetworkTriageToolkitBase):
                 'Gateway': '192.168.1.1',
                 'Public IP': '203.0.113.42'
             }
+
         """
         info = {"Internal IP": "N/A", "Gateway": "N/A", "Public IP": "N/A"}
 
@@ -173,6 +175,7 @@ class NetworkTriageToolkit(NetworkTriageToolkitBase):
                 'Channel': '11',
                 ...
             }
+
         """
         try:
             # Get primary network interface
@@ -212,7 +215,9 @@ class NetworkTriageToolkit(NetworkTriageToolkitBase):
 
                     # Parse Current Network Information section
                     network_info_block = re.search(
-                        r"Current Network Information:(.*?)(?:Other Local Wi-Fi Networks:|\Z)", profiler_output, re.DOTALL
+                        r"Current Network Information:(.*?)(?:Other Local Wi-Fi Networks:|\Z)",
+                        profiler_output,
+                        re.DOTALL,
                     )
 
                     if network_info_block:
@@ -319,6 +324,7 @@ class NetworkTriageToolkit(NetworkTriageToolkitBase):
 
         Raises:
             PrivilegeError: If elevated privileges are required
+
         """
         try:
             if os.geteuid() != 0:
@@ -342,6 +348,7 @@ class NetworkTriageToolkit(NetworkTriageToolkitBase):
 
         Returns:
             str: Formatted adapter information or error message
+
         """
         try:
             return safe_subprocess_run(

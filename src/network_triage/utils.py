@@ -39,6 +39,7 @@ def retry(
         @retry(max_attempts=3, delay=1.0, exceptions=(ConnectionError,))
         def fetch_public_ip():
             return requests.get('https://ipinfo.io/json').json()
+
     """
 
     def decorator(func: Callable) -> Callable:
@@ -55,7 +56,7 @@ def retry(
                     if attempt < max_attempts:
                         logger.debug(
                             f"Attempt {attempt}/{max_attempts} failed for {func.__name__}: {e}. "
-                            f"Retrying in {current_delay}s..."
+                            f"Retrying in {current_delay}s...",
                         )
                         time.sleep(current_delay)
                         current_delay *= backoff
@@ -96,6 +97,7 @@ def safe_subprocess_run(
 
     Example:
         output = safe_subprocess_run(['ifconfig'], timeout=5)
+
     """
     # Verify command exists (if first element is an executable)
     if check_command_exists and not shell:
@@ -155,6 +157,7 @@ def safe_socket_operation(
                 return s.getsockname()[0]
 
         ip = safe_socket_operation(get_ip, timeout=3)
+
     """
     try:
         # Set a timeout context (requires signal on Unix, not available on Windows)
@@ -208,6 +211,7 @@ def safe_http_request(
     Example:
         data = safe_http_request('https://ipinfo.io/json', timeout=3)
         print(data['ip'])
+
     """
     import requests
 
@@ -241,6 +245,7 @@ def format_error_message(error: Exception, context: str = "") -> str:
         except Exception as e:
             msg = format_error_message(e, context="While fetching IP")
             print(msg)  # "While fetching IP: Command 'ping' not found"
+
     """
     type(error).__name__
     error_msg = str(error)
@@ -256,6 +261,7 @@ def log_exception(error: Exception, context: str = "") -> None:
     Args:
         error: Exception to log
         context: Additional context to include
+
     """
     error_type = type(error).__name__
     if context:

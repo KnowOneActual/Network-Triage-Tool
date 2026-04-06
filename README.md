@@ -13,6 +13,36 @@
 > [!NOTE]
 > **This is an active, ongoing project. While the tool is highly stable and feature-rich, it is still in the "pre-production" phase as I finalizes the remaining TUI widgets and comprehensive reporting features. It is very close to a 1.0 release, but for now, it should be used for testing rather than in critical production environments.
 
+> [!IMPORTANT]
+> **Modernization & Refactoring in Progress** (April 2026)
+> 
+> I'm currently refactoring and modernizing the development tooling to make this project more stable and improve performance. Here's what's happening:
+> 
+> **🚀 Switching to UV (Ultra-fast Python Package Manager)**
+> - **Why UV?** uv is 10-100x faster than pip, written in Rust, and supports modern Python workflows
+> - **Benefits:** Faster dependency resolution, better reproducibility with lockfiles, modern Python package management
+> - **Status:** ✅ Migration complete - uv.lock file created, installation instructions updated
+> 
+> **🔧 Development Workflow Improvements**
+> - ✅ Comprehensive pre-commit hooks for automated quality checks
+> - ✅ Modern Makefile with 20+ development commands
+> - ✅ Environment configuration templates (.env.example)
+> - ✅ Type safety improvements with mypy
+> 
+> **📈 Performance & Stability Goals**
+> - Reduce dependency installation time by 50%+
+> - Improve code quality with stricter linting rules
+> - Enhance type safety throughout the codebase
+> - Modernize to Python 3.12+ features
+> 
+> **⚠️ Temporary Hiccups**
+> You might encounter some temporary issues during this transition period. Please bear with me as I work through:
+> - Type annotation fixes (mypy errors)
+> - Code quality improvements
+> - Dependency updates
+> 
+> The end result will be a more stable, performant, and maintainable Network Triage Tool!
+
 A cross-platform **Terminal User Interface (TUI)**
  designed for network professionals to diagnose and troubleshoot connectivity issues efficiently.
 
@@ -94,50 +124,65 @@ The application uses **Textual** to provide a modern, mouse-supportive terminal 
 
 ### Prerequisites
 
-* Python 3.11+
+* **Python 3.12+** (3.14.3 recommended)
 * A terminal with 256-color support (Standard on macOS/Linux/Windows Terminal)
+* **uv** (Ultra-fast Python package manager) - [Installation Guide](https://docs.astral.sh/uv/getting-started/installation/)
 
 ### Installation
 
-**Method 1: pipx (Recommended)**
-The easiest way to install and run Python CLI tools in isolated environments.
+**Method 1: uv (Recommended - Modern & Fast)**
+The fastest way to install with the latest Python package manager.
+
+```bash
+# Install uv if you haven't already
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Clone and install
+git clone https://github.com/knowoneactual/Network-Triage-Tool.git
+cd Network-Triage-Tool
+uv sync --all-extras
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+network-triage
+```
+
+**Method 2: pipx (Traditional)**
+For isolated environments using traditional pip.
 
 ```bash
 pipx install git+https://github.com/knowoneactual/Network-Triage-Tool.git
 ```
 
-**Method 2: One-Liner Scripts**
-Quickly install the tool and set up a virtual environment.
+**Method 3: Docker (Containerized)**
+Run in an isolated container with all dependencies.
 
-**macOS / Linux:**
 ```bash
-curl -sSL https://raw.githubusercontent.com/knowoneactual/Network-Triage-Tool/main/install.sh | bash
+# Build and run
+docker build -t network-triage .
+docker run -it --rm --cap-add=NET_ADMIN --cap-add=NET_RAW --privileged network-triage
+
+# Or use docker-compose
+docker-compose up prod
 ```
 
-**Windows (PowerShell):**
-```powershell
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/knowoneactual/Network-Triage-Tool/main/install.ps1" -UseBasicParsing | Invoke-Expression
+**Method 4: Development Setup**
+For contributors and developers.
+
+```bash
+git clone https://github.com/knowoneactual/Network-Triage-Tool.git
+cd Network-Triage-Tool
+
+# Install uv if needed
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Setup development environment
+uv venv
+uv sync --all-extras
+uv run pre-commit install
+source .venv/bin/activate
+
+# Run the application
+uv run network-triage
 ```
-
-**Method 3: Manual Installation (Development)**
-
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/knowoneactual/Network-Triage-Tool.git
-    cd Network-Triage-Tool
-    ```
-
-2.  **Create a virtual environment:**
-    ```bash
-    python3 -m venv .venv
-    source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-    ```
-
-3.  **Install in Editable Mode:**
-    This installs the dependencies and creates the `network-triage` command while allowing you to edit code live.
-    ```bash
-    pip install -e .
-    ```
 
 ### Running the Tool
 
@@ -163,23 +208,59 @@ network-triage
 
 ## 🛠️ Tech Stack
 
-  * **UI Framework:** [Textual](https://github.com/Textualize/textual) (CSS-driven TUI)
-  * **Networking:** `scapy`, `netmiko`, `python-nmap`
-  * **System Info:** `psutil`, `requests`
-  * **Testing:** `pytest`, `pytest-mock` (106 comprehensive tests)
-  * **Advanced Diagnostics:** Pure Python stdlib (Phase 3)
+### Core Framework
+* **UI Framework:** [Textual](https://github.com/Textualize/textual) (CSS-driven TUI)
+* **Package Manager:** [uv](https://github.com/astral-sh/uv) (Ultra-fast Python package manager)
+* **Linting & Formatting:** [Ruff](https://github.com/astral-sh/ruff) (Replaces black, isort, flake8)
+
+### Networking
+* **Packet Manipulation:** `scapy`
+* **Network Automation:** `netmiko`
+* **Port Scanning:** `python-nmap`
+* **HTTP Requests:** `requests`
+
+### System & Utilities
+* **System Info:** `psutil`
+* **Data Validation:** `pydantic` (Phase 2+)
+* **Async Operations:** `asyncio`, `textual.work`
+
+### Development & Quality
+* **Testing:** `pytest`, `pytest-mock`, `pytest-cov`, `pytest-asyncio`
+* **Type Checking:** `mypy`, `pyright`
+* **Security:** `bandit`, `pip-audit`
+* **Code Quality:** `pre-commit`, `codespell`
+
+### Modern Python Features
+* **Python 3.14+**: Match statements, improved error messages, performance optimizations
+* **Type Hints**: 100% coverage on public APIs
+* **Async/Await**: Non-blocking network operations
+* **Dataclasses**: Clean data structures
 
 ## 🛡️ Code Quality & Security
 
-High standards are maintained through automated CI/CD scans:
+High standards are maintained through modern automated tooling:
 
-- **Linting & Formatting:** [Ruff](https://github.com/astral-sh/ruff) for near-instant linting and PEP 8 compliance.
-- **Type Checking:** [Mypy](http://mypy-lang.org/) for static type verification and catching subtle bugs.
-- **Security Scanning:** [Bandit](https://github.com/PyCQA/bandit) for detecting common security vulnerabilities.
-- **Secret Scanning:** [Gitleaks](https://github.com/gitleaks/gitleaks) to prevent accidental credential commits.
-- **Dependency Audit:** [pip-audit](https://github.com/pypa/pip-audit) for vulnerability scanning in third-party libraries.
-- **Spell Checking:** [Codespell](https://github.com/codespell-project/codespell) to ensure a professional, typo-free interface and documentation.
-- **Automated Updates:** [Dependabot](https://github.com/dependabot) for keeping the environment secure and modern.
+### Development Workflow
+- **Package Management:** [uv](https://github.com/astral-sh/uv) for ultra-fast dependency resolution and installation
+- **Pre-commit Hooks:** Automated checks on every commit (linting, typing, security, spelling)
+- **Containerized Development:** Docker support for reproducible environments
+
+### Code Quality
+- **Linting & Formatting:** [Ruff](https://github.com/astral-sh/ruff) for near-instant linting and PEP 8 compliance (replaces black, isort, flake8)
+- **Type Checking:** [Mypy](http://mypy-lang.org/) with strict mode enabled for robust type safety
+- **Modern Python:** Python 3.14+ features including match statements and improved error messages
+
+### Security & Safety
+- **Security Scanning:** [Bandit](https://github.com/PyCQA/bandit) for detecting common security vulnerabilities
+- **Secret Scanning:** [Gitleaks](https://github.com/gitleaks/gitleaks) to prevent accidental credential commits
+- **Dependency Audit:** [pip-audit](https://github.com/pypa/pip-audit) for vulnerability scanning in third-party libraries
+- **Spell Checking:** [Codespell](https://github.com/codespell-project/codespell) for professional, typo-free code
+
+### Testing & Coverage
+- **Test Framework:** pytest with async support and comprehensive fixtures
+- **Coverage:** 51%+ test coverage with 80% target for all modules
+- **Benchmarking:** pytest-benchmark for performance regression testing
+- **CI/CD:** GitHub Actions with automated testing on 3 OS × 3 Python versions
 
 ## 📊 Quality Metrics
 

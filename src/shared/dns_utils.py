@@ -1,5 +1,4 @@
-"""
-DNS Resolution Utilities Module
+"""DNS Resolution Utilities Module
 
 Provides comprehensive DNS testing capabilities including A/AAAA record resolution,
 reverse DNS lookups, DNS server validation, and propagation checking across
@@ -48,7 +47,7 @@ class DNSLookupResult:
     lookup_time_ms: float
     status: DNSStatus
     error_message: str | None = None
-    records: list[DNSRecord] = None
+    records: list[DNSRecord] | None = None
 
     def __post_init__(self):
         if self.records is None:
@@ -63,8 +62,7 @@ class DNSLookupResult:
 
 
 def resolve_hostname(hostname: str, timeout: int = 5, include_reverse_dns: bool = True) -> DNSLookupResult:
-    """
-    Resolve A, AAAA, and optionally reverse DNS records for a hostname.
+    """Resolve A, AAAA, and optionally reverse DNS records for a hostname.
 
     Args:
         hostname: FQDN or IP address to resolve
@@ -78,6 +76,7 @@ def resolve_hostname(hostname: str, timeout: int = 5, include_reverse_dns: bool 
         >>> result = resolve_hostname('google.com')
         >>> print(result.ipv4_addresses)
         ['142.250.185.46']
+
     """
     start_time = time.time()
     result = DNSLookupResult(
@@ -100,14 +99,16 @@ def resolve_hostname(hostname: str, timeout: int = 5, include_reverse_dns: bool 
             address_info = socket.getaddrinfo(hostname, None, socket.AF_UNSPEC, socket.SOCK_STREAM)
 
             for family, _socktype, _proto, _canonname, sockaddr in address_info:
-                ip_addr = sockaddr[0]
+                ip_addr_raw = sockaddr[0]
+                # Convert to string if it's bytes
+                ip_addr = ip_addr_raw.decode() if isinstance(ip_addr_raw, bytes) else str(ip_addr_raw)
                 query_time = (time.time() - start_time) * 1000
 
                 if family == socket.AF_INET:
                     if ip_addr not in result.ipv4_addresses:
                         result.ipv4_addresses.append(ip_addr)
                         result.records.append(
-                            DNSRecord(record_type="A", value=ip_addr, query_time_ms=query_time, status=DNSStatus.SUCCESS)
+                            DNSRecord(record_type="A", value=ip_addr, query_time_ms=query_time, status=DNSStatus.SUCCESS),
                         )
                 elif family == socket.AF_INET6:
                     # Normalize IPv6 address (remove trailing %interface)
@@ -115,7 +116,9 @@ def resolve_hostname(hostname: str, timeout: int = 5, include_reverse_dns: bool 
                     if ipv6_clean not in result.ipv6_addresses:
                         result.ipv6_addresses.append(ipv6_clean)
                         result.records.append(
-                            DNSRecord(record_type="AAAA", value=ipv6_clean, query_time_ms=query_time, status=DNSStatus.SUCCESS)
+                            DNSRecord(
+                                record_type="AAAA", value=ipv6_clean, query_time_ms=query_time, status=DNSStatus.SUCCESS
+                            ),
                         )
 
         except socket.gaierror as e:
@@ -123,8 +126,11 @@ def resolve_hostname(hostname: str, timeout: int = 5, include_reverse_dns: bool 
             result.error_message = str(e)
             result.records.append(
                 DNSRecord(
-                    record_type="A/AAAA", value="", query_time_ms=(time.time() - start_time) * 1000, status=DNSStatus.NOT_FOUND
-                )
+                    record_type="A/AAAA",
+                    value="",
+                    query_time_ms=(time.time() - start_time) * 1000,
+                    status=DNSStatus.NOT_FOUND,
+                ),
             )
             return result
 
@@ -144,15 +150,15 @@ def resolve_hostname(hostname: str, timeout: int = 5, include_reverse_dns: bool 
                         value=reverse_lookup[0],
                         query_time_ms=(time.time() - start_time) * 1000,
                         status=DNSStatus.SUCCESS,
-                    )
+                    ),
                 )
-            except (TimeoutError, socket.herror):
+            except TimeoutError, socket.herror:
                 # Reverse DNS is optional; don't fail if it times out
                 pass
 
     except Exception as e:
         result.status = DNSStatus.ERROR
-        result.error_message = f"Unexpected error: {str(e)}"
+        result.error_message = f"Unexpected error: {e!s}"
         return result
 
     finally:
@@ -163,8 +169,7 @@ def resolve_hostname(hostname: str, timeout: int = 5, include_reverse_dns: bool 
 
 
 def validate_dns_server(server_ip: str, test_domain: str = "google.com", timeout: int = 5) -> dict[str, Any]:
-    """
-    Validate if a DNS server is responsive and functional.
+    """Validate if a DNS server is responsive and functional.
 
     Args:
         server_ip: IP address of DNS server to test (port 53 assumed)
@@ -178,6 +183,7 @@ def validate_dns_server(server_ip: str, test_domain: str = "google.com", timeout
         >>> result = validate_dns_server('8.8.8.8')
         >>> print(result['is_responsive'])
         True
+
     """
     start_time = time.time()
     result = {
@@ -225,8 +231,7 @@ def validate_dns_server(server_ip: str, test_domain: str = "google.com", timeout
 
 
 def check_dns_propagation(domain: str, record_type: str = "A", timeout: int = 5) -> list[dict[str, Any]]:
-    """
-    Check DNS propagation across multiple public DNS providers.
+    """Check DNS propagation across multiple public DNS providers.
 
     Args:
         domain: Domain to check
@@ -240,6 +245,7 @@ def check_dns_propagation(domain: str, record_type: str = "A", timeout: int = 5)
         >>> results = check_dns_propagation('example.com')
         >>> for result in results:
         ...     print(f"{result['provider']}: {result['ips']}")
+
     """
     # Major public DNS providers
     public_dns_servers = {
@@ -297,8 +303,7 @@ def check_dns_propagation(domain: str, record_type: str = "A", timeout: int = 5)
 
 
 def _build_simple_dns_query(domain: str) -> bytes:
-    """
-    Build a simple DNS query packet for validation.
+    """Build a simple DNS query packet for validation.
 
     This is a minimal DNS query packet for A record lookup.
     Format based on RFC 1035.
@@ -308,6 +313,7 @@ def _build_simple_dns_query(domain: str) -> bytes:
 
     Returns:
         Binary DNS query packet
+
     """
     # DNS header
     transaction_id = b"\x00\x01"  # Simple ID

@@ -63,6 +63,7 @@ class NetworkTriageToolkit:
             >>> info = toolkit.get_system_info()
             >>> print(info['OS'])
             'Ubuntu 22.04.1 LTS'
+
         """
         try:
             # Get distro info
@@ -110,6 +111,7 @@ class NetworkTriageToolkit:
             >>> info = toolkit.get_ip_info()
             >>> print(info['Public IP'])
             '203.0.113.42'
+
         """
         try:
             # Find default gateway and primary interface
@@ -182,6 +184,7 @@ class NetworkTriageToolkit:
             >>> details = toolkit.get_connection_details()
             >>> print(details['Interface'])
             'eth0'
+
         """
         try:
             # Get primary interface
@@ -299,6 +302,7 @@ class NetworkTriageToolkit:
             >>> adapters = toolkit.network_adapter_info()
             >>> print(adapters['eth0']['Status'])
             'up'
+
         """
         try:
             adapters = {}
@@ -369,7 +373,7 @@ class NetworkTriageToolkit:
                         if ip_addr:
                             adapters[iface_name]["IP"] = ip_addr
 
-            return adapters if adapters else {"error": "No interfaces found"}
+            return adapters or {"error": "No interfaces found"}
         except Exception as e:
             logger.error(f"Failed to get network adapter info: {e}")
             return {"error": f"Failed to get adapter info: {e}"}
@@ -392,6 +396,7 @@ class NetworkTriageToolkit:
                 - Hops: List of hops with IP, hostname, and latency
                 - Success: Whether traceroute completed
                 - Message: Status or error message
+
         """
         try:
             traceroute_output = safe_subprocess_run(

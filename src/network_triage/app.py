@@ -55,7 +55,7 @@ elif current_os == "Linux":
 elif current_os == "Windows":
     from .windows.network_toolkit import NetworkTriageToolkit
 else:
-    print(f"Unsupported OS: {current_os}")
+    sys.stderr.write(f"Unsupported OS: {current_os}\n")
     sys.exit(1)
 
 net_tool = NetworkTriageToolkit()
@@ -66,7 +66,7 @@ class InfoBox(Static):
     title_text = reactive("Label")
     value_text = reactive("Waiting to run ...")
 
-    def __init__(self, title, initial_value="", id=None):
+    def __init__(self, title: str, initial_value: str = "", id: str | None = None) -> None:
         super().__init__(id=id)
         self.title_text = title
         if initial_value:
@@ -263,7 +263,10 @@ class LLDPTool(Container):
         def write_to_log(line):
             if "requires administrator privileges" in line:
                 self.app.call_from_thread(
-                    self.notify, "Error: Root/Admin rights needed for packet capture.", severity="error", timeout=5
+                    self.notify,
+                    "Error: Root/Admin rights needed for packet capture.",
+                    severity="error",
+                    timeout=5,
                 )
             self.app.call_from_thread(self.update_log, line)
 

@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.7] - 2026-04-06
+
+### Added
+- **Modernization Phase 1: Development Tooling** — Comprehensive modernization of development workflow and tooling.
+  - **UV package manager integration** - 10-100x faster than pip, written in Rust with modern Python workflows
+  - **Pre-commit hooks** - Automated quality checks with ruff, mypy, bandit, codespell, gitleaks, and commitlint
+  - **Makefile** - 20+ common development commands for faster workflow (`make help` for list)
+  - **Environment configuration** - `.env.example` template with comprehensive settings
+  - **Improvement plan** - `IMPROVEMENT_PLAN.md` with 5-phase modernization roadmap
+  - **Type safety improvements** - Fixed critical mypy type errors throughout codebase
+
+### Changed
+- **Updated README.md** - Added modernization notice and detailed UV installation instructions
+- **Updated AGENTS.md** - Added uv commands and updated development workflow
+- **Migrated to Python 3.14.3** - Updated project to use latest Python version
+- **Fixed subprocess.Popen calls** - Updated `universal_newlines=True` → `text=True` for Python 3.14 compatibility
+- **Enhanced package structure** - Added missing `__init__.py` files for proper namespace packages
+- **Updated dependencies** - Installed type stubs for requests library and other development tools
+
+### Fixed
+- **Type annotations** - Fixed DNS record type annotations and Popen timeout parameter issues
+- **Import issues** - Resolved mypy import errors with proper package structure
+- **Development workflow** - Streamlined setup with `make setup` command
+
 ## [0.5.6] - 2026-03-13
 
 ### Added

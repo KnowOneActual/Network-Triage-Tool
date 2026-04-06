@@ -1,5 +1,4 @@
-"""
-Latency and Jitter Utilities Module
+"""Latency and Jitter Utilities Module
 
 Provides comprehensive latency measurement including ping statistics,
 jitter calculation, and MTR-style tracing with packet loss metrics.
@@ -73,8 +72,7 @@ class TracerouteHop:
 
 
 def ping_statistics(host: str, count: int = 10, timeout: int = 5, interval: float = 0.5) -> PingStatistics:
-    """
-    Execute ping and calculate comprehensive statistics including jitter.
+    """Execute ping and calculate comprehensive statistics including jitter.
 
     Args:
         host: Hostname or IP to ping
@@ -89,6 +87,7 @@ def ping_statistics(host: str, count: int = 10, timeout: int = 5, interval: floa
         >>> stats = ping_statistics('google.com')
         >>> print(f"Packet loss: {stats.packet_loss_percent}%")
         >>> print(f"Jitter (stddev): {stats.stddev_ms:.2f}ms")
+
     """
     result = PingStatistics(
         host=host,
@@ -120,9 +119,12 @@ def ping_statistics(host: str, count: int = 10, timeout: int = 5, interval: floa
     try:
         # Execute ping
         process = subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, timeout=count * timeout + 5
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,  # Use text=True instead of universal_newlines=True
         )
-        stdout, stderr = process.communicate()
+        stdout, stderr = process.communicate(timeout=count * timeout + 5)
 
         if process.returncode not in [0, 1]:  # 0 = success, 1 = some loss
             result.status = LatencyStatus.UNREACHABLE
@@ -166,8 +168,7 @@ def ping_statistics(host: str, count: int = 10, timeout: int = 5, interval: floa
 
 
 def _parse_ping_output(output: str, system: str) -> list[float]:
-    """
-    Parse ping output and extract RTT values in milliseconds.
+    """Parse ping output and extract RTT values in milliseconds.
 
     Args:
         output: Raw ping command output
@@ -175,6 +176,7 @@ def _parse_ping_output(output: str, system: str) -> list[float]:
 
     Returns:
         List of RTT values in milliseconds
+
     """
     rtt_values = []
 
@@ -192,8 +194,7 @@ def _parse_ping_output(output: str, system: str) -> list[float]:
 
 
 def mtr_style_trace(host: str, max_hops: int = 30, timeout: int = 5, min_hops: int = 1) -> tuple[list[TracerouteHop], str]:
-    """
-    Perform MTR-style tracing combining traceroute with latency statistics.
+    """Perform MTR-style tracing combining traceroute with latency statistics.
 
     Attempts to use 'mtr' command if available, otherwise falls back to
     traceroute + ping for each hop.
@@ -211,8 +212,9 @@ def mtr_style_trace(host: str, max_hops: int = 30, timeout: int = 5, min_hops: i
         >>> hops, status = mtr_style_trace('8.8.8.8')
         >>> for hop in hops:
         ...     print(f"Hop {hop.hop_number}: {hop.ip_address} ({hop.avg_rtt_ms():.1f}ms)")
+
     """
-    hops = []
+    hops: list[TraceHop] = []
     system = platform.system()
 
     # Try MTR first if available
@@ -230,13 +232,12 @@ def _has_mtr() -> bool:
     try:
         subprocess.run(["mtr", "--version"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=2)
         return True
-    except (FileNotFoundError, subprocess.TimeoutExpired):
+    except FileNotFoundError, subprocess.TimeoutExpired:
         return False
 
 
 def _parse_mtr_output(host: str, max_hops: int, timeout: int, system: str) -> tuple[list[TracerouteHop], str]:
-    """
-    Parse MTR command output (if mtr is available).
+    """Parse MTR command output (if mtr is available).
 
     Args:
         host: Destination
@@ -246,15 +247,19 @@ def _parse_mtr_output(host: str, max_hops: int, timeout: int, system: str) -> tu
 
     Returns:
         Tuple of (hops list, status message)
+
     """
     try:
         # Run mtr in report mode (easy to parse)
         cmd = ["mtr", "--report", "--report-cycles", "3", "--max-hops", str(max_hops), "--timeout", str(timeout), host]
 
         process = subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, timeout=max_hops * timeout + 10
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
         )
-        stdout, stderr = process.communicate()
+        stdout, stderr = process.communicate(timeout=max_hops * timeout + 10)
 
         if process.returncode != 0:
             return [], f"MTR failed: {stderr}"
@@ -263,7 +268,7 @@ def _parse_mtr_output(host: str, max_hops: int, timeout: int, system: str) -> tu
         return hops, "MTR trace completed"
 
     except Exception as e:
-        return [], f"MTR error: {str(e)}"
+        return [], f"MTR error: {e!s}"
 
 
 def _extract_hops_from_mtr(mtr_output: str) -> list[TracerouteHop]:
@@ -295,15 +300,14 @@ def _extract_hops_from_mtr(mtr_output: str) -> list[TracerouteHop]:
                 status="responsive" if hostname != "???" else "timeout",
             )
             hops.append(hop)
-        except (ValueError, IndexError):
+        except ValueError, IndexError:
             continue
 
     return hops
 
 
 def _fallback_trace(host: str, max_hops: int, timeout: int, system: str) -> tuple[list[TracerouteHop], str]:
-    """
-    Fallback traceroute using subprocess (when mtr unavailable).
+    """Fallback traceroute using subprocess (when mtr unavailable).
 
     Args:
         host: Destination
@@ -313,6 +317,7 @@ def _fallback_trace(host: str, max_hops: int, timeout: int, system: str) -> tupl
 
     Returns:
         Tuple of (hops list, status message)
+
     """
     hops = []
 
@@ -326,22 +331,24 @@ def _fallback_trace(host: str, max_hops: int, timeout: int, system: str) -> tupl
 
     try:
         process = subprocess.Popen(
-            cmd_base, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, timeout=max_hops * timeout + 10
+            cmd_base,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
         )
-        stdout, stderr = process.communicate()
+        stdout, stderr = process.communicate(timeout=max_hops * timeout + 10)
 
         if process.returncode == 0:
             hops = _parse_traceroute_output(stdout, system)
             return hops, "Traceroute completed"
-        else:
-            return [], f"Traceroute failed: {stderr}"
+        return [], f"Traceroute failed: {stderr}"
 
     except FileNotFoundError:
         return [], "traceroute command not found"
     except subprocess.TimeoutExpired:
         return hops, f"Traceroute timeout after {max_hops * timeout}s"
     except Exception as e:
-        return [], f"Traceroute error: {str(e)}"
+        return [], f"Traceroute error: {e!s}"
 
 
 def _parse_traceroute_output(output: str, system: str) -> list[TracerouteHop]:
@@ -372,7 +379,7 @@ def _parse_traceroute_output(output: str, system: str) -> list[TracerouteHop]:
             if "(" in remaining and ")" in remaining:
                 hostname_part = remaining[: remaining.index("(")].strip()
                 ip_part = remaining[remaining.index("(") + 1 : remaining.index(")")].strip()
-                hostname = hostname_part if hostname_part else None
+                hostname = hostname_part or None
                 ip_address = ip_part
                 remaining = remaining[remaining.index(")") + 1 :].strip()
 
@@ -391,7 +398,7 @@ def _parse_traceroute_output(output: str, system: str) -> list[TracerouteHop]:
                 status="responsive" if rtt_values else "timeout",
             )
             hops.append(hop)
-        except (ValueError, IndexError):
+        except ValueError, IndexError:
             continue
 
     return hops
