@@ -17,8 +17,8 @@ repos:
     rev: v1.19.1
     hooks:
       - id: mypy
-        args: [--config-file=pyproject.toml]
         additional_dependencies: [
+          "textual",
           "types-requests",
           "types-psutil",
           "types-PyYAML",
@@ -30,7 +30,6 @@ repos:
     rev: 1.7.9
     hooks:
       - id: bandit
-        args: ["-r", "src", "-c", "pyproject.toml"]
         name: "Bandit: Security scanning"
 
   # Spell checking with codespell

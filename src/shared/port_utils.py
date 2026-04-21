@@ -126,7 +126,7 @@ def check_port_open(host: str, port: int, timeout: int = 3, grab_banner: bool = 
                 try:
                     banner = sock.recv(1024).decode("utf-8", errors="ignore").strip()
                     result.banner = banner[:100]  # Limit to 100 chars
-                except (TimeoutError, OSError):
+                except TimeoutError, OSError:
                     pass  # Banner grab optional
 
         except TimeoutError:

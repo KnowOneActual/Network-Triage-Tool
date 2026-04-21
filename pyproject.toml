@@ -79,8 +79,6 @@ select = [
 ignore = [
     "ANN001",  # Missing type annotation for arguments
     "ANN002",  # Missing return type annotation
-    "ANN101",  # Missing type annotation for self in method
-    "ANN102",  # Missing type annotation for cls in classmethod
     "ANN201",  # Missing return type annotation
     "ANN202",  # Missing return type annotation
     "ANN401",  # Dynamically typed expressions

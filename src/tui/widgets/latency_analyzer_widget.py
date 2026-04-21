@@ -30,7 +30,7 @@ try:
     )
 except ImportError:
     # Fallback for different import contexts
-    from shared.latency_utils import (  # type: ignore[no-redef, import-untyped]
+    from shared.latency_utils import (  # type: ignore[no-redef]
         PingStatistics,
         TracerouteHop,
         mtr_style_trace,
