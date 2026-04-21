@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.8] - 2026-04-21
+
+### Added
+- **Phase 2: Type Safety & Modernization** — Complete type annotation improvements and Python 3.13+ compatibility.
+  - **100% mypy compliance** — All 178 mypy errors resolved in `src/` directory
+  - **Generic typing** — Proper type arguments for `dict`, `list`, `Callable`, and Textual `App` classes
+  - **Platform toolkits** — Fully typed macOS, Linux, and Windows network toolkits
+  - **Match statements** — Refactored `if-elif` chains into Python 3.10+ `match` statements
+  - **Legacy cleanup** — Removed obsolete `src/network_triage/macos/main_app.py`
+  - **Python 3.13+ syntax fixes** — Fixed `except Exception, e:` → `except (Exception, e):` for Python 3.13+
+
+### Changed
+- **Updated ruff configuration** — Added `ANN201` ignore for test files to reduce noise
+- **Enhanced test coverage** — Added 323 new functional tests for TUI widgets
+- **Migrated to Python 3.14.**
+
+### Fixed
+- **Type annotations** — Fixed DNS record types, Popen timeout, and Textual widget API issues
+- **Import resolution** — Proper namespace packages for mypy
+- **LSP violations** — Renamed `ResultsWidget.add_row` to `add_result_row`
+- **Python 3 Syntax** — Fixed legacy exception syntax in `src/shared/dns_utils.py` and `src/tui/widgets/connection_monitor_widget.py`
+
 ## [0.5.7] - 2026-04-06
 
 ### Added
