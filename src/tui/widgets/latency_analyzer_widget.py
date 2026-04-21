@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 # Import latency utilities - Phase 3
-from shared.latency_utils import (  # type: ignore[import-untyped]
+from shared.latency_utils import (
     PingStatistics,
     TracerouteHop,
     mtr_style_trace,

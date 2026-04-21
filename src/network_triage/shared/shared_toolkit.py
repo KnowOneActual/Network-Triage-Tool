@@ -9,7 +9,7 @@ import xml.etree.ElementTree as ET
 from collections.abc import Callable
 from typing import Any
 
-import speedtest  # type: ignore
+import speedtest
 from scapy.all import inet_ntoa, sniff
 from scapy.contrib.cdp import CDPAddrRecord, CDPMsg
 from scapy.contrib.lldp import LLDPDU

@@ -16,7 +16,6 @@ src/network_triage.egg-info/top_level.txt
 src/network_triage/linux/__init__.py
 src/network_triage/linux/network_toolkit.py
 src/network_triage/macos/__init__.py
-src/network_triage/macos/main_app.py
 src/network_triage/macos/network_toolkit.py
 src/network_triage/shared/__init__.py
 src/network_triage/shared/shared_toolkit.py
@@ -36,7 +35,9 @@ src/tui/widgets/lan_bandwidth_widget.py
 src/tui/widgets/latency_analyzer_widget.py
 src/tui/widgets/port_scanner_widget.py
 tests/test_app.py
+tests/test_dns_widget_functional.py
 tests/test_error_handling.py
+tests/test_latency_widget_functional.py
 tests/test_linux_toolkit.py
 tests/test_phase3_diagnostics.py
 tests/test_phase4_connection_monitor.py
@@ -45,3 +46,4 @@ tests/test_phase4_foundation.py
 tests/test_phase4_lan_bandwidth.py
 tests/test_phase4_latency_widget.py
 tests/test_phase4_port_scanner_widget.py
+tests/test_port_scanner_widget_functional.py

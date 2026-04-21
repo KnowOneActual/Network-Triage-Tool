@@ -38,7 +38,7 @@ try:
 except ImportError:
     # Fallback for local development if tui is not in path correctly
     sys.path.append(str(sys.path[0] + "/.."))
-    from tui.widgets import (  # type: ignore[import-untyped]
+    from tui.widgets import (
         ConnectionMonitorWidget,
         DNSResolverWidget,
         LanBandwidthWidget,

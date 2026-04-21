@@ -30,6 +30,7 @@ repos:
     rev: 1.7.9
     hooks:
       - id: bandit
+        args: ["-c", "pyproject.toml"]
         name: "Bandit: Security scanning"
 
   # Spell checking with codespell
