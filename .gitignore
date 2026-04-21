@@ -90,6 +90,11 @@ __pycache__/
 .coverage
 conductor/
 
+# SQLite databases
+*.db
+*.db-shm
+*.db-wal
+
 # My Personal shorthands (original file)
 # ==============================================
 _hold
