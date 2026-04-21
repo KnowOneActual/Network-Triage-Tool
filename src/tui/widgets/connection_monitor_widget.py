@@ -161,29 +161,22 @@ def gather_connections() -> list[ConnectionEntry]:
 
 
 def apply_filter(entries: list[ConnectionEntry], filter_value: str) -> list[ConnectionEntry]:
-    """Filter a list of ConnectionEntry objects by the given filter.
-
-    Args:
-        entries: Full list of connections to filter.
-        filter_value: One of the FILTER_* constants.
-
-    Returns:
-        Filtered list.
-
-    """
-    if filter_value == FILTER_ALL:
-        return entries
-    if filter_value == FILTER_TCP:
-        return [e for e in entries if e.protocol == "TCP"]
-    if filter_value == FILTER_UDP:
-        return [e for e in entries if e.protocol == "UDP"]
-    if filter_value == FILTER_ESTABLISHED:
-        return [e for e in entries if e.status == "ESTABLISHED"]
-    if filter_value == FILTER_LISTEN:
-        # "LISTEN" covers TCP listeners; UDP bound sockets have no state
-        return [e for e in entries if e.status in ("LISTEN", "NONE") and not e.remote_addr]
-    # Custom status match (e.g. "CLOSE_WAIT")
-    return [e for e in entries if e.status == filter_value]
+    """Filter a list of ConnectionEntry objects by the given filter."""
+    match filter_value:
+        case typeof_filter if typeof_filter == FILTER_ALL:
+            return entries
+        case typeof_filter if typeof_filter == FILTER_TCP:
+            return [e for e in entries if e.protocol == "TCP"]
+        case typeof_filter if typeof_filter == FILTER_UDP:
+            return [e for e in entries if e.protocol == "UDP"]
+        case typeof_filter if typeof_filter == FILTER_ESTABLISHED:
+            return [e for e in entries if e.status == "ESTABLISHED"]
+        case typeof_filter if typeof_filter == FILTER_LISTEN:
+            # "LISTEN" covers TCP listeners; UDP bound sockets have no state
+            return [e for e in entries if e.status in ("LISTEN", "NONE") and not e.remote_addr]
+        case _:
+            # Custom status match (e.g. "CLOSE_WAIT")
+            return [e for e in entries if e.status == filter_value]
 
 
 def apply_process_filter(entries: list[ConnectionEntry], search: str) -> list[ConnectionEntry]:
@@ -431,3 +424,4 @@ class ConnectionMonitorWidget(BaseWidget):
                 conn.pid_display,
                 conn.process_name or "–",
             )
+

@@ -304,6 +304,9 @@ class LanBandwidthWidget(BaseWidget):
         """Compose the LAN Bandwidth Tester UI."""
         yield Label("[bold]LAN Bandwidth Tester[/bold]", id="bw-title")
 
+        # Error display (required by BaseWidget)
+        yield Static(id="error-display", classes="error-message")
+
         with Vertical(id="bw-controls"), Horizontal(id="bw-top-bar"):
             yield Label("Interface:", id="bw-iface-label")
             yield Select(

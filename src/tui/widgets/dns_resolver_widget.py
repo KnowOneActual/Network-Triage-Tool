@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from textual.containers import Horizontal, Vertical
-from textual.widgets import Button, Input, Label, Select
+from textual.widgets import Button, Input, Label, Select, Static
 
 # Import DNS utilities
 from src.shared.dns_utils import DNSStatus
@@ -29,6 +29,9 @@ class DNSResolverWidget(BaseWidget):
         """Compose the widget UI."""
         # Title
         yield Label("[bold]DNS Resolver[/bold]", id="title")
+
+        # Error display (required by BaseWidget)
+        yield Static(id="error-display", classes="error-message")
 
         # Input section
         with Vertical(id="input-section"):
@@ -114,20 +117,21 @@ class DNSResolverWidget(BaseWidget):
             result = resolve_dns_hostname(hostname, timeout=5, include_reverse_dns=True)
 
             # Check if resolution was successful
-            if result.status == DNSStatus.NOT_FOUND:
-                self.display_error(f"Could not resolve {hostname}")
-                self.set_status(f"Failed to resolve {hostname}")
-                return
-
-            if result.status == DNSStatus.TIMEOUT:
-                self.display_error("DNS resolution timeout")
-                self.set_status("Timeout - no response from DNS server")
-                return
-
-            if result.status == DNSStatus.ERROR:
-                self.display_error(f"Error: {result.error_message}")
-                self.set_status(f"Error: {result.error_message}")
-                return
+            match result.status:
+                case DNSStatus.NOT_FOUND:
+                    self.display_error(f"Could not resolve {hostname}")
+                    self.set_status(f"Failed to resolve {hostname}")
+                    return
+                case DNSStatus.TIMEOUT:
+                    self.display_error("DNS resolution timeout")
+                    self.set_status("Timeout - no response from DNS server")
+                    return
+                case DNSStatus.ERROR:
+                    self.display_error(f"Error: {result.error_message}")
+                    self.set_status(f"Error: {result.error_message}")
+                    return
+                case _:
+                    pass
 
             # Display results based on query type
             record_count = 0
