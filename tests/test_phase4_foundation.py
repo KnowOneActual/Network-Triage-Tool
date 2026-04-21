@@ -266,8 +266,8 @@ class TestResultsWidget:
         # Don't instantiate with columns (requires app context)
         # Just test the class has what need
         assert hasattr(ResultsWidget, "__init__")
-        assert hasattr(ResultsWidget, "add_row")
-        assert hasattr(ResultsWidget, "add_rows")
+        assert hasattr(ResultsWidget, "add_result_row")
+        assert hasattr(ResultsWidget, "add_result_rows")
         assert hasattr(ResultsWidget, "clear_results")
         assert hasattr(ResultsWidget, "get_summary")
 
@@ -289,14 +289,14 @@ class TestResultsWidget:
         """Test results widget method signatures work with mocks."""
         # Test the interface without instantiating in no-app context
         mock_widget = MagicMock(spec=ResultsWidget)
-        mock_widget.add_row = MagicMock()
-        mock_widget.add_rows = MagicMock()
+        mock_widget.add_result_row = MagicMock()
+        mock_widget.add_result_rows = MagicMock()
         mock_widget.result_count = 0
         mock_widget.get_summary = MagicMock(return_value="Results: 0 items")
 
         # Verify methods can be called
-        mock_widget.add_row(name="test", status="active")
-        mock_widget.add_row.assert_called_with(name="test", status="active")
+        mock_widget.add_result_row(name="test", status="active")
+        mock_widget.add_result_row.assert_called_with(name="test", status="active")
 
         # Verify summary can be retrieved
         summary = mock_widget.get_summary()

@@ -4,7 +4,7 @@ import ipaddress
 import platform
 import sys
 from pathlib import Path
-from typing import ClassVar
+from typing import Any
 
 from textual import work
 from textual.app import App, ComposeResult
@@ -38,7 +38,7 @@ try:
 except ImportError:
     # Fallback for local development if tui is not in path correctly
     sys.path.append(str(sys.path[0] + "/.."))
-    from tui.widgets import (
+    from tui.widgets import (  # type: ignore[import-untyped]
         ConnectionMonitorWidget,
         DNSResolverWidget,
         LanBandwidthWidget,
@@ -54,9 +54,9 @@ current_os = platform.system()
 if current_os == "Darwin":
     from .macos.network_toolkit import NetworkTriageToolkit
 elif current_os == "Linux":
-    from .linux.network_toolkit import NetworkTriageToolkit
+    from .linux.network_toolkit import NetworkTriageToolkit  # type: ignore[assignment]
 elif current_os == "Windows":
-    from .windows.network_toolkit import NetworkTriageToolkit
+    from .windows.network_toolkit import NetworkTriageToolkit  # type: ignore[assignment]
 else:
     sys.stderr.write(f"Unsupported OS: {current_os}\n")
     sys.exit(1)
@@ -348,12 +348,12 @@ class SpeedTestTool(Container):
 
 
 class NmapTool(Container):
-    BINDINGS: ClassVar[list[Binding]] = [
+    BINDINGS = [
         Binding("escape", "cancel_input", "Exit Input"),
     ]
 
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
         self.scan_data: list[dict[str, str]] = []
 
     def compose(self) -> ComposeResult:
@@ -584,12 +584,12 @@ class UtilityTool(Container):
                 self.query_one(f"#{btn_id}", Button).add_class("-active")
 
 
-class NetworkTriageApp(App):
+class NetworkTriageApp(App[None]):
     """A Textual TUI with Manual Button Navigation."""
 
     CSS_PATH = "triage.tcss"
 
-    BINDINGS: ClassVar[list[Binding]] = [
+    BINDINGS = [
         Binding("q", "quit", "Quit"),
         Binding("ctrl+s", "save_report", "Save Report"),
         Binding("d", "switch_tab('dashboard')", "Dashboard"),

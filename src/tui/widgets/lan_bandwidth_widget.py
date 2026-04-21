@@ -18,6 +18,7 @@ import logging
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
+from typing import Any
 
 import psutil
 from textual import work
@@ -290,7 +291,7 @@ class LanBandwidthWidget(BaseWidget):
     No external tools (iperf3, netcat, etc.) are required.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.widget_name = "LanBandwidthWidget"
         self._test_running = False

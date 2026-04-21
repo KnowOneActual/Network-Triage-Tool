@@ -38,7 +38,7 @@ class NetworkTriageToolkit(NetworkTriageToolkitBase):
     handling for common failure modes.
     """
 
-    def get_system_info(self) -> dict:
+    def get_system_info(self) -> dict[str, str]:
         """Gather basic system information with macOS-specific name resolution.
 
         Returns:
@@ -93,7 +93,7 @@ class NetworkTriageToolkit(NetworkTriageToolkitBase):
             log_exception(e, context="get_system_info")
             return {"OS": "N/A", "Hostname": "N/A"}
 
-    def get_ip_info(self) -> dict:
+    def get_ip_info(self) -> dict[str, str]:
         """Fetch local IP, public IP, and gateway information.
 
         Returns:
@@ -112,11 +112,11 @@ class NetworkTriageToolkit(NetworkTriageToolkitBase):
         # Get internal IP via socket connection
         try:
 
-            def _get_internal_ip():
+            def _get_internal_ip() -> str:
                 with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
                     # Connect to a non-routable address (doesn't actually connect)
                     s.connect(("8.8.8.8", 80))
-                    return s.getsockname()[0]
+                    return str(s.getsockname()[0])
 
             info["Internal IP"] = safe_socket_operation(
                 _get_internal_ip,
@@ -159,7 +159,7 @@ class NetworkTriageToolkit(NetworkTriageToolkitBase):
 
         return info
 
-    def get_connection_details(self) -> dict:
+    def get_connection_details(self) -> dict[str, str]:
         """Get detailed network connection info using system_profiler and psutil.
 
         Returns:
@@ -274,7 +274,7 @@ class NetworkTriageToolkit(NetworkTriageToolkitBase):
                 for addr in addresses:
                     if addr.family == socket.AF_INET:
                         info["IP Address"] = addr.address
-                        info["Netmask"] = addr.netmask
+                        info["Netmask"] = addr.netmask or "N/A"
                     elif hasattr(psutil, "AF_LINK") and addr.family == psutil.AF_LINK:
                         info["MAC Address"] = addr.address
 

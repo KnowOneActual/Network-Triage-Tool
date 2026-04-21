@@ -7,14 +7,14 @@ from ..shared.shared_toolkit import NetworkTriageToolkitBase
 class NetworkTriageToolkit(NetworkTriageToolkitBase):
     """Windows-specific network troubleshooting functions."""
 
-    def get_system_info(self):
+    def get_system_info(self) -> dict[str, str]:
         return {"OS": f"{platform.system()} {platform.release()} (Windows Support Pending)", "Hostname": socket.gethostname()}
 
-    def get_ip_info(self):
+    def get_ip_info(self) -> dict[str, str]:
         # Placeholder - Real implementation would use 'ipconfig' or WMI
         return {"Internal IP": "Pending", "Gateway": "Pending", "Public IP": "Pending"}
 
-    def get_connection_details(self):
+    def get_connection_details(self) -> dict[str, str]:
         # Placeholder - Real implementation would use PowerShell or netsh
         return {
             "Interface": "Pending",
@@ -27,8 +27,8 @@ class NetworkTriageToolkit(NetworkTriageToolkitBase):
             "DNS Servers": "N/A",
         }
 
-    def traceroute_test(self, host):
+    def traceroute_test(self, host: str) -> str:
         return "Traceroute not yet implemented for Windows."
 
-    def network_adapter_info(self):
+    def network_adapter_info(self) -> str:
         return "Adapter info not yet implemented for Windows."

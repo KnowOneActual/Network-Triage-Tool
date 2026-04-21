@@ -26,7 +26,10 @@ class ResultColumn:
     cell_width: int | None = None
 
 
-class ResultsWidget(DataTable):
+from typing import Any
+
+
+class ResultsWidget(DataTable[Any]):
     """Standardized results table for Phase 4 widgets.
 
     Features:
@@ -49,10 +52,10 @@ class ResultsWidget(DataTable):
                 yield self.results_widget
 
             def add_result(self, data: dict):
-                self.results_widget.add_row(**data)
+                self.results_widget.add_result_row(**data)
     """
 
-    def __init__(self, columns: list[ResultColumn], *args, **kwargs):
+    def __init__(self, columns: list[ResultColumn], *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.columns_def = columns
         self.result_count = 0
@@ -72,24 +75,24 @@ class ResultsWidget(DataTable):
         for col in self.columns_def:
             self.add_column(col.name, key=col.key, width=col.cell_width or 20)
 
-    def add_row(self, **data) -> RowKey:
+    def add_result_row(self, **data: Any) -> RowKey:
         """Add a result row."""
         values = [str(data.get(col.key, "")) for col in self.columns_def]
         self.result_count += 1
         return super().add_row(*values, key=str(self.result_count))
 
-    def add_rows(self, rows: list[dict]) -> None:
+    def add_result_rows(self, rows: list[dict[str, Any]]) -> None:
         """Add multiple result rows."""
         for row in rows:
-            self.add_row(**row)
+            self.add_result_row(**row)
 
-    def get_results(self) -> list[dict]:
+    def get_results(self) -> list[dict[str, Any]]:
         """Get all results as list of dicts."""
-        results = []
-        for row_key in self.row_keys:
+        results: list[dict[str, Any]] = []
+        for row_key in getattr(self, "rows", {}):
             row_data = {}
             for i, col in enumerate(self.columns_def):
-                value = self.get_cell(row_key, i)
+                value = self.get_cell(row_key, str(i))  # Assuming column indices are strings or using cell access correctly
                 row_data[col.key] = value
             results.append(row_data)
         return results
@@ -178,7 +181,7 @@ class StatusIndicator(Static):
         yield status
     """
 
-    def __init__(self, status: str = "pending", text: str = "", details: str = "", *args, **kwargs):
+    def __init__(self, status: str = "pending", text: str = "", details: str = "", *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.status = status
         self.text = text
@@ -276,9 +279,9 @@ class SummaryWidget(Static):
         yield summary
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        self.stats = {}
+        self.stats: dict[str, dict[str, Any]] = {}
 
     def add_stat(self, name: str, value: str, color: str | None = None) -> None:
         """Add a statistic."""

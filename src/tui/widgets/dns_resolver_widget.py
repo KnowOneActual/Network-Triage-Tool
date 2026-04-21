@@ -141,7 +141,7 @@ class DNSResolverWidget(BaseWidget):
                 for ip in result.ipv4_addresses:
                     # Find the record with this IP to get timing
                     record = next((r for r in result.records if r.value == ip and r.record_type == "A"), None)
-                    self.results_widget.add_row(
+                    self.results_widget.add_result_row(
                         type="A",
                         value=ip,
                         time=f"{record.query_time_ms:.2f}" if record else "N/A",
@@ -153,7 +153,7 @@ class DNSResolverWidget(BaseWidget):
                 for ip in result.ipv6_addresses:
                     # Find the record with this IP to get timing
                     record = next((r for r in result.records if r.value == ip and r.record_type == "AAAA"), None)
-                    self.results_widget.add_row(
+                    self.results_widget.add_result_row(
                         type="AAAA",
                         value=ip,
                         time=f"{record.query_time_ms:.2f}" if record else "N/A",
@@ -163,7 +163,7 @@ class DNSResolverWidget(BaseWidget):
             # Add PTR record (Reverse DNS)
             if query_type in ["PTR", "ALL"] and result.reverse_dns:
                 record = next((r for r in result.records if r.record_type == "PTR"), None)
-                self.results_widget.add_row(
+                self.results_widget.add_result_row(
                     type="PTR",
                     value=result.reverse_dns,
                     time=f"{record.query_time_ms:.2f}" if record else "N/A",

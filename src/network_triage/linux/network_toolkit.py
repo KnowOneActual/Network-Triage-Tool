@@ -15,6 +15,7 @@ Uses Linux commands:
 
 import logging
 import re
+from typing import Any
 
 from ..exceptions import (
     CommandNotFoundError,
@@ -36,11 +37,11 @@ class NetworkTriageToolkit:
     tools for best results.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the Linux network toolkit."""
         self.logger = logging.getLogger(__name__)
 
-    def get_system_info(self) -> dict:
+    def get_system_info(self) -> dict[str, str]:
         """Get system information (OS, hostname, etc).
 
         Retrieves system-level information using Linux commands:
@@ -91,7 +92,7 @@ class NetworkTriageToolkit:
             logger.error(f"Failed to get system info: {e}")
             raise NetworkCommandError(f"Failed to get system info: {e}")
 
-    def get_ip_info(self) -> dict:
+    def get_ip_info(self) -> dict[str, str]:
         """Get IP configuration (internal and public IP).
 
         Retrieves IP addresses using:
@@ -137,7 +138,7 @@ class NetworkTriageToolkit:
             # Get public IP via HTTP
             try:
                 public_data = safe_http_request("https://api.ipify.org?format=json", timeout=5)
-                public_ip = public_data.get("ip", "Unavailable")
+                public_ip = str(public_data.get("ip", "Unavailable"))
             except Exception as e:
                 logger.warning(f"Could not get public IP: {e}")
                 public_ip = "Unavailable"
@@ -155,7 +156,7 @@ class NetworkTriageToolkit:
                 "Gateway": "Unknown",
             }
 
-    def get_connection_details(self) -> dict:
+    def get_connection_details(self) -> dict[str, str]:
         """Get detailed connection information.
 
         Retrieves comprehensive connection details including:
@@ -199,10 +200,10 @@ class NetworkTriageToolkit:
             netmask_bits = ip_match.group(2) if ip_match else "24"
 
             # Convert netmask bits to dotted notation
-            def bits_to_netmask(bits):
+            def bits_to_netmask(bits: str) -> str:
                 try:
-                    bits = int(bits)
-                    mask = (0xFFFFFFFF >> (32 - bits)) << (32 - bits)
+                    ibits = int(bits)
+                    mask = (0xFFFFFFFF >> (32 - ibits)) << (32 - ibits)
                     return ".".join([str((mask >> (i << 3)) & 0xFF) for i in range(4)[::-1]])
                 except:
                     return "255.255.255.0"
@@ -232,7 +233,7 @@ class NetworkTriageToolkit:
                 speed = "Unknown"
 
             # Check if wireless and get WiFi details
-            wifi_details = {}
+            wifi_details: dict[str, str] = {}
             try:
                 iwconfig_output = safe_subprocess_run(["iwconfig", interface], timeout=5)
                 # Check if it's a wireless interface (iwconfig succeeds and doesn't show "no wireless")
@@ -278,7 +279,7 @@ class NetworkTriageToolkit:
                 "Gateway": "Unknown",
             }
 
-    def network_adapter_info(self) -> dict:
+    def network_adapter_info(self) -> dict[str, Any]:
         """Get network adapter information.
 
         Retrieves a list of all network interfaces with their status,
@@ -305,7 +306,7 @@ class NetworkTriageToolkit:
 
         """
         try:
-            adapters = {}
+            adapters: dict[str, Any] = {}
 
             # Get all interfaces using 'ip link show'
             link_output = safe_subprocess_run(["ip", "link", "show"], timeout=5)
@@ -378,7 +379,7 @@ class NetworkTriageToolkit:
             logger.error(f"Failed to get network adapter info: {e}")
             return {"error": f"Failed to get adapter info: {e}"}
 
-    def traceroute_test(self, destination: str = "8.8.8.8") -> dict:
+    def traceroute_test(self, destination: str = "8.8.8.8") -> dict[str, Any]:
         """Perform a traceroute test to a destination.
 
         Traces the network path to a destination host, showing each hop
@@ -404,7 +405,7 @@ class NetworkTriageToolkit:
                 timeout=30,
             )
 
-            hops: list[dict] = []
+            hops: list[dict[str, Any]] = []
             for line in traceroute_output.split("\n"):
                 line = line.strip()
                 if not line or line.startswith("traceroute"):
@@ -415,7 +416,7 @@ class NetworkTriageToolkit:
                     continue
 
                 hop_num = int(parts[0])
-                hop_info: dict = {"Hop": hop_num}
+                hop_info: dict[str, Any] = {"Hop": hop_num}
 
                 if "*" in line:
                     hop_info["Status"] = "No response"

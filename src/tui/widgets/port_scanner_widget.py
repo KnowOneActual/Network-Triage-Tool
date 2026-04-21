@@ -4,11 +4,10 @@ from __future__ import annotations
 
 import logging
 import re
+from typing import TYPE_CHECKING, Any
+
 from textual.containers import Horizontal, Vertical
 from textual.widgets import Button, Input, Label, Select, Static
-from .base import BaseWidget
-from .components import ResultColumn, ResultsWidget
-from typing import TYPE_CHECKING, Any
 
 from src.shared.port_utils import (
     COMMON_SERVICE_PORTS,
@@ -16,6 +15,9 @@ from src.shared.port_utils import (
     check_multiple_ports,
     summarize_port_scan,
 )
+
+from .base import BaseWidget
+from .components import ResultColumn, ResultsWidget
 
 if TYPE_CHECKING:
     from textual.app import ComposeResult
@@ -264,17 +266,18 @@ class PortScannerWidget(BaseWidget):
             if results:
                 for result in results:
                     # Determine status color
-                    status_str = result.status.value
-                    if result.status == PortStatus.OPEN:
-                        status_str = f"[green]{status_str}[/green]"
-                    elif result.status == PortStatus.CLOSED:
-                        status_str = f"[red]{status_str}[/red]"
-                    elif result.status == PortStatus.FILTERED:
-                        status_str = f"[yellow]{status_str}[/yellow]"
-                    else:
-                        status_str = f"[dim]{status_str}[/dim]"
+                    status_str = result.status.value.upper()
+                    match result.status:
+                        case PortStatus.OPEN:
+                            status_str = f"[green]{status_str}[/green]"
+                        case PortStatus.CLOSED:
+                            status_str = f"[red]{status_str}[/red]"
+                        case PortStatus.FILTERED:
+                            status_str = f"[yellow]{status_str}[/yellow]"
+                        case _:
+                            status_str = f"[dim]{status_str}[/dim]"
 
-                    self.results_widget.add_row(
+                    self.results_widget.add_result_row(
                         port=str(result.port),
                         service=result.service_name or "Unknown",
                         status=status_str,
@@ -338,4 +341,3 @@ class PortScannerWidget(BaseWidget):
 
         except Exception as e:
             self.display_error(f"Error clearing: {e!s}")
-
