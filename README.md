@@ -247,6 +247,7 @@ High standards are maintained through modern automated tooling:
 
 ### Code Quality
 - **Linting & Formatting:** [Ruff](https://github.com/astral-sh/ruff) for near-instant linting and PEP 8 compliance (replaces black, isort, flake8)
+  - ⚠️ **Note:** ruff formatter 0.15.x has a known issue where it may incorrectly revert Python 3 exception syntax. This is cosmetic - the code works correctly. See [GitHub issue](https://github.com/astral-sh/ruff/issues) for updates.
 - **Type Checking:** [Mypy](http://mypy-lang.org/) with strict mode enabled for robust type safety
 - **Modern Python:** Python 3.14+ features including match statements and improved error messages
 
