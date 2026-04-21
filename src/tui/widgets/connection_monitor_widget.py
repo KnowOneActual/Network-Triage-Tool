@@ -122,7 +122,7 @@ def gather_connections() -> list[ConnectionEntry]:
                 if pid not in pid_cache:
                     try:
                         proc_name = psutil.Process(pid).name()
-                    except psutil.NoSuchProcess, psutil.AccessDenied:
+                    except (psutil.NoSuchProcess, psutil.AccessDenied):
                         proc_name = "<unknown>"
                     pid_cache[pid] = proc_name
                 else:
