@@ -24,7 +24,7 @@ Phase 4.1 establishes the foundational architecture for all Phase 4 widgets. Thi
 All Phase 4 widgets inherit from `BaseWidget`, which provides:
 
 ```python
-from src.tui.widgets.base import BaseWidget
+from tui.widgets.base import BaseWidget
 from textual.app import ComposeResult
 from textual.widgets import Input, Button
 
@@ -64,7 +64,7 @@ class BaseWidget:
 Provides patterns for executing operations without freezing the UI:
 
 ```python
-from src.tui.widgets.base import AsyncOperationMixin, OperationResult
+from tui.widgets.base import AsyncOperationMixin, OperationResult
 
 class MyWidget(BaseWidget, AsyncOperationMixin):
     async def long_operation(self) -> OperationResult[str]:
@@ -102,7 +102,7 @@ self.cancel_operations("worker_name")  # Cancel specific worker
 Standardized result object for all async operations:
 
 ```python
-from src.tui.widgets.base import OperationResult
+from tui.widgets.base import OperationResult
 
 # Success result
 result = OperationResult(
@@ -129,7 +129,7 @@ result = OperationResult(
 Standardized table for displaying operation results:
 
 ```python
-from src.tui.widgets.components import ResultsWidget, ResultColumn
+from tui.widgets.components import ResultsWidget, ResultColumn
 
 class PortScannerWidget(BaseWidget):
     def compose(self) -> ComposeResult:
@@ -159,7 +159,7 @@ class PortScannerWidget(BaseWidget):
 Standardized progress display:
 
 ```python
-from src.tui.widgets.components import ProgressWidget
+from tui.widgets.components import ProgressWidget
 
 class MyWidget(BaseWidget):
     def compose(self) -> ComposeResult:
@@ -179,7 +179,7 @@ class MyWidget(BaseWidget):
 Color-coded status display:
 
 ```python
-from src.tui.widgets.components import StatusIndicator
+from tui.widgets.components import StatusIndicator
 
 class MyWidget(BaseWidget):
     def compose(self) -> ComposeResult:
@@ -197,7 +197,7 @@ class MyWidget(BaseWidget):
 Consistent error message display:
 
 ```python
-from src.tui.widgets.components import ErrorDisplay
+from tui.widgets.components import ErrorDisplay
 
 class MyWidget(BaseWidget):
     def compose(self) -> ComposeResult:
@@ -220,7 +220,7 @@ class MyWidget(BaseWidget):
 Key-value statistics display:
 
 ```python
-from src.tui.widgets.components import SummaryWidget
+from tui.widgets.components import SummaryWidget
 
 class PortScannerWidget(BaseWidget):
     def compose(self) -> ComposeResult:
@@ -243,10 +243,10 @@ class PortScannerWidget(BaseWidget):
 Use `WidgetTemplate` as a starting point for new widgets:
 
 ```python
-from src.tui.widgets.base import WidgetTemplate, OperationResult
+from tui.widgets.base import WidgetTemplate, OperationResult
 from textual.app import ComposeResult
 from textual.widgets import Input, Button, DataTable
-from src.tui.widgets.components import ResultsWidget, ResultColumn
+from tui.widgets.components import ResultsWidget, ResultColumn
 
 class DNSResolverWidget(WidgetTemplate):
     """DNS Resolver Widget - Template example."""
@@ -351,7 +351,7 @@ async def operation(self, key: str) -> OperationResult[dict]:
 
 ```python
 import pytest
-from src.tui.widgets.base import BaseWidget, OperationResult
+from tui.widgets.base import BaseWidget, OperationResult
 
 def test_base_widget_error_display():
     """Test error display."""

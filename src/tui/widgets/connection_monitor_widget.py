@@ -13,7 +13,7 @@ import psutil
 from textual import work
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
-from textual.widgets import Button, DataTable, Input, Label, Select
+from textual.widgets import Button, DataTable, Input, Label, Select, Static
 
 from .base import BaseWidget
 
@@ -122,7 +122,7 @@ def gather_connections() -> list[ConnectionEntry]:
                 if pid not in pid_cache:
                     try:
                         proc_name = psutil.Process(pid).name()
-                    except psutil.NoSuchProcess, psutil.AccessDenied:
+                    except (psutil.NoSuchProcess, psutil.AccessDenied):
                         proc_name = "<unknown>"
                     pid_cache[pid] = proc_name
                 else:
@@ -259,6 +259,9 @@ class ConnectionMonitorWidget(BaseWidget):
     def compose(self) -> ComposeResult:
         """Compose the Connection Monitor UI."""
         yield Label("[bold]Connection Monitor[/bold]", id="conn-mon-title")
+
+        # Error display (required by BaseWidget)
+        yield Static(id="error-display", classes="error-message")
 
         with Vertical(id="conn-mon-controls"):
             with Horizontal(id="conn-mon-top-bar"):

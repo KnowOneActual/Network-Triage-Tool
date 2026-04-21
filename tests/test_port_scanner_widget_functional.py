@@ -5,8 +5,8 @@ from unittest.mock import patch
 import pytest
 from textual.app import App, ComposeResult
 
-from src.shared.port_utils import PortCheckResult, PortStatus
-from src.tui.widgets.port_scanner_widget import PortScannerWidget
+from shared.port_utils import PortCheckResult, PortStatus
+from tui.widgets.port_scanner_widget import PortScannerWidget
 
 
 class PortScannerMockApp(App):
@@ -27,7 +27,7 @@ async def test_port_scan_success():
         PortCheckResult(host="localhost", port=443, status=PortStatus.CLOSED, service_name="https", response_time_ms=2.0),
     ]
 
-    with patch("src.tui.widgets.port_scanner_widget.check_multiple_ports", return_value=mock_results):
+    with patch("tui.widgets.port_scanner_widget.check_multiple_ports", return_value=mock_results):
         async with app.run_test() as pilot:
             widget = app.query_one(PortScannerWidget)
 

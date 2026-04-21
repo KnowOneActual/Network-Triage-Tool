@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any
 from textual.containers import Horizontal, Vertical
 from textual.widgets import Button, Input, Label, Select, Static
 
-from src.shared.port_utils import (
+from shared.port_utils import (  # type: ignore[import-untyped]
     COMMON_SERVICE_PORTS,
     PortStatus,
     check_multiple_ports,

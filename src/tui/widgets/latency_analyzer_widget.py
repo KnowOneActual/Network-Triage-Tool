@@ -21,21 +21,12 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 # Import latency utilities - Phase 3
-try:
-    from src.shared.latency_utils import (
-        PingStatistics,
-        TracerouteHop,
-        mtr_style_trace,
-        ping_statistics,
-    )
-except ImportError:
-    # Fallback for different import contexts
-    from shared.latency_utils import (  # type: ignore[no-redef]
-        PingStatistics,
-        TracerouteHop,
-        mtr_style_trace,
-        ping_statistics,
-    )
+from shared.latency_utils import (  # type: ignore[import-untyped]
+    PingStatistics,
+    TracerouteHop,
+    mtr_style_trace,
+    ping_statistics,
+)
 
 
 class LatencyAnalyzerWidget(BaseWidget):

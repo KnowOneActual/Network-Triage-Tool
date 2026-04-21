@@ -8,8 +8,8 @@ from textual.containers import Horizontal, Vertical
 from textual.widgets import Button, Input, Label, Select, Static
 
 # Import DNS utilities
-from src.shared.dns_utils import DNSStatus
-from src.shared.dns_utils import resolve_hostname as resolve_dns_hostname
+from shared.dns_utils import DNSStatus
+from shared.dns_utils import resolve_hostname as resolve_dns_hostname
 
 from .base import BaseWidget
 from .components import ResultColumn, ResultsWidget

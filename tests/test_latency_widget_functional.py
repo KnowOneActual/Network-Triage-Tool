@@ -6,8 +6,8 @@ import pytest
 from textual.app import App, ComposeResult
 from textual.widgets import DataTable
 
-from src.shared.latency_utils import LatencyStatus, PingStatistics, TracerouteHop
-from src.tui.widgets.latency_analyzer_widget import LatencyAnalyzerWidget
+from shared.latency_utils import LatencyStatus, PingStatistics, TracerouteHop
+from tui.widgets.latency_analyzer_widget import LatencyAnalyzerWidget
 
 
 class LatencyMockApp(App):
@@ -56,8 +56,8 @@ async def test_latency_analysis_success():
     )
 
     with (
-        patch("src.tui.widgets.latency_analyzer_widget.mtr_style_trace", return_value=(mock_hops, "success")),
-        patch("src.tui.widgets.latency_analyzer_widget.ping_statistics", return_value=mock_ping),
+        patch("tui.widgets.latency_analyzer_widget.mtr_style_trace", return_value=(mock_hops, "success")),
+        patch("tui.widgets.latency_analyzer_widget.ping_statistics", return_value=mock_ping),
     ):
         async with app.run_test() as pilot:
             widget = app.query_one(LatencyAnalyzerWidget)

@@ -5,8 +5,8 @@ from unittest.mock import patch
 import pytest
 from textual.app import App, ComposeResult
 
-from src.shared.dns_utils import DNSLookupResult, DNSRecord, DNSStatus
-from src.tui.widgets.dns_resolver_widget import DNSResolverWidget
+from shared.dns_utils import DNSLookupResult, DNSRecord, DNSStatus
+from tui.widgets.dns_resolver_widget import DNSResolverWidget
 
 
 class DNSMockApp(App):
@@ -32,7 +32,7 @@ async def test_dns_resolution_success():
         records=[DNSRecord("A", "93.184.216.34", 10.5, DNSStatus.SUCCESS)],
     )
 
-    with patch("src.tui.widgets.dns_resolver_widget.resolve_dns_hostname", return_value=mock_result):
+    with patch("tui.widgets.dns_resolver_widget.resolve_dns_hostname", return_value=mock_result):
         async with app.run_test() as pilot:
             widget = app.query_one(DNSResolverWidget)
 
@@ -102,7 +102,7 @@ async def test_dns_resolution_not_found():
         status=DNSStatus.NOT_FOUND,
     )
 
-    with patch("src.tui.widgets.dns_resolver_widget.resolve_dns_hostname", return_value=mock_result):
+    with patch("tui.widgets.dns_resolver_widget.resolve_dns_hostname", return_value=mock_result):
         async with app.run_test() as pilot:
             widget = app.query_one(DNSResolverWidget)
             widget.query_one("#hostname-input").value = "nonexistent.local"

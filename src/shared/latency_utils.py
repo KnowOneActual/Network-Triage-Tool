@@ -232,7 +232,7 @@ def _has_mtr() -> bool:
     try:
         subprocess.run(["mtr", "--version"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=2)
         return True
-    except FileNotFoundError, subprocess.TimeoutExpired:
+    except (FileNotFoundError, subprocess.TimeoutExpired):
         return False
 
 
@@ -300,8 +300,7 @@ def _extract_hops_from_mtr(mtr_output: str) -> list[TracerouteHop]:
                 status="responsive" if hostname != "???" else "timeout",
             )
             hops.append(hop)
-        except ValueError, IndexError:
-            continue
+        except (ValueError, IndexError):            continue
 
     return hops
 
@@ -398,8 +397,7 @@ def _parse_traceroute_output(output: str, system: str) -> list[TracerouteHop]:
                 status="responsive" if rtt_values else "timeout",
             )
             hops.append(hop)
-        except ValueError, IndexError:
-            continue
+        except (ValueError, IndexError):            continue
 
     return hops
 
