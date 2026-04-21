@@ -1,4 +1,4 @@
-"""Base Widget Classes for Phase 4 TUI Integration
+"""Base Widget Classes for Phase 4 TUI Integration.
 
 This module provides the foundation for all Phase 4 widgets.
 All widgets should inherit from BaseWidget to ensure consistency in:
@@ -9,15 +9,19 @@ All widgets should inherit from BaseWidget to ensure consistency in:
 - UI responsiveness
 """
 
+from __future__ import annotations
+
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Generic, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar
 
-from textual.app import ComposeResult
 from textual.containers import Container, Vertical
 from textual.reactive import reactive
 from textual.widgets import Label, Static
+
+if TYPE_CHECKING:
+    from textual.app import ComposeResult
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +29,7 @@ T = TypeVar("T")
 
 
 @dataclass
-class OperationResult(Generic[T]):
+class OperationResult[T]:
     """Result of an async operation."""
 
     success: bool
@@ -33,9 +37,9 @@ class OperationResult(Generic[T]):
     error: str | None = None
     error_type: type | None = None
     duration_ms: float = 0.0
-    timestamp: datetime = None
+    timestamp: datetime | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.timestamp is None:
             self.timestamp = datetime.now()
 
@@ -60,9 +64,9 @@ class AsyncOperationMixin:
                     return self.handle_error(e)
     """
 
-    def __init__(self):
-        self._active_workers = {}
-        self._operation_cache = {}
+    def __init__(self) -> None:
+        self._active_workers: dict[str, Any] = {}
+        self._operation_cache: dict[str, Any] = {}
         self._cache_enabled = True
 
     def enable_cache(self, enabled: bool = True) -> None:
@@ -100,7 +104,7 @@ class AsyncOperationMixin:
                     worker.cancel()
             self._active_workers.clear()
 
-    def handle_error(self, error: Exception, message: str | None = None) -> OperationResult:
+    def handle_error(self, error: Exception, message: str | None = None) -> OperationResult[Any]:
         """Consistent error handling."""
         error_msg = message or str(error)
         logger.error(f"Operation error: {error_msg}", exc_info=error)
@@ -146,7 +150,7 @@ class BaseWidget(Container, AsyncOperationMixin):
     current_status = reactive("Ready")
     error_message = reactive("")
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         AsyncOperationMixin.__init__(self)
         self.widget_name = self.__class__.__name__
@@ -236,7 +240,7 @@ class WidgetTemplate(BaseWidget):
 
     """
 
-    def __init__(self, name: str = "WidgetTemplate"):
+    def __init__(self, name: str = "WidgetTemplate") -> None:
         super().__init__()
         self.widget_name = name
 

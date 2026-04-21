@@ -1,39 +1,32 @@
 """Port Scanner Widget for Phase 4.3."""
 
+from __future__ import annotations
+
 import logging
 import re
-
-from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
 from textual.widgets import Button, Input, Label, Select
-
 from .base import BaseWidget
 from .components import ResultColumn, ResultsWidget
+from typing import TYPE_CHECKING, Any
+
+from src.shared.port_utils import (
+    COMMON_SERVICE_PORTS,
+    PortStatus,
+    check_multiple_ports,
+    summarize_port_scan,
+)
+
+if TYPE_CHECKING:
+    from textual.app import ComposeResult
 
 logger = logging.getLogger(__name__)
-
-# Import port utilities - use relative import from shared module
-try:
-    from ..shared.port_utils import (
-        COMMON_SERVICE_PORTS,
-        PortStatus,
-        check_multiple_ports,
-        summarize_port_scan,
-    )
-except ImportError:
-    # Fallback for different import contexts
-    from shared.port_utils import (
-        COMMON_SERVICE_PORTS,
-        PortStatus,
-        check_multiple_ports,
-        summarize_port_scan,
-    )
 
 
 class PortScannerWidget(BaseWidget):
     """Port Scanner Widget - scans and detects open ports."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.widget_name = "PortScannerWidget"
         self.scan_in_progress = False
@@ -219,7 +212,7 @@ class PortScannerWidget(BaseWidget):
 
             # Get scan mode
             scan_mode_select = self.query_one("#scan-mode-select", Select)
-            scan_mode = scan_mode_select.value or "common"
+            scan_mode = scan_mode_select.value if isinstance(scan_mode_select.value, str) else "common"
 
             # Get timeout
             timeout_input = self.query_one("#timeout-input", Input)

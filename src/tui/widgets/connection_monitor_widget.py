@@ -7,6 +7,7 @@ background thread so the UI never blocks.
 
 import logging
 from dataclasses import dataclass
+from typing import Any
 
 import psutil
 from textual import work
@@ -109,7 +110,7 @@ def gather_connections() -> list[ConnectionEntry]:
         try:
             conns = psutil.net_connections(kind="inet")
         except AttributeError:  # pragma: no cover
-            conns = psutil.net_connections(kind="inet")  # type: ignore[attr-defined]
+            conns = psutil.net_connections()
 
         # Build a pid→name cache to avoid per-connection Process() calls
         pid_cache: dict[int, str] = {}
@@ -121,7 +122,7 @@ def gather_connections() -> list[ConnectionEntry]:
                 if pid not in pid_cache:
                     try:
                         proc_name = psutil.Process(pid).name()
-                    except psutil.NoSuchProcess, psutil.AccessDenied:
+                    except (psutil.NoSuchProcess, psutil.AccessDenied):
                         proc_name = "<unknown>"
                     pid_cache[pid] = proc_name
                 else:
@@ -250,7 +251,7 @@ class ConnectionMonitorWidget(BaseWidget):
     # Refresh interval in seconds
     AUTO_REFRESH_INTERVAL: float = 10.0
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.widget_name = "ConnectionMonitorWidget"
         self._refresh_in_progress = False

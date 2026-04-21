@@ -1,26 +1,27 @@
 """DNS Resolver Widget for Phase 4.2."""
 
-from textual.app import ComposeResult
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
+
 from textual.containers import Horizontal, Vertical
 from textual.widgets import Button, Input, Label, Select
+
+# Import DNS utilities
+from src.shared.dns_utils import DNSStatus
+from src.shared.dns_utils import resolve_hostname as resolve_dns_hostname
 
 from .base import BaseWidget
 from .components import ResultColumn, ResultsWidget
 
-# Import DNS utilities - use relative import from shared module
-try:
-    from ..shared.dns_utils import DNSStatus
-    from ..shared.dns_utils import resolve_hostname as resolve_dns_hostname
-except ImportError:
-    # Fallback for different import contexts
-    from shared.dns_utils import DNSStatus
-    from shared.dns_utils import resolve_hostname as resolve_dns_hostname
+if TYPE_CHECKING:
+    from textual.app import ComposeResult
 
 
 class DNSResolverWidget(BaseWidget):
     """DNS Resolver Widget - resolves hostnames to IP addresses."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.widget_name = "DNSResolverWidget"
 
@@ -132,41 +133,38 @@ class DNSResolverWidget(BaseWidget):
             record_count = 0
 
             # Add A records (IPv4)
-            if query_type in ["A", "BOTH", "ALL"]:
-                if result.ipv4_addresses:
-                    for ip in result.ipv4_addresses:
-                        # Find the record with this IP to get timing
-                        record = next((r for r in result.records if r.value == ip and r.record_type == "A"), None)
-                        self.results_widget.add_row(
-                            type="A",
-                            value=ip,
-                            time=f"{record.query_time_ms:.2f}" if record else "N/A",
-                        )
-                        record_count += 1
-
-            # Add AAAA records (IPv6)
-            if query_type in ["AAAA", "BOTH", "ALL"]:
-                if result.ipv6_addresses:
-                    for ip in result.ipv6_addresses:
-                        # Find the record with this IP to get timing
-                        record = next((r for r in result.records if r.value == ip and r.record_type == "AAAA"), None)
-                        self.results_widget.add_row(
-                            type="AAAA",
-                            value=ip,
-                            time=f"{record.query_time_ms:.2f}" if record else "N/A",
-                        )
-                        record_count += 1
-
-            # Add PTR record (Reverse DNS)
-            if query_type in ["PTR", "ALL"]:
-                if result.reverse_dns:
-                    record = next((r for r in result.records if r.record_type == "PTR"), None)
+            if query_type in ["A", "BOTH", "ALL"] and result.ipv4_addresses:
+                for ip in result.ipv4_addresses:
+                    # Find the record with this IP to get timing
+                    record = next((r for r in result.records if r.value == ip and r.record_type == "A"), None)
                     self.results_widget.add_row(
-                        type="PTR",
-                        value=result.reverse_dns,
+                        type="A",
+                        value=ip,
                         time=f"{record.query_time_ms:.2f}" if record else "N/A",
                     )
                     record_count += 1
+
+            # Add AAAA records (IPv6)
+            if query_type in ["AAAA", "BOTH", "ALL"] and result.ipv6_addresses:
+                for ip in result.ipv6_addresses:
+                    # Find the record with this IP to get timing
+                    record = next((r for r in result.records if r.value == ip and r.record_type == "AAAA"), None)
+                    self.results_widget.add_row(
+                        type="AAAA",
+                        value=ip,
+                        time=f"{record.query_time_ms:.2f}" if record else "N/A",
+                    )
+                    record_count += 1
+
+            # Add PTR record (Reverse DNS)
+            if query_type in ["PTR", "ALL"] and result.reverse_dns:
+                record = next((r for r in result.records if r.record_type == "PTR"), None)
+                self.results_widget.add_row(
+                    type="PTR",
+                    value=result.reverse_dns,
+                    time=f"{record.query_time_ms:.2f}" if record else "N/A",
+                )
+                record_count += 1
 
             # Show success message
             if record_count > 0:
