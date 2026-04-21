@@ -4,20 +4,25 @@ Provides an MTR-style path analyzer showing per-hop latency and packet loss,
 plus aggregate ping statistics for the target host.
 """
 
+from __future__ import annotations
+
 import logging
+from typing import TYPE_CHECKING, Any
 
 from textual import work
-from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
-from textual.widgets import Button, DataTable, Input, Label
+from textual.widgets import Button, DataTable, Input, Label, Static
 
 from .base import BaseWidget
+
+if TYPE_CHECKING:
+    from textual.app import ComposeResult
 
 logger = logging.getLogger(__name__)
 
 # Import latency utilities - Phase 3
 try:
-    from ..shared.latency_utils import (
+    from src.shared.latency_utils import (
         PingStatistics,
         TracerouteHop,
         mtr_style_trace,
@@ -25,7 +30,7 @@ try:
     )
 except ImportError:
     # Fallback for different import contexts
-    from shared.latency_utils import (  # type: ignore[no-redef]
+    from shared.latency_utils import (  # type: ignore[no-redef, import-untyped]
         PingStatistics,
         TracerouteHop,
         mtr_style_trace,
@@ -40,7 +45,7 @@ class LatencyAnalyzerWidget(BaseWidget):
     picture of latency across every hop to the target host.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.widget_name = "LatencyAnalyzerWidget"
         self.trace_in_progress = False
@@ -48,6 +53,9 @@ class LatencyAnalyzerWidget(BaseWidget):
     def compose(self) -> ComposeResult:
         """Compose the Latency Analyzer UI."""
         yield Label("[bold]Latency Analyzer[/bold]", id="title")
+
+        # Error display (required by BaseWidget)
+        yield Static(id="error-display", classes="error-message")
 
         # Input section
         with Vertical(id="input-section"):
@@ -80,10 +88,11 @@ class LatencyAnalyzerWidget(BaseWidget):
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle Run and Clear button presses."""
-        if event.button.id == "run-btn":
-            self.run_analysis()
-        elif event.button.id == "clear-btn":
-            self.clear_results()
+        match event.button.id:
+            case "run-btn":
+                self.run_analysis()
+            case "clear-btn":
+                self.clear_results()
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
         """Run analysis when Enter is pressed in the host field."""

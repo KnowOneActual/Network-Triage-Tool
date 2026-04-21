@@ -7,6 +7,7 @@ background thread so the UI never blocks.
 
 import logging
 from dataclasses import dataclass
+from typing import Any
 
 import psutil
 from textual import work
@@ -109,7 +110,7 @@ def gather_connections() -> list[ConnectionEntry]:
         try:
             conns = psutil.net_connections(kind="inet")
         except AttributeError:  # pragma: no cover
-            conns = psutil.net_connections(kind="inet")  # type: ignore[attr-defined]
+            conns = psutil.net_connections()
 
         # Build a pid→name cache to avoid per-connection Process() calls
         pid_cache: dict[int, str] = {}
@@ -121,7 +122,7 @@ def gather_connections() -> list[ConnectionEntry]:
                 if pid not in pid_cache:
                     try:
                         proc_name = psutil.Process(pid).name()
-                    except psutil.NoSuchProcess, psutil.AccessDenied:
+                    except (psutil.NoSuchProcess, psutil.AccessDenied):
                         proc_name = "<unknown>"
                     pid_cache[pid] = proc_name
                 else:
@@ -160,29 +161,22 @@ def gather_connections() -> list[ConnectionEntry]:
 
 
 def apply_filter(entries: list[ConnectionEntry], filter_value: str) -> list[ConnectionEntry]:
-    """Filter a list of ConnectionEntry objects by the given filter.
-
-    Args:
-        entries: Full list of connections to filter.
-        filter_value: One of the FILTER_* constants.
-
-    Returns:
-        Filtered list.
-
-    """
-    if filter_value == FILTER_ALL:
-        return entries
-    if filter_value == FILTER_TCP:
-        return [e for e in entries if e.protocol == "TCP"]
-    if filter_value == FILTER_UDP:
-        return [e for e in entries if e.protocol == "UDP"]
-    if filter_value == FILTER_ESTABLISHED:
-        return [e for e in entries if e.status == "ESTABLISHED"]
-    if filter_value == FILTER_LISTEN:
-        # "LISTEN" covers TCP listeners; UDP bound sockets have no state
-        return [e for e in entries if e.status in ("LISTEN", "NONE") and not e.remote_addr]
-    # Custom status match (e.g. "CLOSE_WAIT")
-    return [e for e in entries if e.status == filter_value]
+    """Filter a list of ConnectionEntry objects by the given filter."""
+    match filter_value:
+        case typeof_filter if typeof_filter == FILTER_ALL:
+            return entries
+        case typeof_filter if typeof_filter == FILTER_TCP:
+            return [e for e in entries if e.protocol == "TCP"]
+        case typeof_filter if typeof_filter == FILTER_UDP:
+            return [e for e in entries if e.protocol == "UDP"]
+        case typeof_filter if typeof_filter == FILTER_ESTABLISHED:
+            return [e for e in entries if e.status == "ESTABLISHED"]
+        case typeof_filter if typeof_filter == FILTER_LISTEN:
+            # "LISTEN" covers TCP listeners; UDP bound sockets have no state
+            return [e for e in entries if e.status in ("LISTEN", "NONE") and not e.remote_addr]
+        case _:
+            # Custom status match (e.g. "CLOSE_WAIT")
+            return [e for e in entries if e.status == filter_value]
 
 
 def apply_process_filter(entries: list[ConnectionEntry], search: str) -> list[ConnectionEntry]:
@@ -250,7 +244,7 @@ class ConnectionMonitorWidget(BaseWidget):
     # Refresh interval in seconds
     AUTO_REFRESH_INTERVAL: float = 10.0
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.widget_name = "ConnectionMonitorWidget"
         self._refresh_in_progress = False

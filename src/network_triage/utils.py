@@ -9,7 +9,7 @@ import shutil
 import subprocess
 import time
 from collections.abc import Callable
-from typing import Any
+from typing import Any, TypeVar, cast
 
 from .exceptions import (
     CommandNotFoundError,
@@ -20,13 +20,15 @@ from .exceptions import (
 # Configure logging
 logger = logging.getLogger(__name__)
 
+T = TypeVar("T")
+
 
 def retry(
     max_attempts: int = 3,
     delay: float = 1.0,
     backoff: float = 2.0,
-    exceptions: tuple = (Exception,),
-) -> Callable:
+    exceptions: tuple[type[Exception], ...] = (Exception,),
+) -> Callable[[Callable[..., T]], Callable[..., T]]:
     """Decorator to retry a function with exponential backoff.
 
     Args:
@@ -42,9 +44,9 @@ def retry(
 
     """
 
-    def decorator(func: Callable) -> Callable:
+    def decorator(func: Callable[..., T]) -> Callable[..., T]:
         @functools.wraps(func)
-        def wrapper(*args, **kwargs) -> Any:
+        def wrapper(*args: Any, **kwargs: Any) -> T:
             current_delay = delay
             last_exception = None
 
@@ -132,10 +134,10 @@ def safe_subprocess_run(
 
 
 def safe_socket_operation(
-    operation: Callable,
+    operation: Callable[[], T],
     timeout: float = 5.0,
     operation_name: str = "Socket operation",
-) -> Any:
+) -> T:
     """Safely execute a socket operation with timeout.
 
     Args:
@@ -164,7 +166,7 @@ def safe_socket_operation(
         import signal
         import threading
 
-        def timeout_handler(signum, frame):
+        def timeout_handler(signum: int, frame: Any) -> None:
             raise TimeoutError(f"{operation_name} timed out after {timeout}s")
 
         # Only use signal on Unix systems and if we are in the main thread
@@ -194,7 +196,7 @@ def safe_http_request(
     url: str,
     timeout: int = 5,
     retries: int = 2,
-) -> dict:
+) -> dict[str, Any]:
     """Safely make an HTTP request with retry logic.
 
     Args:
@@ -218,10 +220,10 @@ def safe_http_request(
     from .exceptions import NetworkConnectivityError
 
     @retry(max_attempts=retries, delay=1.0, exceptions=(requests.RequestException,))
-    def _request():
+    def _request() -> dict[str, Any]:
         response = requests.get(url, timeout=timeout)
         response.raise_for_status()
-        return response.json()
+        return cast("dict[str, Any]", response.json())
 
     try:
         return _request()

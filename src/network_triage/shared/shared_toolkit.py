@@ -6,8 +6,10 @@ import struct
 import subprocess
 import threading
 import xml.etree.ElementTree as ET
+from collections.abc import Callable
+from typing import Any
 
-import speedtest
+import speedtest  # type: ignore
 from scapy.all import inet_ntoa, sniff
 from scapy.contrib.cdp import CDPAddrRecord, CDPMsg
 from scapy.contrib.lldp import LLDPDU
@@ -16,13 +18,13 @@ from scapy.contrib.lldp import LLDPDU
 class NetworkTriageToolkitBase:
     """A collection of OS-agnostic network troubleshooting functions."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.stop_ping_event = threading.Event()
-        self.discovery_thread = None
-        self.stop_discovery = False
-        self.nmap_process = None
+        self.discovery_thread: threading.Thread | None = None
+        self.stop_discovery: bool = False
+        self.nmap_process: subprocess.Popen[str] | None = None
 
-    def continuous_ping(self, host, callback):
+    def continuous_ping(self, host: str, callback: Callable[[str], None]) -> None:
         """Pings a host continuously and sends output to a callback."""
         self.stop_ping_event.clear()
         command = ["ping", host]
@@ -36,6 +38,9 @@ class NetworkTriageToolkitBase:
                 bufsize=1,
                 universal_newlines=True,
             )
+            if process.stdout is None:
+                callback("Error: Could not open subprocess stdout.")
+                return
             for line in iter(process.stdout.readline, ""):
                 if self.stop_ping_event.is_set():
                     process.terminate()
@@ -47,11 +52,11 @@ class NetworkTriageToolkitBase:
         except Exception as e:
             callback(f"An error occurred: {e}\n")
 
-    def stop_ping(self):
+    def stop_ping(self) -> None:
         """Signals the continuous ping to stop."""
         self.stop_ping_event.set()
 
-    def dns_resolution_test(self, domain):
+    def dns_resolution_test(self, domain: str) -> str:
         """Tests DNS resolution for a specific domain."""
         try:
             ip = socket.gethostbyname(domain)
@@ -61,7 +66,7 @@ class NetworkTriageToolkitBase:
         except Exception as e:
             return f"An error occurred during DNS resolution: {e}"
 
-    def port_connectivity_test(self, host, port):
+    def port_connectivity_test(self, host: str, port: int | str) -> str:
         """Tests if a specific port is open on a given host."""
         try:
             port_num = int(port)
@@ -78,7 +83,7 @@ class NetworkTriageToolkitBase:
         except Exception as e:
             return f"An error occurred: {e}"
 
-    def start_discovery_capture(self, callback, timeout=60):
+    def start_discovery_capture(self, callback: Callable[[str], None], timeout: int = 60) -> None:
         """Starts a thread to capture LLDP or CDP packets."""
         if self.discovery_thread and self.discovery_thread.is_alive():
             callback("A scan is already in progress.")
@@ -88,11 +93,11 @@ class NetworkTriageToolkitBase:
         self.discovery_thread = threading.Thread(target=self._run_discovery_capture, args=(callback, timeout), daemon=True)
         self.discovery_thread.start()
 
-    def stop_discovery_capture(self):
+    def stop_discovery_capture(self) -> None:
         """Signals the packet capture thread to stop."""
         self.stop_discovery = True
 
-    def _run_discovery_capture(self, callback, timeout):
+    def _run_discovery_capture(self, callback: Callable[[str], None], timeout: int) -> None:
         """The actual packet sniffing logic."""
         if platform.system() != "Windows" and os.geteuid() != 0:
             callback("Packet capture requires administrator privileges. Please run with 'sudo'.")
@@ -100,7 +105,7 @@ class NetworkTriageToolkitBase:
 
         packet_found = [False]
 
-        def _packet_callback(packet):
+        def _packet_callback(packet: Any) -> bool:
             """This function is called for every captured packet."""
             if self.stop_discovery or packet_found[0]:
                 return True
@@ -121,18 +126,19 @@ class NetworkTriageToolkitBase:
                             break
                         value_bytes = raw_payload[i + 2 : i + 2 + tlv_len]
 
-                        if tlv_type == 1:
-                            chassis_id_val = value_bytes[1:]
-                        elif tlv_type == 2:
-                            port_id_val = value_bytes[1:]
-                        elif tlv_type == 4:
-                            port_description_val = value_bytes
-                        elif tlv_type == 5:
-                            system_name_val = value_bytes
-                        elif tlv_type == 8 and len(value_bytes) > 1 and value_bytes[1] == 1:
-                            mgmt_address_val = inet_ntoa(value_bytes[2:6])
-                        elif tlv_type == 0:
-                            break
+                        match tlv_type:
+                            case 1:
+                                chassis_id_val = value_bytes[1:]
+                            case 2:
+                                port_id_val = value_bytes[1:]
+                            case 4:
+                                port_description_val = value_bytes
+                            case 5:
+                                system_name_val = value_bytes
+                            case 8 if len(value_bytes) > 1 and value_bytes[1] == 1:
+                                mgmt_address_val = inet_ntoa(value_bytes[2:6])
+                            case 0:
+                                break
                         i += 2 + tlv_len
 
                     if not chassis_id_val or not port_id_val:
@@ -182,7 +188,7 @@ class NetworkTriageToolkitBase:
             if not packet_found[0] and not self.stop_discovery:
                 callback(f"\nScan complete. No LLDP or CDP packets found in {timeout} seconds.")
 
-    def run_speed_test(self):
+    def run_speed_test(self) -> dict[str, str]:
         """Performs a network speed test and returns the results."""
         try:
             st = speedtest.Speedtest(secure=True)
@@ -204,7 +210,9 @@ class NetworkTriageToolkitBase:
         except Exception as e:
             return {"Error": f"Speed test failed: {e}"}
 
-    def run_network_scan(self, target, arguments="-F", callback=None):
+    def run_network_scan(
+        self, target: str, arguments: str = "-F", callback: Callable[[str], None] | None = None
+    ) -> list[dict[str, Any]]:
         """Performs an Nmap scan by running it as a subprocess and parsing the XML output."""
         # dynamic path resolution
         nmap_path = shutil.which("nmap")
@@ -246,7 +254,7 @@ class NetworkTriageToolkitBase:
 
             # ... (The rest of your XML parsing logic remains exactly the same) ...
             root = ET.fromstring(process.stdout)
-            results = []
+            results: list[dict[str, Any]] = []
 
             for host in root.findall("host"):
                 status_elem = host.find("status")
@@ -265,7 +273,7 @@ class NetworkTriageToolkitBase:
                 hostname_elem = host.find("hostnames/hostname")
                 hostname = hostname_elem.get("name") if hostname_elem is not None else ""
 
-                host_details = {
+                host_details: dict[str, Any] = {
                     "ip": ip_addr,
                     "hostname": hostname,
                     "status": status,
@@ -281,7 +289,7 @@ class NetworkTriageToolkitBase:
         except Exception as e:
             return [{"ip": "Error", "hostname": "Exception", "status": str(e), "mac": "", "vendor": "", "details": {}}]
 
-    def stop_network_scan(self):
+    def stop_network_scan(self) -> str:
         """Stops a running Nmap scan."""
         return "Scan stopping is not directly supported with this method."
 

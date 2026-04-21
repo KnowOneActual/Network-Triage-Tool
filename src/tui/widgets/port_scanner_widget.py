@@ -1,39 +1,34 @@
 """Port Scanner Widget for Phase 4.3."""
 
+from __future__ import annotations
+
 import logging
 import re
+from typing import TYPE_CHECKING, Any
 
-from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
-from textual.widgets import Button, Input, Label, Select
+from textual.widgets import Button, Input, Label, Select, Static
+
+from src.shared.port_utils import (
+    COMMON_SERVICE_PORTS,
+    PortStatus,
+    check_multiple_ports,
+    summarize_port_scan,
+)
 
 from .base import BaseWidget
 from .components import ResultColumn, ResultsWidget
 
-logger = logging.getLogger(__name__)
+if TYPE_CHECKING:
+    from textual.app import ComposeResult
 
-# Import port utilities - use relative import from shared module
-try:
-    from ..shared.port_utils import (
-        COMMON_SERVICE_PORTS,
-        PortStatus,
-        check_multiple_ports,
-        summarize_port_scan,
-    )
-except ImportError:
-    # Fallback for different import contexts
-    from shared.port_utils import (
-        COMMON_SERVICE_PORTS,
-        PortStatus,
-        check_multiple_ports,
-        summarize_port_scan,
-    )
+logger = logging.getLogger(__name__)
 
 
 class PortScannerWidget(BaseWidget):
     """Port Scanner Widget - scans and detects open ports."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.widget_name = "PortScannerWidget"
         self.scan_in_progress = False
@@ -42,6 +37,9 @@ class PortScannerWidget(BaseWidget):
         """Compose the widget UI."""
         # Title
         yield Label("[bold]Port Scanner[/bold]", id="title")
+
+        # Error display (required by BaseWidget)
+        yield Static(id="error-display", classes="error-message")
 
         # Input section
         with Vertical(id="input-section"):
@@ -111,94 +109,84 @@ class PortScannerWidget(BaseWidget):
         # This could be enhanced to show/hide port input based on mode
 
     def parse_ports_input(self, port_input: str, mode: str) -> list[int] | None:
-        """Parse port input based on scan mode.
-
-        Returns None if invalid, or a list of valid port numbers.
-        Does NOT call display_error - caller should handle None return.
-
-        Args:
-            port_input: Raw port input string
-            mode: Scan mode (single, multiple, range)
-
-        Returns:
-            List of port numbers or None if invalid
-
-        """
+        """Parse port input based on scan mode."""
         port_input = port_input.strip()
 
-        if mode == "single":
-            try:
-                port = int(port_input)
-                if 1 <= port <= 65535:
-                    return [port]
-                logger.warning(f"Port {port} out of range (1-65535)")
-                return None
-            except ValueError:
-                logger.warning(f"Invalid port number: {port_input}")
-                return None
-
-        elif mode == "multiple":
-            try:
-                if not port_input:
-                    logger.warning("Empty port input")
+        match mode:
+            case "single":
+                try:
+                    port = int(port_input)
+                    if 1 <= port <= 65535:
+                        return [port]
+                    logger.warning(f"Port {port} out of range (1-65535)")
+                    return None
+                except ValueError:
+                    logger.warning(f"Invalid port number: {port_input}")
                     return None
 
-                ports = []
-                for port_str in port_input.split(","):
-                    port_str = port_str.strip()
-                    if not port_str:
-                        continue
-                    port = int(port_str)
-                    if 1 <= port <= 65535:
-                        ports.append(port)
-                    else:
-                        logger.warning(f"Port {port} out of range (1-65535)")
+            case "multiple":
+                try:
+                    if not port_input:
+                        logger.warning("Empty port input")
                         return None
 
-                if not ports:
-                    logger.warning("No valid ports provided")
+                    ports = []
+                    for port_str in port_input.split(","):
+                        port_str = port_str.strip()
+                        if not port_str:
+                            continue
+                        port = int(port_str)
+                        if 1 <= port <= 65535:
+                            ports.append(port)
+                        else:
+                            logger.warning(f"Port {port} out of range (1-65535)")
+                            return None
+
+                    if not ports:
+                        logger.warning("No valid ports provided")
+                        return None
+
+                    return sorted(set(ports))  # Remove duplicates and sort
+                except ValueError as e:
+                    logger.warning(f"Invalid port format: {port_input} - {e}")
                     return None
 
-                return sorted(set(ports))  # Remove duplicates and sort
-            except ValueError as e:
-                logger.warning(f"Invalid port format: {port_input} - {e}")
-                return None
-
-        elif mode == "range":
-            # Parse range like "1-1024"
-            if not port_input:
-                logger.warning("Empty range input")
-                return None
-
-            match = re.match(r"^(\d+)\s*-\s*(\d+)$", port_input)
-            if not match:
-                logger.warning(f"Invalid range format: {port_input}")
-                return None
-
-            try:
-                start = int(match.group(1))
-                end = int(match.group(2))
-
-                if not (1 <= start <= 65535 and 1 <= end <= 65535):
-                    logger.warning(f"Range ports out of bounds: {start}-{end}")
+            case "range":
+                # Parse range like "1-1024"
+                if not port_input:
+                    logger.warning("Empty range input")
                     return None
 
-                if start > end:
-                    start, end = end, start
-
-                # Limit range to prevent excessive scanning
-                port_count = end - start + 1
-                if port_count > 5000:
-                    logger.warning(f"Range too large: {port_count} ports (max 5000)")
+                regex_match = re.match(r"^(\d+)\s*-\s*(\d+)$", port_input)
+                if not regex_match:
+                    logger.warning(f"Invalid range format: {port_input}")
                     return None
 
-                return list(range(start, end + 1))
-            except ValueError as e:
-                logger.warning(f"Error parsing range: {e}")
-                return None
+                try:
+                    start = int(regex_match.group(1))
+                    end = int(regex_match.group(2))
 
-        logger.warning(f"Unknown mode: {mode}")
-        return None
+                    if not (1 <= start <= 65535 and 1 <= end <= 65535):
+                        logger.warning(f"Range ports out of bounds: {start}-{end}")
+                        return None
+
+                    if start > end:
+                        start, end = end, start
+
+                    # Limit range to prevent excessive scanning
+                    port_count = end - start + 1
+                    if port_count > 5000:
+                        logger.warning(f"Range too large: {port_count} ports (max 5000)")
+                        return None
+
+                    return list(range(start, end + 1))
+                except ValueError as e:
+                    logger.warning(f"Error parsing range: {e}")
+                    return None
+
+            case _:
+                logger.warning(f"Unknown mode: {mode}")
+                return None
 
     def scan_ports(self) -> None:
         """Scan the target host ports using Phase 3 port utilities."""
@@ -219,7 +207,7 @@ class PortScannerWidget(BaseWidget):
 
             # Get scan mode
             scan_mode_select = self.query_one("#scan-mode-select", Select)
-            scan_mode = scan_mode_select.value or "common"
+            scan_mode = scan_mode_select.value if isinstance(scan_mode_select.value, str) else "common"
 
             # Get timeout
             timeout_input = self.query_one("#timeout-input", Input)
@@ -278,17 +266,18 @@ class PortScannerWidget(BaseWidget):
             if results:
                 for result in results:
                     # Determine status color
-                    status_str = result.status.value
-                    if result.status == PortStatus.OPEN:
-                        status_str = f"[green]{status_str}[/green]"
-                    elif result.status == PortStatus.CLOSED:
-                        status_str = f"[red]{status_str}[/red]"
-                    elif result.status == PortStatus.FILTERED:
-                        status_str = f"[yellow]{status_str}[/yellow]"
-                    else:
-                        status_str = f"[dim]{status_str}[/dim]"
+                    status_str = result.status.value.upper()
+                    match result.status:
+                        case PortStatus.OPEN:
+                            status_str = f"[green]{status_str}[/green]"
+                        case PortStatus.CLOSED:
+                            status_str = f"[red]{status_str}[/red]"
+                        case PortStatus.FILTERED:
+                            status_str = f"[yellow]{status_str}[/yellow]"
+                        case _:
+                            status_str = f"[dim]{status_str}[/dim]"
 
-                    self.results_widget.add_row(
+                    self.results_widget.add_result_row(
                         port=str(result.port),
                         service=result.service_name or "Unknown",
                         status=status_str,

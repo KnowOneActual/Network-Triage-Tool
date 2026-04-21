@@ -11,7 +11,7 @@ License: MIT
 import concurrent.futures
 import socket
 import time
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from enum import Enum
 from typing import Any
 
@@ -47,11 +47,7 @@ class DNSLookupResult:
     lookup_time_ms: float
     status: DNSStatus
     error_message: str | None = None
-    records: list[DNSRecord] | None = None
-
-    def __post_init__(self):
-        if self.records is None:
-            self.records = []
+    records: list[DNSRecord] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary, excluding None values."""
@@ -155,7 +151,7 @@ def resolve_hostname(hostname: str, timeout: int = 5, include_reverse_dns: bool 
                         status=DNSStatus.SUCCESS,
                     ),
                 )
-            except TimeoutError, socket.herror:
+            except (TimeoutError, socket.herror):
                 # Reverse DNS is optional; don't fail if it times out
                 pass
 
