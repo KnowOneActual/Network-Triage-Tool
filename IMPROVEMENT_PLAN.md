@@ -120,10 +120,10 @@ This document outlines a comprehensive modernization plan for the Network Triage
 **Rationale:** Network tools benefit from optimized I/O and concurrency.
 
 **Tasks:**
-- [ ] Implement connection pooling for repeated DNS queries
-- [ ] Add parallel port scanning with configurable concurrency limits
+- [x] Implement connection pooling for repeated DNS queries
+- [x] Add parallel port scanning with configurable concurrency limits
 - [ ] Optimize latency measurement with statistical sampling
-- [ ] Implement result caching with TTL for repeated queries
+- [x] Implement result caching with TTL for repeated queries
 
 ### 4.2 Memory Efficiency
 **Tasks:**
