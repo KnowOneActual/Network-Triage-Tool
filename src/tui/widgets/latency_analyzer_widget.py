@@ -6,19 +6,13 @@ plus aggregate ping statistics for the target host.
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import TYPE_CHECKING, Any
 
 from textual import work
 from textual.containers import Horizontal, Vertical
 from textual.widgets import Button, DataTable, Input, Label, Static
-
-from .base import BaseWidget
-
-if TYPE_CHECKING:
-    from textual.app import ComposeResult
-
-logger = logging.getLogger(__name__)
 
 # Import latency utilities - Phase 3
 from shared.latency_utils import (
@@ -27,6 +21,13 @@ from shared.latency_utils import (
     mtr_style_trace,
     ping_statistics,
 )
+
+from .base import BaseWidget
+
+if TYPE_CHECKING:
+    from textual.app import ComposeResult
+
+logger = logging.getLogger(__name__)
 
 
 class LatencyAnalyzerWidget(BaseWidget):
@@ -201,17 +202,23 @@ class LatencyAnalyzerWidget(BaseWidget):
     # Background worker
     # ------------------------------------------------------------------
 
-    @work(thread=True)
-    def _run_trace_worker(self, host: str) -> None:
-        """Run mtr_style_trace + ping_statistics on a background thread."""
+    @work(group="trace_job")
+    async def _run_trace_worker(self, host: str) -> None:
+        """Run mtr_style_trace + ping_statistics concurrently using TaskGroup."""
         try:
-            hops, trace_msg = mtr_style_trace(host, max_hops=30, timeout=3)
-            ping_stats = ping_statistics(host, count=5, timeout=3)
+            async with asyncio.TaskGroup() as tg:
+                trace_task = tg.create_task(asyncio.to_thread(mtr_style_trace, host, max_hops=30, timeout=3))
+                ping_task = tg.create_task(asyncio.to_thread(ping_statistics, host, count=5, timeout=3))
+
+            hops, trace_msg = trace_task.result()
+            ping_stats = ping_task.result()
+
             logger.debug(f"Trace complete for {host}: {len(hops)} hops — {trace_msg}")
-            self.app.call_from_thread(self._display_results, hops, ping_stats)
-        except Exception as e:
+            self._display_results(hops, ping_stats)
+        except* Exception as e:
+            # TaskGroup errors are wrapped in ExceptionGroup
             logger.error(f"Trace worker error for {host}: {e}", exc_info=True)
-            self.app.call_from_thread(self._on_trace_error, str(e))
+            self._on_trace_error(str(e))
 
     def _display_results(self, hops: list[TracerouteHop], ping_stats: PingStatistics) -> None:
         """Populate the DataTable and summary label with trace results (UI thread)."""

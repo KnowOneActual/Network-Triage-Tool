@@ -7,12 +7,15 @@ Author: Network-Triage-Tool Contributors
 License: MIT
 """
 
-import concurrent.futures
+import asyncio
+import logging
 import socket
 import time
 from dataclasses import asdict, dataclass
 from enum import Enum
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 
 class PortStatus(Enum):
@@ -126,7 +129,7 @@ def check_port_open(host: str, port: int, timeout: int = 3, grab_banner: bool = 
                 try:
                     banner = sock.recv(1024).decode("utf-8", errors="ignore").strip()
                     result.banner = banner[:100]  # Limit to 100 chars
-                except (TimeoutError, OSError):
+                except TimeoutError, OSError:
                     pass  # Banner grab optional
 
         except TimeoutError:
@@ -166,89 +169,93 @@ def check_port_open(host: str, port: int, timeout: int = 3, grab_banner: bool = 
     return result
 
 
-def check_multiple_ports(host: str, ports: list[int], timeout: int = 3, max_workers: int = 10) -> list[PortCheckResult]:
-    """Check multiple ports concurrently.
+async def check_multiple_ports(
+    host: str,
+    ports: list[int],
+    timeout_secs: int = 3,
+    max_workers: int = 10,
+) -> list[PortCheckResult]:
+    """Check connectivity to multiple ports concurrently using TaskGroup.
 
     Args:
         host: Hostname or IP address
         ports: List of port numbers to check
-        timeout: Timeout per port in seconds
-        max_workers: Maximum concurrent threads
+        timeout_secs: Connection timeout per port in seconds
+        max_workers: Concurrent workers (historical; used for backoff/concurrency control)
 
     Returns:
         List of PortCheckResult objects
 
     Example:
-        >>> results = check_multiple_ports('localhost', [22, 80, 443, 3306])
+        >>> results = await check_multiple_ports('localhost', [22, 80, 443, 3306])
         >>> open_ports = [r for r in results if r.status == PortStatus.OPEN]
 
     """
-    results = []
+    results: list[PortCheckResult] = []
 
     def check_port_wrapper(port: int) -> PortCheckResult:
-        return check_port_open(host, port, timeout)
+        return check_port_open(host, port, timeout_secs)
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures = {executor.submit(check_port_wrapper, port): port for port in ports}
-
-        for future in concurrent.futures.as_completed(futures):
+    # Use TaskGroup for concurrent checks (Python 3.11+)
+    try:
+        async with asyncio.timeout(timeout_secs + 5):
             try:
-                result = future.result(timeout=timeout + 2)
-                results.append(result)
-            except Exception as e:
-                port = futures[future]
-                results.append(
-                    PortCheckResult(
-                        host=host,
-                        port=port,
-                        status=PortStatus.ERROR,
-                        service_name=COMMON_SERVICE_PORTS.get(port),
-                        response_time_ms=(time.time() - time.time()) * 1000,
-                        error_message=str(e),
-                    ),
-                )
+                async with asyncio.TaskGroup() as tg:
+                    tasks = {}
+                    for port in ports:
+                        task = tg.create_task(asyncio.to_thread(check_port_wrapper, port))
+                        tasks[task] = port
+
+                for task in tasks:
+                    results.append(task.result())
+            except* Exception as e:
+                # TaskGroup errors are wrapped in ExceptionGroup
+                for exc in e.exceptions:
+                    logger.error(f"Port scan error: {exc}")
+    except TimeoutError:
+        logger.error(f"Port scan timed out for {host}")
 
     # Sort by port number
     results.sort(key=lambda r: r.port)
     return results
 
 
-def scan_common_ports(host: str, timeout: int = 3, max_workers: int = 10) -> list[PortCheckResult]:
-    """Scan all common service ports.
+async def scan_common_ports(host: str, timeout_secs: int = 3, max_workers: int = 10) -> list[PortCheckResult]:
+    """Scan all common service ports concurrently using TaskGroup.
 
     Args:
         host: Hostname or IP address
-        timeout: Timeout per port in seconds
-        max_workers: Maximum concurrent threads
+        timeout_secs: Timeout per port in seconds
+        max_workers: Concurrent workers (historical)
 
     Returns:
         List of PortCheckResult objects for all common ports
 
     Example:
-        >>> results = scan_common_ports('192.168.1.1')
+        >>> results = await scan_common_ports('192.168.1.1')
         >>> for result in results:
         ...     if result.status == PortStatus.OPEN:
         ...         print(f"Port {result.port} ({result.service_name}) is open")
 
     """
-    return check_multiple_ports(host, list(COMMON_SERVICE_PORTS.keys()), timeout, max_workers)
+    return await check_multiple_ports(host, list(COMMON_SERVICE_PORTS.keys()), timeout_secs, max_workers)
 
 
-def scan_port_range(
+async def scan_port_range(
     host: str,
     start_port: int = 1,
     end_port: int = 1024,
-    timeout: int = 2,
+    timeout_secs: int = 2,
     max_workers: int = 20,
 ) -> list[PortCheckResult]:
-    """Scan a range of ports (useful for finding unexpected services).
+    """Scan a range of ports concurrently using TaskGroup.
 
     Args:
         host: Hostname or IP address
         start_port: Starting port number (inclusive)
         end_port: Ending port number (inclusive)
-        timeout: Timeout per port in seconds
-        max_workers: Maximum concurrent threads
+        timeout_secs: Timeout per port in seconds
+        max_workers: Concurrent workers (historical)
 
     Returns:
         List of PortCheckResult objects for open ports only
@@ -258,7 +265,7 @@ def scan_port_range(
         for detailed results including closed/filtered ports.
 
     Example:
-        >>> results = scan_port_range('192.168.1.100', 1, 1024)
+        >>> results = await scan_port_range('192.168.1.100', 1, 1024)
         >>> print(f"Found {len(results)} open ports")
 
     """
@@ -269,7 +276,7 @@ def scan_port_range(
         start_port, end_port = end_port, start_port
 
     ports = list(range(start_port, end_port + 1))
-    all_results = check_multiple_ports(host, ports, timeout, max_workers)
+    all_results = await check_multiple_ports(host, ports, timeout_secs, max_workers)
 
     # Filter to only open ports
     return [r for r in all_results if r.status == PortStatus.OPEN]
@@ -354,7 +361,7 @@ if __name__ == "__main__":
     print(f"Response time: {result.response_time_ms:.2f}ms")
 
     print("\n=== Multiple Common Ports ===")
-    results = check_multiple_ports("localhost", [22, 80, 443, 3306, 5432])
+    results = asyncio.run(check_multiple_ports("localhost", [22, 80, 443, 3306, 5432]))
     summary = summarize_port_scan(results)
     print(f"Total scanned: {summary['total_scanned']}")
     print(f"Open: {summary['open_count']}")

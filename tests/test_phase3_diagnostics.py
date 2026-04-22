@@ -35,11 +35,11 @@ from shared.port_utils import (
 )
 
 
-class TestDNSUtils(unittest.TestCase):
+class TestDNSUtils(unittest.IsolatedAsyncioTestCase):
     """Test suite for DNS utilities module."""
 
     @patch("shared.dns_utils.socket")
-    def test_resolve_hostname_success(self, mock_socket):
+    def test_resolve_hostname_success(self, mock_socket: MagicMock) -> None:
         """Test successful hostname resolution."""
         # Mock getaddrinfo to return A and AAAA records
         mock_socket.getaddrinfo.return_value = [
@@ -62,7 +62,7 @@ class TestDNSUtils(unittest.TestCase):
         self.assertEqual(result.status, DNSStatus.SUCCESS)
 
     @patch("shared.dns_utils.socket")
-    def test_resolve_hostname_not_found(self, mock_socket):
+    def test_resolve_hostname_not_found(self, mock_socket: MagicMock) -> None:
         """Test hostname not found scenario."""
         mock_socket.getaddrinfo.side_effect = Exception("Name or service not known")
         mock_socket.gaierror = Exception
@@ -76,7 +76,7 @@ class TestDNSUtils(unittest.TestCase):
         self.assertIsNotNone(result.error_message)
 
     @patch("shared.dns_utils.socket")
-    def test_resolve_hostname_timeout(self, mock_socket):
+    def test_resolve_hostname_timeout(self, mock_socket: MagicMock) -> None:
         """Test DNS resolution timeout."""
         mock_socket.getaddrinfo.side_effect = Exception("DNS query timed out")
         mock_socket.gaierror = Exception
@@ -90,7 +90,7 @@ class TestDNSUtils(unittest.TestCase):
         self.assertIn(result.status, [DNSStatus.TIMEOUT, DNSStatus.NOT_FOUND, DNSStatus.ERROR])
 
     @patch("shared.dns_utils.socket")
-    def test_validate_dns_server_responsive(self, mock_socket):
+    def test_validate_dns_server_responsive(self, mock_socket: MagicMock) -> None:
         """Test DNS server validation - responsive server."""
         mock_sock_instance = MagicMock()
         mock_socket.socket.return_value = mock_sock_instance
@@ -103,7 +103,7 @@ class TestDNSUtils(unittest.TestCase):
         self.assertEqual(result["server_ip"], "8.8.8.8")
 
     @patch("shared.dns_utils.socket")
-    def test_validate_dns_server_timeout(self, mock_socket):
+    def test_validate_dns_server_timeout(self, mock_socket: MagicMock) -> None:
         """Test DNS server validation - timeout."""
         mock_sock_instance = MagicMock()
         mock_socket.socket.return_value = mock_sock_instance
@@ -116,11 +116,11 @@ class TestDNSUtils(unittest.TestCase):
         self.assertIn(result["status"], ["timeout", "error", "no_response"])
 
     @patch("shared.dns_utils.socket.gethostbyname_ex")
-    def test_check_dns_propagation(self, mock_gethostbyname):
+    async def test_check_dns_propagation(self, mock_gethostbyname: MagicMock) -> None:
         """Test DNS propagation check across providers."""
         mock_gethostbyname.return_value = ("google.com", [], ["142.250.185.46"])
 
-        results = check_dns_propagation("google.com")
+        results = await check_dns_propagation("google.com")
 
         self.assertGreater(len(results), 0)
         # Check that results have expected structure
@@ -130,11 +130,11 @@ class TestDNSUtils(unittest.TestCase):
             self.assertIn("ips", result)
 
 
-class TestPortUtils(unittest.TestCase):
+class TestPortUtils(unittest.IsolatedAsyncioTestCase):
     """Test suite for port utilities module."""
 
     @patch("shared.port_utils.socket")
-    def test_check_port_open(self, mock_socket):
+    def test_check_port_open(self, mock_socket: MagicMock) -> None:
         """Test port check - port is open."""
         mock_sock_instance = MagicMock()
         mock_socket.socket.return_value = mock_sock_instance
@@ -148,7 +148,7 @@ class TestPortUtils(unittest.TestCase):
         self.assertGreaterEqual(result.response_time_ms, 0)
 
     @patch("shared.port_utils.socket.socket")
-    def test_check_port_closed(self, mock_socket_class):
+    def test_check_port_closed(self, mock_socket_class: MagicMock) -> None:
         """Test port check - port is closed."""
         mock_sock_instance = MagicMock()
         mock_socket_class.return_value = mock_sock_instance
@@ -159,7 +159,7 @@ class TestPortUtils(unittest.TestCase):
         self.assertEqual(result.status, PortStatus.CLOSED)
 
     @patch("shared.port_utils.socket.socket")
-    def test_check_port_timeout(self, mock_socket_class):
+    def test_check_port_timeout(self, mock_socket_class: MagicMock) -> None:
         """Test port check - timeout (filtered port)."""
         mock_sock_instance = MagicMock()
         mock_socket_class.return_value = mock_sock_instance
@@ -171,7 +171,7 @@ class TestPortUtils(unittest.TestCase):
         self.assertEqual(result.status, PortStatus.FILTERED)
 
     @patch("shared.port_utils.socket")
-    def test_check_port_invalid_port(self, mock_socket):
+    def test_check_port_invalid_port(self, mock_socket: MagicMock) -> None:
         """Test port check - invalid port number."""
         result = check_port_open("localhost", 99999)
 
@@ -179,7 +179,7 @@ class TestPortUtils(unittest.TestCase):
         self.assertIsNotNone(result.error_message)
 
     @patch("shared.port_utils.check_port_open")
-    def test_check_multiple_ports(self, mock_check_port):
+    async def test_check_multiple_ports(self, mock_check_port: MagicMock) -> None:
         """Test concurrent port checking."""
         # Mock results for multiple ports
         results = [
@@ -188,30 +188,36 @@ class TestPortUtils(unittest.TestCase):
         ]
         mock_check_port.side_effect = results
 
-        result = check_multiple_ports("localhost", [22, 80])
+        result = await check_multiple_ports("localhost", [22, 80])
 
         # Note: Since mocked check_port_open, we're testing the threading logic
         self.assertEqual(len(result), 2)
 
-    def test_get_service_name(self):
+    def test_get_service_name(self) -> None:
         """Test service name lookup."""
         self.assertEqual(get_service_name(22), "SSH")
         self.assertEqual(get_service_name(80), "HTTP")
         self.assertEqual(get_service_name(443), "HTTPS")
         self.assertEqual(get_service_name(99999), "Unknown")
 
-    def test_summarize_port_scan(self):
+    def test_summarize_port_scan(self) -> None:
         """Test port scan result summarization."""
+        from shared.port_utils import PortCheckResult
+
         # Create mock results
-        open_result = type(
-            "obj",
-            (object,),
-            {"port": 22, "status": PortStatus.OPEN, "response_time_ms": 15.5, "service_name": "SSH"},
+        open_result = PortCheckResult(
+            host="localhost",
+            port=22,
+            status=PortStatus.OPEN,
+            response_time_ms=15.5,
+            service_name="SSH",
         )
-        closed_result = type(
-            "obj",
-            (object,),
-            {"port": 23, "status": PortStatus.CLOSED, "response_time_ms": 2.1, "service_name": "TELNET"},
+        closed_result = PortCheckResult(
+            host="localhost",
+            port=23,
+            status=PortStatus.CLOSED,
+            response_time_ms=2.1,
+            service_name="TELNET",
         )
 
         results = [open_result, closed_result]
@@ -226,7 +232,7 @@ class TestPortUtils(unittest.TestCase):
 class TestLatencyUtils(unittest.TestCase):
     """Test suite for latency utilities module."""
 
-    def test_parse_ping_output_linux(self):
+    def test_parse_ping_output_linux(self) -> None:
         """Test ping output parsing for Linux."""
         ping_output = """
 PING google.com (142.250.185.46) 56(84) bytes of data.
@@ -242,7 +248,7 @@ PING google.com (142.250.185.46) 56(84) bytes of data.
         self.assertAlmostEqual(rtt_values[1], 14.856, places=2)
         self.assertAlmostEqual(rtt_values[2], 16.234, places=2)
 
-    def test_parse_ping_output_windows(self):
+    def test_parse_ping_output_windows(self) -> None:
         """Test ping output parsing for Windows."""
         ping_output = """
 Reply from 8.8.8.8: bytes=32 time=20ms TTL=119
@@ -258,7 +264,7 @@ Reply from 8.8.8.8: bytes=32 time=21ms TTL=119
         self.assertEqual(rtt_values[2], 21.0)
 
     @patch("shared.latency_utils.subprocess.Popen")
-    def test_ping_statistics_success(self, mock_popen):
+    def test_ping_statistics_success(self, mock_popen: MagicMock) -> None:
         """Test ping statistics calculation."""
         ping_output = """
 PING google.com (142.250.185.46) 56(84) bytes of data.
@@ -283,7 +289,7 @@ PING google.com (142.250.185.46) 56(84) bytes of data.
         self.assertGreater(stats.stddev_ms, 0)  # Jitter should be > 0
 
     @patch("shared.latency_utils.subprocess.Popen")
-    def test_ping_statistics_no_response(self, mock_popen):
+    def test_ping_statistics_no_response(self, mock_popen: MagicMock) -> None:
         """Test ping with no response."""
         # Ping output with no response - no RTT values extracted
         ping_output = """
@@ -308,7 +314,7 @@ PING invalid.local (127.0.0.1) 56(84) bytes of data.
         self.assertEqual(stats.packet_loss_percent, 100)
 
     @patch("shared.latency_utils.subprocess.Popen")
-    def test_ping_statistics_timeout(self, mock_popen):
+    def test_ping_statistics_timeout(self, mock_popen: MagicMock) -> None:
         """Test ping command timeout."""
         mock_popen.side_effect = Exception("Command timeout")
 
@@ -320,7 +326,7 @@ PING invalid.local (127.0.0.1) 56(84) bytes of data.
 
     @patch("shared.latency_utils._has_mtr", return_value=False)
     @patch("shared.latency_utils.subprocess.Popen")
-    def test_mtr_style_trace_fallback(self, mock_popen, mock_has_mtr):
+    def test_mtr_style_trace_fallback(self, mock_popen: MagicMock, mock_has_mtr: MagicMock) -> None:
         """Test MTR fallback to traceroute when mtr unavailable."""
         traceroute_output = """
 traceroute to 8.8.8.8 (8.8.8.8), 30 hops max
@@ -343,7 +349,7 @@ traceroute to 8.8.8.8 (8.8.8.8), 30 hops max
 class TestPhase3Integration(unittest.TestCase):
     """Integration tests for Phase 3 modules."""
 
-    def test_dns_result_to_dict(self):
+    def test_dns_result_to_dict(self) -> None:
         """Test DNS result dictionary conversion."""
         from shared.dns_utils import DNSRecord
 
@@ -364,7 +370,7 @@ class TestPhase3Integration(unittest.TestCase):
         self.assertEqual(result_dict["status"], "success")
         self.assertEqual(len(result_dict["records"]), 1)
 
-    def test_port_result_to_dict(self):
+    def test_port_result_to_dict(self) -> None:
         """Test port check result dictionary conversion."""
         from shared.port_utils import PortCheckResult
 
@@ -376,7 +382,7 @@ class TestPhase3Integration(unittest.TestCase):
         self.assertEqual(result_dict["status"], "open")
         self.assertEqual(result_dict["service_name"], "SSH")
 
-    def test_ping_statistics_result_to_dict(self):
+    def test_ping_statistics_result_to_dict(self) -> None:
         """Test ping statistics result dictionary conversion."""
         stats = PingStatistics(
             host="8.8.8.8",

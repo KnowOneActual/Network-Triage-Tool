@@ -8,7 +8,7 @@ Author: Network-Triage-Tool Contributors
 License: MIT
 """
 
-import concurrent.futures
+import asyncio
 import socket
 import time
 from dataclasses import asdict, dataclass, field
@@ -230,19 +230,19 @@ def validate_dns_server(server_ip: str, test_domain: str = "google.com", timeout
     return result
 
 
-def check_dns_propagation(domain: str, record_type: str = "A", timeout: int = 5) -> list[dict[str, Any]]:
+async def check_dns_propagation(domain: str, record_type: str = "A", timeout_secs: int = 5) -> list[dict[str, Any]]:
     """Check DNS propagation across multiple public DNS providers.
 
     Args:
         domain: Domain to check
         record_type: Type of record ('A', 'AAAA', 'CNAME', 'MX')
-        timeout: Timeout per server in seconds
+        timeout_secs: Timeout per server in seconds
 
     Returns:
         List of results from each DNS provider
 
     Example:
-        >>> results = check_dns_propagation('example.com')
+        >>> results = await check_dns_propagation('example.com')
         >>> for result in results:
         ...     print(f"{result['provider']}: {result['ips']}")
 
@@ -263,7 +263,7 @@ def check_dns_propagation(domain: str, record_type: str = "A", timeout: int = 5)
         try:
             # Set resolver temporarily
             old_timeout = socket.getdefaulttimeout()
-            socket.setdefaulttimeout(timeout)
+            socket.setdefaulttimeout(timeout_secs)
 
             try:
                 # Use getaddrinfo with the resolver (limited support)
@@ -284,20 +284,25 @@ def check_dns_propagation(domain: str, record_type: str = "A", timeout: int = 5)
         except Exception as e:
             return {"provider": provider_name, "server_ip": server_ip, "ips": [], "status": "error", "error": str(e)}
 
-    # Use ThreadPoolExecutor for concurrent checks
-    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-        futures = []
-        for provider, servers in public_dns_servers.items():
-            for server_ip in servers[:1]:  # Use first server per provider
-                future = executor.submit(check_with_resolver, provider, server_ip)
-                futures.append(future)
-
-        for future in concurrent.futures.as_completed(futures):
+    # Use TaskGroup for concurrent checks (Python 3.11+)
+    try:
+        async with asyncio.timeout(timeout_secs + 2):
             try:
-                result = future.result(timeout=timeout + 2)
-                propagation_results.append(result)
-            except Exception as e:
-                propagation_results.append({"provider": "unknown", "status": "error", "error": str(e)})
+                async with asyncio.TaskGroup() as tg:
+                    tasks = []
+                    for provider, servers in public_dns_servers.items():
+                        for server_ip in servers[:1]:  # Use first server per provider
+                            task = tg.create_task(asyncio.to_thread(check_with_resolver, provider, server_ip))
+                            tasks.append(task)
+
+                for task in tasks:
+                    propagation_results.append(task.result())
+            except* Exception as e:
+                # TaskGroup errors are wrapped in ExceptionGroup
+                for exc in e.exceptions:
+                    propagation_results.append({"provider": "unknown", "status": "error", "error": str(exc)})
+    except TimeoutError:
+        propagation_results.append({"provider": "global", "status": "timeout", "error": "Propagation check timed out"})
 
     return propagation_results
 
@@ -354,6 +359,6 @@ if __name__ == "__main__":
     print(f"Response time: {server_result['response_time_ms']:.2f}ms")
 
     print("\n=== DNS Propagation Check ===")
-    propagation = check_dns_propagation("google.com")
+    propagation = asyncio.run(check_dns_propagation("google.com"))
     for provider_result in propagation:
         print(f"{provider_result['provider']}: {provider_result['status']}")
