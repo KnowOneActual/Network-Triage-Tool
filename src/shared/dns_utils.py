@@ -100,25 +100,26 @@ def resolve_hostname(hostname: str, timeout: int = 5, include_reverse_dns: bool 
                 ip_addr = ip_addr_raw.decode() if isinstance(ip_addr_raw, bytes) else str(ip_addr_raw)
                 query_time = (time.time() - start_time) * 1000
 
-                if family == socket.AF_INET:
-                    if ip_addr not in result.ipv4_addresses:
-                        result.ipv4_addresses.append(ip_addr)
-                        result.records.append(
-                            DNSRecord(record_type="A", value=ip_addr, query_time_ms=query_time, status=DNSStatus.SUCCESS),
-                        )
-                elif family == socket.AF_INET6:
-                    # Normalize IPv6 address (remove trailing %interface)
-                    ipv6_clean = ip_addr.split("%")[0]
-                    if ipv6_clean not in result.ipv6_addresses:
-                        result.ipv6_addresses.append(ipv6_clean)
-                        result.records.append(
-                            DNSRecord(
-                                record_type="AAAA",
-                                value=ipv6_clean,
-                                query_time_ms=query_time,
-                                status=DNSStatus.SUCCESS,
-                            ),
-                        )
+                match family:
+                    case socket.AF_INET:
+                        if ip_addr not in result.ipv4_addresses:
+                            result.ipv4_addresses.append(ip_addr)
+                            result.records.append(
+                                DNSRecord(record_type="A", value=ip_addr, query_time_ms=query_time, status=DNSStatus.SUCCESS),
+                            )
+                    case socket.AF_INET6:
+                        # Normalize IPv6 address (remove trailing %interface)
+                        ipv6_clean = ip_addr.split("%")[0]
+                        if ipv6_clean not in result.ipv6_addresses:
+                            result.ipv6_addresses.append(ipv6_clean)
+                            result.records.append(
+                                DNSRecord(
+                                    record_type="AAAA",
+                                    value=ipv6_clean,
+                                    query_time_ms=query_time,
+                                    status=DNSStatus.SUCCESS,
+                                ),
+                            )
 
         except socket.gaierror as e:
             result.status = DNSStatus.NOT_FOUND
@@ -151,7 +152,7 @@ def resolve_hostname(hostname: str, timeout: int = 5, include_reverse_dns: bool 
                         status=DNSStatus.SUCCESS,
                     ),
                 )
-            except (TimeoutError, socket.herror):
+            except TimeoutError, socket.herror:
                 # Reverse DNS is optional; don't fail if it times out
                 pass
 

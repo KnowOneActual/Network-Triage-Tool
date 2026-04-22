@@ -51,15 +51,16 @@ except ImportError:
 # ----------------------------------------------------------------------------
 current_os = platform.system()
 
-if current_os == "Darwin":
-    from .macos.network_toolkit import NetworkTriageToolkit
-elif current_os == "Linux":
-    from .linux.network_toolkit import NetworkTriageToolkit  # type: ignore[assignment]
-elif current_os == "Windows":
-    from .windows.network_toolkit import NetworkTriageToolkit  # type: ignore[assignment]
-else:
-    sys.stderr.write(f"Unsupported OS: {current_os}\n")
-    sys.exit(1)
+match current_os:
+    case "Darwin":
+        from .macos.network_toolkit import NetworkTriageToolkit
+    case "Linux":
+        from .linux.network_toolkit import NetworkTriageToolkit  # type: ignore[assignment]
+    case "Windows":
+        from .windows.network_toolkit import NetworkTriageToolkit  # type: ignore[assignment]
+    case _:
+        sys.stderr.write(f"Unsupported OS: {current_os}\n")
+        sys.exit(1)
 
 net_tool = NetworkTriageToolkit()
 # ----------------------------------------------------------------------------
@@ -152,8 +153,9 @@ class ConnectionTool(Container):
         self.refresh_connection()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.id == "btn_refresh_conn":
-            self.refresh_connection()
+        match event.button.id:
+            case "btn_refresh_conn":
+                self.refresh_connection()
 
     @work(thread=True)
     def refresh_connection(self) -> None:
@@ -191,10 +193,11 @@ class PingTool(Container):
         yield Log(id="ping_log", highlight=True)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.id == "start_ping_btn":
-            self.action_start_ping()
-        elif event.button.id == "stop_ping_btn":
-            self.action_stop_ping()
+        match event.button.id:
+            case "start_ping_btn":
+                self.action_start_ping()
+            case "stop_ping_btn":
+                self.action_stop_ping()
 
     def action_start_ping(self) -> None:
         host = self.query_one("#ping_input", Input).value
@@ -236,10 +239,11 @@ class LLDPTool(Container):
         yield Log(id="lldp_log", highlight=True)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.id == "btn_lldp_start":
-            self.action_start_scan()
-        elif event.button.id == "btn_lldp_stop":
-            self.action_stop_scan()
+        match event.button.id:
+            case "btn_lldp_start":
+                self.action_start_scan()
+            case "btn_lldp_stop":
+                self.action_stop_scan()
 
     def action_start_scan(self) -> None:
         self.query_one("#btn_lldp_start", Button).disabled = True

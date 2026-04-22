@@ -14,7 +14,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, Any
 
 from textual.containers import Container, Vertical
 from textual.reactive import reactive
@@ -24,8 +24,6 @@ if TYPE_CHECKING:
     from textual.app import ComposeResult
 
 logger = logging.getLogger(__name__)
-
-T = TypeVar("T")
 
 
 @dataclass

@@ -9,7 +9,7 @@ import shutil
 import subprocess
 import time
 from collections.abc import Callable
-from typing import Any, TypeVar, cast
+from typing import Any, cast
 
 from .exceptions import (
     CommandNotFoundError,
@@ -20,10 +20,8 @@ from .exceptions import (
 # Configure logging
 logger = logging.getLogger(__name__)
 
-T = TypeVar("T")
 
-
-def retry(
+def retry[T](
     max_attempts: int = 3,
     delay: float = 1.0,
     backoff: float = 2.0,
@@ -133,7 +131,7 @@ def safe_subprocess_run(
         raise NetworkCommandError(f"Unexpected error running command: {e}")
 
 
-def safe_socket_operation(
+def safe_socket_operation[T](
     operation: Callable[[], T],
     timeout: float = 5.0,
     operation_name: str = "Socket operation",

@@ -326,12 +326,13 @@ def _fallback_trace(host: str, max_hops: int, timeout: int, system: str) -> tupl
     hops = []
 
     # Determine traceroute command
-    if system == "Windows":
-        cmd_base = ["tracert", "-h", str(max_hops), "-w", str(timeout * 1000), host]
-    elif system == "Darwin":
-        cmd_base = ["traceroute", "-m", str(max_hops), "-w", str(timeout), host]
-    else:  # Linux
-        cmd_base = ["traceroute", "-m", str(max_hops), "-w", str(timeout), host]
+    match system:
+        case "Windows":
+            cmd_base = ["tracert", "-h", str(max_hops), "-w", str(timeout * 1000), host]
+        case "Darwin":
+            cmd_base = ["traceroute", "-m", str(max_hops), "-w", str(timeout), host]
+        case _:  # Linux
+            cmd_base = ["traceroute", "-m", str(max_hops), "-w", str(timeout), host]
 
     try:
         process = subprocess.Popen(
