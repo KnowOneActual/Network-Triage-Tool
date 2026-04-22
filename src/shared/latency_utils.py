@@ -71,7 +71,14 @@ class TracerouteHop:
         return asdict(self)
 
 
-def ping_statistics(host: str, count: int = 10, timeout: int = 5, interval: float = 0.5) -> PingStatistics:
+def ping_statistics(
+    host: str,
+    count: int = 10,
+    timeout: int = 5,
+    interval: float = 0.5,
+    target_stddev: float | None = 1.0,
+    min_samples: int = 5,
+) -> PingStatistics:
     """Execute ping and calculate comprehensive statistics including jitter.
 
     Args:
@@ -79,6 +86,8 @@ def ping_statistics(host: str, count: int = 10, timeout: int = 5, interval: floa
         count: Number of ping packets (default 10)
         timeout: Timeout per ping in seconds
         interval: Interval between pings in seconds
+        target_stddev: Terminate early if jitter falls below this threshold
+        min_samples: Minimum samples before checking early termination
 
     Returns:
         PingStatistics object with min/max/avg/stddev and jitter
@@ -89,6 +98,8 @@ def ping_statistics(host: str, count: int = 10, timeout: int = 5, interval: floa
         >>> print(f"Jitter (stddev): {stats.stddev_ms:.2f}ms")
 
     """
+    import time
+
     result = PingStatistics(
         host=host,
         packets_sent=count,
@@ -124,20 +135,50 @@ def ping_statistics(host: str, count: int = 10, timeout: int = 5, interval: floa
             stderr=subprocess.PIPE,
             text=True,  # Use text=True instead of universal_newlines=True
         )
-        stdout, stderr = process.communicate(timeout=count * timeout + 5)
 
-        if process.returncode not in [0, 1]:  # 0 = success, 1 = some loss
+        rtt_values: list[float] = []
+        stderr_output: str = ""
+        start_time = time.time()
+        timeout_limit = count * max(timeout, interval) + 5
+        early_terminated = False
+
+        if process.stdout is not None:
+            while True:
+                # Check timeout
+                if time.time() - start_time > timeout_limit:
+                    process.kill()
+                    break
+
+                line = process.stdout.readline()
+                if not line and process.poll() is not None:
+                    break
+
+                if line:
+                    rtts = _parse_ping_output(line, system)
+                    rtt_values.extend(rtts)
+
+                    # Statistical sampling early exit
+                    if target_stddev is not None and len(rtt_values) >= min_samples:
+                        current_stddev = statistics.stdev(rtt_values)
+                        if current_stddev <= target_stddev:
+                            early_terminated = True
+                            process.terminate()
+                            break
+
+        if process.stderr is not None:
+            stderr_output = process.stderr.read()
+
+        process.wait()
+
+        if not early_terminated and process.returncode not in [0, 1] and not rtt_values:  # 0 = success, 1 = some loss
             result.status = LatencyStatus.UNREACHABLE
-            result.error_message = stderr or "Ping failed"
+            result.error_message = stderr_output or "Ping failed"
             return result
 
-        # Parse ping output for RTT values
-        rtt_values = _parse_ping_output(stdout, system)
-
-        # If no RTT values but ping succeeded, calculate packet loss and return
+        # If no RTT values but ping succeeded or failed gracefully, calculate packet loss and return
         if not rtt_values:
             result.packets_received = 0
-            result.packet_loss_percent = ((count - 0) / count) * 100  # 100% loss
+            result.packet_loss_percent = 100.0
             result.status = LatencyStatus.UNREACHABLE
             result.error_message = "No response from host"
             return result
@@ -149,12 +190,10 @@ def ping_statistics(host: str, count: int = 10, timeout: int = 5, interval: floa
         result.min_ms = min(rtt_values)
         result.max_ms = max(rtt_values)
         result.avg_ms = statistics.mean(rtt_values)
-        result.stddev_ms = statistics.stdev(rtt_values) if len(rtt_values) > 1 else 0
-        result.packet_loss_percent = ((count - len(rtt_values)) / count) * 100
+        result.stddev_ms = statistics.stdev(rtt_values) if len(rtt_values) > 1 else 0.0
 
-    except subprocess.TimeoutExpired:
-        result.status = LatencyStatus.TIMEOUT
-        result.error_message = f"Ping timeout after {count * timeout}s"
+        actual_count = result.packets_received if early_terminated else count
+        result.packet_loss_percent = max(0.0, ((actual_count - result.packets_received) / actual_count) * 100.0)
 
     except FileNotFoundError:
         result.status = LatencyStatus.ERROR

@@ -272,9 +272,14 @@ PING google.com (142.250.185.46) 56(84) bytes of data.
 64 bytes from google.com: icmp_seq=2 ttl=119 time=14.0 ms
 64 bytes from google.com: icmp_seq=3 ttl=119 time=16.0 ms
         """
+        import io
+
         mock_process = MagicMock()
         mock_process.returncode = 0
         mock_process.communicate.return_value = (ping_output, "")
+        mock_process.stdout = io.StringIO(ping_output)
+        mock_process.stderr = io.StringIO("")
+        mock_process.poll.return_value = 0
         mock_popen.return_value = mock_process
 
         with patch("shared.latency_utils.platform.system", return_value="Linux"):
@@ -298,9 +303,14 @@ PING invalid.local (127.0.0.1) 56(84) bytes of data.
 --- invalid.local statistics ---
 10 packets transmitted, 0 received, 100% packet loss, time 9127ms
         """
+        import io
+
         mock_process = MagicMock()
         mock_process.returncode = 1
         mock_process.communicate.return_value = (ping_output, "")
+        mock_process.stdout = io.StringIO(ping_output)
+        mock_process.stderr = io.StringIO("")
+        mock_process.poll.return_value = 0
         mock_popen.return_value = mock_process
 
         with patch("shared.latency_utils.platform.system", return_value="Linux"):

@@ -122,7 +122,7 @@ This document outlines a comprehensive modernization plan for the Network Triage
 **Tasks:**
 - [x] Implement connection pooling for repeated DNS queries
 - [x] Add parallel port scanning with configurable concurrency limits
-- [ ] Optimize latency measurement with statistical sampling
+- [x] Optimize latency measurement with statistical sampling
 - [x] Implement result caching with TTL for repeated queries
 
 ### 4.2 Memory Efficiency
