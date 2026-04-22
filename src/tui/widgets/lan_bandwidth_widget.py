@@ -351,11 +351,11 @@ class LanBandwidthWidget(BaseWidget):
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle Start / Stop button presses."""
-        btn_id = event.button.id
-        if btn_id == "bw-start-btn":
-            self._start_test()
-        elif btn_id == "bw-stop-btn":
-            self._stop_test()
+        match event.button.id:
+            case "bw-start-btn":
+                self._start_test()
+            case "bw-stop-btn":
+                self._stop_test()
 
     # ------------------------------------------------------------------
     # Control methods

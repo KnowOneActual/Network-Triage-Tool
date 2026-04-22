@@ -308,14 +308,14 @@ class ConnectionMonitorWidget(BaseWidget):
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button presses."""
-        btn_id = event.button.id
-        if btn_id == "refresh-btn":
-            self._do_refresh()
-        elif btn_id == "auto-btn":
-            self._toggle_auto_refresh()
-        elif btn_id == "clear-search-btn":
-            self.query_one("#search-input", Input).value = ""
-            self._apply_current_filter()
+        match event.button.id:
+            case "refresh-btn":
+                self._do_refresh()
+            case "auto-btn":
+                self._toggle_auto_refresh()
+            case "clear-search-btn":
+                self.query_one("#search-input", Input).value = ""
+                self._apply_current_filter()
 
     def on_select_changed(self, event: Select.Changed) -> None:
         """Re-apply filter when the dropdown changes."""

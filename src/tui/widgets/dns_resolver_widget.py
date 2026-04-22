@@ -83,10 +83,11 @@ class DNSResolverWidget(BaseWidget):
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button presses."""
-        if event.button.id == "resolve-btn":
-            self.resolve_hostname()
-        elif event.button.id == "clear-btn":
-            self.clear_results()
+        match event.button.id:
+            case "resolve-btn":
+                self.resolve_hostname()
+            case "clear-btn":
+                self.clear_results()
 
     def resolve_hostname(self) -> None:
         """Resolve the hostname using Phase 3 DNS utilities."""

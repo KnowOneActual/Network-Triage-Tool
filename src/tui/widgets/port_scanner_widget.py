@@ -246,12 +246,13 @@ class PortScannerWidget(BaseWidget):
                 parsed_ports = self.parse_ports_input(port_str, scan_mode)
                 if parsed_ports is None:
                     # Provide specific error message based on mode
-                    if scan_mode == "single":
-                        self.display_error("Invalid port number (must be 1-65535)")
-                    elif scan_mode == "multiple":
-                        self.display_error("Invalid ports: use comma-separated numbers (1-65535)")
-                    elif scan_mode == "range":
-                        self.display_error("Invalid range: use format 'start-end' (e.g. 1-1024)")
+                    match scan_mode:
+                        case "single":
+                            self.display_error("Invalid port number (must be 1-65535)")
+                        case "multiple":
+                            self.display_error("Invalid ports: use comma-separated numbers (1-65535)")
+                        case "range":
+                            self.display_error("Invalid range: use format 'start-end' (e.g. 1-1024)")
                     return
 
                 ports_to_scan = parsed_ports
