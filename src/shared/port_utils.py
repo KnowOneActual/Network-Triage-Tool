@@ -8,6 +8,7 @@ License: MIT
 """
 
 import asyncio
+import functools
 import logging
 import socket
 import time
@@ -282,6 +283,7 @@ async def scan_port_range(
     return [r for r in all_results if r.status == PortStatus.OPEN]
 
 
+@functools.cache
 def get_service_name(port: int) -> str:
     """Get service name for a port number.
 

@@ -1,3 +1,4 @@
+import functools
 import os
 import platform
 import shutil
@@ -7,12 +8,71 @@ import subprocess
 import threading
 import xml.etree.ElementTree as ET
 from collections.abc import Callable
-from typing import Any
+from typing import Any, Protocol, runtime_checkable
 
 import speedtest
 from scapy.all import inet_ntoa, sniff
 from scapy.contrib.cdp import CDPAddrRecord, CDPMsg
 from scapy.contrib.lldp import LLDPDU
+
+
+@runtime_checkable
+class NetworkToolkit(Protocol):
+    """Protocol defining the interface for all network toolkits."""
+
+    def continuous_ping(self, host: str, callback: Callable[[str], None]) -> None:
+        """Pings a host continuously."""
+        ...
+
+    def stop_ping(self) -> None:
+        """Signals the continuous ping to stop."""
+        ...
+
+    def dns_resolution_test(self, domain: str) -> str:
+        """Tests DNS resolution."""
+        ...
+
+    def port_connectivity_test(self, host: str, port: int | str) -> str:
+        """Tests if a specific port is open."""
+        ...
+
+    def start_discovery_capture(self, callback: Callable[[str], None], timeout: int = 60) -> None:
+        """Starts a thread to capture LLDP or CDP packets."""
+        ...
+
+    def stop_discovery_capture(self) -> None:
+        """Signals the packet capture thread to stop."""
+        ...
+
+    def run_speed_test(self) -> dict[str, str]:
+        """Performs a network speed test."""
+        ...
+
+    def run_network_scan(
+        self, target: str, arguments: str = "-F", callback: Callable[[str], None] | None = None
+    ) -> list[dict[str, Any]]:
+        """Performs an Nmap scan."""
+        ...
+
+    def stop_network_scan(self) -> str:
+        """Stops a running Nmap scan."""
+        ...
+
+    def get_system_info(self) -> dict[str, str]:
+        """Gets basic system information."""
+        ...
+
+    def get_ip_info(self) -> dict[str, str]:
+        """Gets IP address information."""
+        ...
+
+    def get_connection_details(self) -> dict[str, str]:
+        """Gets current network connection details."""
+        ...
+
+    def traceroute_test(self, host: str) -> str:
+        """Performs a simple traceroute."""
+        ...
 
 
 class NetworkTriageToolkitBase:
@@ -210,11 +270,10 @@ class NetworkTriageToolkitBase:
         except Exception as e:
             return {"Error": f"Speed test failed: {e}"}
 
-    def run_network_scan(
-        self, target: str, arguments: str = "-F", callback: Callable[[str], None] | None = None
-    ) -> list[dict[str, Any]]:
-        """Performs an Nmap scan by running it as a subprocess and parsing the XML output."""
-        # dynamic path resolution
+    @staticmethod
+    @functools.cache
+    def _get_nmap_path() -> str | None:
+        """Find and cache the path to the nmap executable."""
         nmap_path = shutil.which("nmap")
         if not nmap_path:
             # Fallback checks for common macOS locations
@@ -222,6 +281,14 @@ class NetworkTriageToolkitBase:
                 nmap_path = "/usr/local/bin/nmap"
             elif os.path.exists("/opt/homebrew/bin/nmap"):
                 nmap_path = "/opt/homebrew/bin/nmap"
+        return nmap_path
+
+    def run_network_scan(
+        self, target: str, arguments: str = "-F", callback: Callable[[str], None] | None = None
+    ) -> list[dict[str, Any]]:
+        """Performs an Nmap scan by running it as a subprocess and parsing the XML output."""
+        # dynamic path resolution
+        nmap_path = self._get_nmap_path()
 
         if not nmap_path:
             return [

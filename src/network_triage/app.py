@@ -1,10 +1,15 @@
+from __future__ import annotations
+
 import datetime
 import importlib.metadata
 import ipaddress
 import platform
 import sys
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from .shared.shared_toolkit import NetworkToolkit
 
 from textual import work
 from textual.app import App, ComposeResult
@@ -62,7 +67,7 @@ match current_os:
         sys.stderr.write(f"Unsupported OS: {current_os}\n")
         sys.exit(1)
 
-net_tool = NetworkTriageToolkit()
+net_tool: NetworkToolkit = NetworkTriageToolkit()
 # ----------------------------------------------------------------------------
 
 
