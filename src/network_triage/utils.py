@@ -268,3 +268,39 @@ def log_exception(error: Exception, context: str = "") -> None:
         logger.error(f"{context}: [{error_type}] {error}", exc_info=False)
     else:
         logger.error(f"[{error_type}] {error}", exc_info=False)
+
+
+def ttl_cache(ttl_seconds: int = 60) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+    """Decorator to cache function results with a Time-To-Live (TTL).
+
+    Args:
+        ttl_seconds: Cache duration in seconds (default: 60)
+
+    """
+
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+        cache: dict[tuple[Any, ...], tuple[float, Any]] = {}
+
+        @functools.wraps(func)
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            # Create a hashable key from args and kwargs
+            # Exclude non-hashable arguments safely by converting them to str for caching purposes
+            try:
+                key = (args, frozenset(kwargs.items()))
+                hash(key)
+            except TypeError:
+                key = (str(args), str(kwargs))  # type: ignore
+
+            now = time.time()
+            if key in cache:
+                timestamp, result = cache[key]
+                if now - timestamp < ttl_seconds:
+                    return result
+
+            result = func(*args, **kwargs)
+            cache[key] = (now, result)
+            return result
+
+        return wrapper
+
+    return decorator

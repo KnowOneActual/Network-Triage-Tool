@@ -57,6 +57,10 @@ class DNSLookupResult:
         return {k: v for k, v in result.items() if v is not None}
 
 
+from network_triage.utils import ttl_cache
+
+
+@ttl_cache(ttl_seconds=300)
 def resolve_hostname(hostname: str, timeout: int = 5, include_reverse_dns: bool = True) -> DNSLookupResult:
     """Resolve A, AAAA, and optionally reverse DNS records for a hostname.
 

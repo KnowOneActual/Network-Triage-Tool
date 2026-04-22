@@ -199,6 +199,12 @@ async def check_multiple_ports(
     def check_port_wrapper(port: int) -> PortCheckResult:
         return check_port_open(host, port, timeout_secs)
 
+    semaphore = asyncio.Semaphore(max_workers)
+
+    async def sem_check_port(port: int) -> PortCheckResult:
+        async with semaphore:
+            return await asyncio.to_thread(check_port_wrapper, port)
+
     # Use TaskGroup for concurrent checks (Python 3.11+)
     try:
         async with asyncio.timeout(timeout_secs + 5):
@@ -206,7 +212,7 @@ async def check_multiple_ports(
                 async with asyncio.TaskGroup() as tg:
                     tasks = {}
                     for port in ports:
-                        task = tg.create_task(asyncio.to_thread(check_port_wrapper, port))
+                        task = tg.create_task(sem_check_port(port))
                         tasks[task] = port
 
                 for task in tasks:
