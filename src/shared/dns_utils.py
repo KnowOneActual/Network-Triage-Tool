@@ -152,8 +152,10 @@ def resolve_hostname(hostname: str, timeout: int = 5, include_reverse_dns: bool 
                         status=DNSStatus.SUCCESS,
                     ),
                 )
-            except TimeoutError, socket.herror:
+            except TimeoutError:
                 # Reverse DNS is optional; don't fail if it times out
+                pass
+            except socket.herror:
                 pass
 
     except Exception as e:
