@@ -25,7 +25,7 @@ jobs:
         uses: astral-sh/setup-uv@v1
 
       - name: Install dependencies
-        run: python -m uv pip install -e ".[dev]"
+        run: python -m uv pip install --frozen-lockfile --with dev,lint,test,type
 
       - name: Lint with ruff
         run: python -m uv run ruff check .
@@ -79,7 +79,7 @@ jobs:
         uses: astral-sh/setup-uv@v1
 
       - name: Install dependencies
-        run: python -m uv pip install -e ".[dev]"
+        run: python -m uv pip install --frozen-lockfile --with dev,lint,test,type
 
       - name: Run tests with coverage
         run: |
@@ -122,7 +122,7 @@ jobs:
         uses: astral-sh/setup-uv@v1
 
       - name: Install dependencies
-        run: python -m uv pip install -e ".[dev]"
+        run: python -m uv pip install --frozen-lockfile --with dev,lint,test,type
 
       - name: Download all coverage data
         uses: actions/download-artifact@v4
