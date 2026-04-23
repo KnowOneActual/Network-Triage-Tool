@@ -21,9 +21,14 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install uv and dependencies
+      - name: Install uv
         run: |
+          set -x
           pip install uv
+
+      - name: Install dependencies with uv
+        run: |
+          set -x
           python -m uv pip install --frozen-lockfile
 
       - name: Lint with ruff
@@ -74,9 +79,14 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install uv and dependencies
+      - name: Install uv
         run: |
+          set -x
           pip install uv
+
+      - name: Install dependencies with uv
+        run: |
+          set -x
           python -m uv pip install --frozen-lockfile
 
       - name: Run tests with coverage
@@ -116,9 +126,14 @@ jobs:
         with:
           python-version: '3.13'
 
-      - name: Install uv and dependencies
+      - name: Install uv
         run: |
+          set -x
           pip install uv
+
+      - name: Install dependencies with uv
+        run: |
+          set -x
           python -m uv pip install --frozen-lockfile
 
       - name: Download all coverage data
