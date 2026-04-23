@@ -21,36 +21,34 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install Rye
-        uses: eifinger/setup-rye@v2
-        with:
-          version: 'latest' # Or a specific version if needed
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v1
 
-      - name: Install dependencies with Rye
-        run: rye sync
+      - name: Install dependencies
+        run: python -m uv pip install
 
       - name: Lint with ruff
-        run: rye run ruff check .
+        run: python -m uv run ruff check .
 
       - name: Check formatting with ruff
-        run: rye run ruff format --check .
+        run: python -m uv run ruff format --check .
 
       - name: Spell check with codespell
-        run: rye run codespell
+        run: python -m uv run codespell
 
       - name: Type check with mypy
-        run: rye run mypy src/ # Assuming mypy is installed as a dev dependency
+        run: python -m uv run mypy src/ # Assuming mypy is installed as a dev dependency
 
       - name: Security scan with bandit
-        run: rye run bandit -c pyproject.toml -r src/
+        run: python -m uv run bandit -c pyproject.toml -r src/
 
       - name: Secret scan with gitleaks
         uses: gitleaks/gitleaks-action@v2
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB.TOKEN }}
 
       - name: Dependency vulnerability scan
-        run: rye run pip-audit
+        run: python -m uv run pip-audit
 
   test:
     name: Test on ${{ matrix.os }} - Python ${{ matrix.python-version }}
@@ -77,17 +75,15 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install Rye
-        uses: eifinger/setup-rye@v2
-        with:
-          version: 'latest' # Or a specific version if needed
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v1
 
-      - name: Install dependencies with Rye
-        run: rye sync
+      - name: Install dependencies
+        run: python -m uv pip install
 
       - name: Run tests with coverage
         run: |
-          rye run pytest \
+          python -m uv run pytest \
             --cov=. \
             --cov-report=xml \
             --cov-report=html \
@@ -122,13 +118,11 @@ jobs:
         with:
           python-version: '3.13' # Use a consistent Python version for coverage reporting
 
-      - name: Install Rye
-        uses: eifinger/setup-rye@v2
-        with:
-          version: 'latest' # Or a specific version if needed
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v1
 
-      - name: Install dependencies with Rye
-        run: rye sync
+      - name: Install dependencies
+        run: python -m uv pip install
 
       - name: Download all coverage data
         uses: actions/download-artifact@v4
@@ -139,11 +133,11 @@ jobs:
       - name: Combine coverage reports
         run: |
           # Install coverage tool if not already in dev deps
-          rye run pip install coverage
+          python -m uv pip install coverage
           # Merge xml coverage reports
-          rye run coverage combine --keep --data-file=coverage-artifacts/.coverage.*
-          rye run coverage xml -o coverage.xml
-          rye run coverage html -d htmlcov
+          python -m uv run coverage combine --keep --data-file=coverage-artifacts/.coverage.*
+          python -m uv run coverage xml -o coverage.xml
+          python -m uv run coverage html -d htmlcov
 
       - name: Upload combined coverage to Codecov
         uses: codecov/codecov-action@v4
