@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-@dataclass
+@dataclass(slots=True)
 class OperationResult[T]:
     """Result of an async operation."""
 

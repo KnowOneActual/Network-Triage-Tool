@@ -25,7 +25,7 @@ class LatencyStatus(Enum):
     ERROR = "error"
 
 
-@dataclass
+@dataclass(slots=True)
 class PingStatistics:
     """Complete ping statistics result."""
 
@@ -50,7 +50,7 @@ class PingStatistics:
         return {k: v for k, v in result.items() if v is not None}
 
 
-@dataclass
+@dataclass(slots=True)
 class TracerouteHop:
     """A single hop in a traceroute path."""
 

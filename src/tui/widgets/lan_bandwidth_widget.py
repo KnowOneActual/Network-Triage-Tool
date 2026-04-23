@@ -51,7 +51,7 @@ SAMPLE_INTERVAL: float = 1.0  # seconds between psutil polls
 # ---------------------------------------------------------------------------
 
 
-@dataclass
+@dataclass(slots=True)
 class BandwidthSample:
     """A single throughput measurement taken at one point in time."""
 
@@ -61,7 +61,7 @@ class BandwidthSample:
     elapsed: float  # seconds since test start
 
 
-@dataclass
+@dataclass(slots=True)
 class BandwidthResult:
     """Aggregate result of a completed bandwidth test."""
 

@@ -26,7 +26,7 @@ class DNSStatus(Enum):
     PARTIAL = "partial"  # Some records found, some failed
 
 
-@dataclass
+@dataclass(slots=True)
 class DNSRecord:
     """Represents a single DNS record result."""
 
@@ -36,7 +36,7 @@ class DNSRecord:
     status: DNSStatus
 
 
-@dataclass
+@dataclass(slots=True)
 class DNSLookupResult:
     """Complete DNS lookup result for a hostname."""
 

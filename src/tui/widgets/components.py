@@ -16,7 +16,7 @@ from textual.widgets import DataTable, Label, ProgressBar, Static
 from textual.widgets.data_table import RowKey
 
 
-@dataclass
+@dataclass(slots=True)
 class ResultColumn:
     """Definition for a results table column."""
 

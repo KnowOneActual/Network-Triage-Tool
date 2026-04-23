@@ -63,7 +63,7 @@ COMMON_SERVICE_PORTS = {
 }
 
 
-@dataclass
+@dataclass(slots=True)
 class PortCheckResult:
     """Result of a single port check."""
 

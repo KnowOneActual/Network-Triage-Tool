@@ -24,7 +24,7 @@ Build a comprehensive, professional-grade Network Triage Tool with:
 
 ---
 
-## Phase 4: TUI Widget Integration 🚀 IN PROGRESS (v0.4.0)
+## Phase 4: TUI Widget Integration ✅ COMPLETE (v0.4.0)
 
 **Goal:** Integrate Phase 3 diagnostics and new professional triage tools into reusable TUI widgets.
 
@@ -32,30 +32,30 @@ Build a comprehensive, professional-grade Network Triage Tool with:
 ### Phase 4.2: DNS Resolver Widget ✅ COMPLETE
 ### Phase 4.3: Port Scanner Widget ✅ COMPLETE
 
-### Phase 4.4: Live Path Analyzer (MTR-style) 🔜 NEXT
+### Phase 4.4: Live Path Analyzer (MTR-style) ✅ COMPLETE
 **Professional Path Diagnostics:**
-- [ ] Live-updating hop table (replaces static Traceroute)
-- [ ] Real-time Latency (Min/Max/Avg) per hop
-- [ ] Packet Loss percentage tracking per hop
-- [ ] Jitter analysis for every point in the path
-- [ ] Visual indicators for where bottlenecks begin
+- [x] Live-updating hop table (replaces static Traceroute)
+- [x] Real-time Latency (Min/Max/Avg) per hop
+- [x] Packet Loss percentage tracking per hop
+- [x] Jitter analysis for every point in the path
+- [x] Visual indicators for where bottlenecks begin
 
-### Phase 4.5: Connection Monitor (Active Sockets) 🔜 PLANNED
+### Phase 4.5: Connection Monitor (Active Sockets) ✅ COMPLETE
 **Resource Triage:**
-- [ ] Live list of active TCP/UDP connections (SS/Netstat style)
-- [ ] Remote IP/Port and local process identification
-- [ ] Connection state tracking (ESTABLISHED, TIME_WAIT, etc.)
-- [ ] Quick-filter for high-bandwidth connections
+- [x] Live list of active TCP/UDP connections (SS/Netstat style)
+- [x] Remote IP/Port and local process identification
+- [x] Connection state tracking (ESTABLISHED, TIME_WAIT, etc.)
+- [x] Quick-filter for high-bandwidth connections
 
-### Phase 4.6: LAN Bandwidth Tester (Internal Performance) 🔜 PLANNED
+### Phase 4.6: LAN Bandwidth Tester (Internal Performance) ✅ COMPLETE
 **Local Network Diagnostics:**
-- [ ] Iperf3-lite client integration
-- [ ] Peer-to-peer LAN speed testing (Internal vs. Internet delta)
-- [ ] Bandwidth saturation benchmarking
+- [x] Iperf3-lite client integration
+- [x] Peer-to-peer LAN speed testing (Internal vs. Internet delta)
+- [x] Bandwidth saturation benchmarking
 
 ---
 
-## Phase 5: Advanced Features 🎯 FUTURE
+## Phase 5: Advanced Features 🔜 NEXT
 
 **Goal:** Add high-level visualization and broadcast monitoring.
 
@@ -87,9 +87,9 @@ To maintain focus and high performance, the following features are **explicitly 
 | 4.1 | ✅ | Foundation | Solid BaseWidget pattern |
 | 4.2 | ✅ | DNS Resolver | Multi-provider support |
 | 4.3 | ✅ | Port Scanner | Concurrent scanning |
-| 4.4 | 🔜 | Path Analyzer | **High Priority: MTR-style** |
-| 4.5 | 🔜 | Conn Monitor | Identifying local hogs |
-| 4.6 | 🔜 | LAN Tester | Internal vs External delta |
-| 5.0 | 🎯 | Traffic Health | Broadcast summaries |
+| 4.4 | ✅ | Path Analyzer | MTR-style implemented |
+| 4.5 | ✅ | Conn Monitor | Identifying local hogs |
+| 4.6 | ✅ | LAN Tester | Internal vs External delta |
+| 5.0 | 🔜 | Traffic Health | Broadcast summaries |
 
 **Total Tests:** 184 items passing 🎉

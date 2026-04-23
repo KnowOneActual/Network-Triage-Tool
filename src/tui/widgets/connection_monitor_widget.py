@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 
-@dataclass
+@dataclass(slots=True)
 class ConnectionEntry:
     """Represents a single active network connection."""
 
@@ -323,9 +323,11 @@ class ConnectionMonitorWidget(BaseWidget):
             self._apply_current_filter()
 
     def on_input_changed(self, event: Input.Changed) -> None:
-        """Re-apply filter as the search term changes."""
+        """Re-apply filter as the search term changes, using a debounce timer."""
         if event.input.id == "search-input":
-            self._apply_current_filter()
+            if getattr(self, "_search_timer", None) is not None:
+                self._search_timer.stop()
+            self._search_timer = self.set_timer(0.3, self._apply_current_filter)
 
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
         """Copy the remote address to clipboard on row click."""
