@@ -25,13 +25,13 @@ jobs:
         run: pip install uv
 
       - name: Install dependencies
-        run: uv pip install --frozen-lockfile
+        run: python -m uv pip install --frozen-lockfile
 
       - name: Lint with ruff
-        run: uv run ruff check .
+        run: python -m uv run ruff check .
 
       - name: Check formatting with ruff
-        run: uv run ruff format --check .
+        run: python -m uv run ruff format --check .
 
       - name: Spell check with codespell
         run: uv run codespell
@@ -65,7 +65,7 @@ jobs:
         run: pip install uv
 
       - name: Install dependencies
-        run: uv pip install --frozen-lockfile
+        run: python -m uv pip install --frozen-lockfile
 
       - name: Run tests with pytest
-        run: uv run pytest --cov
+        run: python -m uv run pytest --cov
