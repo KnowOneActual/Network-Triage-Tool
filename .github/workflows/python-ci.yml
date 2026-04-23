@@ -21,30 +21,28 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install uv
-        run: |
-          set -x
-          pip install uv
+      - name: Install Rye
+        uses: eifinger/setup-rye@v2
+        with:
+          version: 'latest' # Or a specific version if needed
 
-      - name: Install dependencies with uv
-        run: |
-          set -x
-          python -m uv pip install --verbose
+      - name: Install dependencies with Rye
+        run: rye sync
 
       - name: Lint with ruff
-        run: python -m uv run ruff check .
+        run: rye run ruff check .
 
       - name: Check formatting with ruff
-        run: python -m uv run ruff format --check .
+        run: rye run ruff format --check .
 
       - name: Spell check with codespell
-        run: python -m uv run codespell
+        run: rye run codespell
 
       - name: Type check with mypy
-        run: python -m uv run mypy src/ # Assuming mypy is installed as a dev dependency
+        run: rye run mypy src/ # Assuming mypy is installed as a dev dependency
 
       - name: Security scan with bandit
-        run: python -m uv run bandit -c pyproject.toml -r src/
+        run: rye run bandit -c pyproject.toml -r src/
 
       - name: Secret scan with gitleaks
         uses: gitleaks/gitleaks-action@v2
@@ -52,7 +50,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Dependency vulnerability scan
-        run: python -m uv run pip-audit
+        run: rye run pip-audit
 
   test:
     name: Test on ${{ matrix.os }} - Python ${{ matrix.python-version }}
@@ -79,23 +77,21 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install uv
-        run: |
-          set -x
-          pip install uv
+      - name: Install Rye
+        uses: eifinger/setup-rye@v2
+        with:
+          version: 'latest' # Or a specific version if needed
 
-      - name: Install dependencies with uv
-        run: |
-          set -x
-          python -m uv pip install --verbose
+      - name: Install dependencies with Rye
+        run: rye sync
 
       - name: Run tests with coverage
         run: |
-          python -m uv run pytest
-            --cov=.
-            --cov-report=xml
-            --cov-report=html
-            --cov-report=term
+          rye run pytest \
+            --cov=. \
+            --cov-report=xml \
+            --cov-report=html \
+            --cov-report=term \
             --junit-xml=test-results-${{ matrix.os }}-${{ matrix.python-version }}.xml
 
       - name: Upload test results
@@ -124,17 +120,15 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
+          python-version: '3.13' # Use a consistent Python version for coverage reporting
 
-      - name: Install uv
-        run: |
-          set -x
-          pip install uv
+      - name: Install Rye
+        uses: eifinger/setup-rye@v2
+        with:
+          version: 'latest' # Or a specific version if needed
 
-      - name: Install dependencies with uv
-        run: |
-          set -x
-          python -m uv pip install --verbose
+      - name: Install dependencies with Rye
+        run: rye sync
 
       - name: Download all coverage data
         uses: actions/download-artifact@v4
@@ -145,11 +139,11 @@ jobs:
       - name: Combine coverage reports
         run: |
           # Install coverage tool if not already in dev deps
-          python -m uv pip install coverage
+          rye run pip install coverage
           # Merge xml coverage reports
-          coverage combine --keep --data-file=coverage-artifacts/.coverage.*
-          coverage xml -o coverage.xml
-          coverage html -d htmlcov
+          rye run coverage combine --keep --data-file=coverage-artifacts/.coverage.*
+          rye run coverage xml -o coverage.xml
+          rye run coverage html -d htmlcov
 
       - name: Upload combined coverage to Codecov
         uses: codecov/codecov-action@v4
