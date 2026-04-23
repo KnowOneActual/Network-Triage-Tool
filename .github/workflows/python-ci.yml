@@ -29,7 +29,7 @@ jobs:
       - name: Install dependencies with uv
         run: |
           set -x
-          python -m uv pip install --frozen-lockfile
+          python -m uv pip install --verbose
 
       - name: Lint with ruff
         run: python -m uv run ruff check .
@@ -87,7 +87,7 @@ jobs:
       - name: Install dependencies with uv
         run: |
           set -x
-          python -m uv pip install --frozen-lockfile
+          python -m uv pip install --verbose
 
       - name: Run tests with coverage
         run: |
@@ -134,7 +134,7 @@ jobs:
       - name: Install dependencies with uv
         run: |
           set -x
-          python -m uv pip install --frozen-lockfile
+          python -m uv pip install --verbose
 
       - name: Download all coverage data
         uses: actions/download-artifact@v4
