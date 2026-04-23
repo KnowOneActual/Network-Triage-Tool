@@ -20,7 +20,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: 'uv' # Cache uv dependencies
 
       - name: Install uv and dependencies
         run: |
@@ -74,7 +73,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: 'uv' # Cache uv dependencies
 
       - name: Install uv and dependencies
         run: |
@@ -116,8 +114,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.13' # Use a consistent Python version for coverage reporting
-          cache: 'uv'
+          python-version: '3.13'
 
       - name: Install uv and dependencies
         run: |
