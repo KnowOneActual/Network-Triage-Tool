@@ -241,8 +241,9 @@ class TestFormatErrorMessage:
 class TestMacOSToolkit:
     """Test macOS-specific toolkit error handling."""
 
+    @patch("platform.system", return_value="Darwin")
     @patch("network_triage.utils.safe_subprocess_run")
-    def test_get_system_info_with_error(self, mock_subprocess):
+    def test_get_system_info_with_error(self, mock_subprocess, mock_system):
         """Test get_system_info handles errors gracefully."""
         mock_subprocess.side_effect = CommandNotFoundError("sw_vers not found")
 
@@ -256,8 +257,9 @@ class TestMacOSToolkit:
         assert "Hostname" in result
         assert result["OS"] != "N/A"  # Should have Darwin version fallback
 
+    @patch("platform.system", return_value="Darwin")
     @patch("network_triage.utils.safe_http_request")
-    def test_get_ip_info_handles_network_failure(self, mock_request):
+    def test_get_ip_info_handles_network_failure(self, mock_request, mock_system):
         """Test get_ip_info handles network failures."""
         mock_request.side_effect = NetworkConnectivityError("No internet")
 
