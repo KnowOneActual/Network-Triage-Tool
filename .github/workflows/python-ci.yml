@@ -23,6 +23,8 @@ jobs:
         uses: astral-sh/setup-uv@v1
         with:
           enable-cache: true
+          # Latest version needed for Python 3.13 support
+          version: "latest"
 
       - name: Set up Python
         run: uv python install 3.12
@@ -70,6 +72,7 @@ jobs:
         uses: astral-sh/setup-uv@v1
         with:
           enable-cache: true
+          version: "latest"
 
       - name: Set up Python ${{ matrix.python-version }}
         run: uv python install ${{ matrix.python-version }}
@@ -115,6 +118,7 @@ jobs:
         uses: astral-sh/setup-uv@v1
         with:
           enable-cache: true
+          version: "latest"
 
       - name: Set up Python
         run: uv python install 3.12
