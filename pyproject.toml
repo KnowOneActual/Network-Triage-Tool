@@ -239,44 +239,6 @@ skips = ["B101", "B104", "B110", "B314", "B404", "B405", "B602", "B603", "B607"]
 skip = "*.json,*.zip,.git,venv,.*venv,temp,docs/archive,build,dist"
 ignore-words-list = "nd,toolk"
 
-[tool.coverage.run]
-source = ["src"]
-omit = [
-    "src/network_triage/__init__.py",
-    "src/network_triage/linux/*",
-    "src/network_triage/windows/*",
-    "src/network_triage.egg-info/*",
-    "tests/*",
-    "*/__pycache__/*",
-]
-branch = true
-parallel = true
-
-[tool.coverage.report]
-fail_under = 45
-show_missing = true
-skip_covered = false
-precision = 2
-exclude_lines = [
-    "pragma: no cover",
-    "def __repr__",
-    "if self.debug:",
-    "if settings.DEBUG",
-    "raise AssertionError",
-    "raise NotImplementedError",
-    "if 0:",
-    "if __name__ == .__main__.:",
-    "class .*\\bProtocol\\):",
-    "@(abc\\.)?abstractmethod",
-]
-
-[tool.coverage.html]
-directory = "htmlcov"
-title = "Network Triage Tool Coverage Report"
-
-[tool.coverage.json]
-output = "coverage.json"
-pretty_print = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

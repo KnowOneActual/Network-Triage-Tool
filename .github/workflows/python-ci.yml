@@ -23,7 +23,6 @@ jobs:
         uses: astral-sh/setup-uv@v1
         with:
           enable-cache: true
-          # Latest version needed for Python 3.13 support
           version: "latest"
 
       - name: Set up Python
@@ -83,13 +82,15 @@ jobs:
       - name: Run tests with coverage
         shell: bash
         run: |
-          uv run pytest \
-            --cov=src \
-            --cov-report=xml:coverage-${{ matrix.os }}-${{ matrix.python-version }}.xml \
-            --cov-report=term \
+          # Use COVERAGE_FILE to generate unique data files directly
+          export COVERAGE_FILE=.coverage.${{ matrix.os }}-${{ matrix.python-version }}
+          uv run coverage run -m pytest \
             --junit-xml=test-results-${{ matrix.os }}-${{ matrix.python-version }}.xml
-          # Rename .coverage to be unique for combining
-          mv .coverage .coverage.${{ matrix.os }}-${{ matrix.python-version }}
+
+          # Also generate XML for per-job overview
+          uv run coverage xml -o coverage-${{ matrix.os }}-${{ matrix.python-version }}.xml
+
+          ls -la .coverage*
 
       - name: Upload test results
         if: always()
@@ -135,11 +136,14 @@ jobs:
 
       - name: Combine coverage
         run: |
-          ls -R coverage-reports
-          # Move all .coverage.* files to current directory for combining
+          # Move all .coverage.* files to root
           find coverage-reports -type f -name ".coverage.*" -exec mv -v {} . \;
-          ls -a .
+          ls -la .coverage*
+
+          # Combine binary data
           uv run coverage combine
+
+          # Generate final reports
           uv run coverage xml -o coverage.xml
           uv run coverage html -d htmlcov
           uv run coverage report

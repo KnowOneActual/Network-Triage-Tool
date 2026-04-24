@@ -1,0 +1,35 @@
+[run]
+source = src
+omit =
+    src/network_triage/__init__.py
+    src/network_triage/linux/*
+    src/network_triage/windows/*
+    src/network_triage.egg-info/*
+    tests/*
+    */__pycache__/*
+branch = true
+parallel = true
+
+[report]
+fail_under = 45
+show_missing = true
+precision = 2
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    if self.debug:
+    if settings.DEBUG
+    raise AssertionError
+    raise NotImplementedError
+    if 0:
+    if __name__ == .__main__.:
+    class .*\bProtocol\):
+    @(abc\.)?abstractmethod
+
+[html]
+directory = htmlcov
+title = Network Triage Tool Coverage Report
+
+[json]
+output = coverage.json
+pretty_print = true
