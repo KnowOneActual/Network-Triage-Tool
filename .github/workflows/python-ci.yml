@@ -10,7 +10,6 @@ permissions:
   contents: read
 
 env:
-  UV_VERSION: "0.4.4"
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
@@ -23,7 +22,6 @@ jobs:
       - name: Set up uv
         uses: astral-sh/setup-uv@v1
         with:
-          version: ${{ env.UV_VERSION }}
           enable-cache: true
 
       - name: Set up Python
@@ -71,7 +69,6 @@ jobs:
       - name: Set up uv
         uses: astral-sh/setup-uv@v1
         with:
-          version: ${{ env.UV_VERSION }}
           enable-cache: true
 
       - name: Set up Python ${{ matrix.python-version }}
@@ -117,7 +114,6 @@ jobs:
       - name: Set up uv
         uses: astral-sh/setup-uv@v1
         with:
-          version: ${{ env.UV_VERSION }}
           enable-cache: true
 
       - name: Set up Python

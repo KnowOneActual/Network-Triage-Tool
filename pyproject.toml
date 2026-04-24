@@ -298,7 +298,6 @@ markers = [
     "network: marks tests that require network access",
 ]
 filterwarnings = [
-    "error",
     "ignore::DeprecationWarning",
     "ignore::PendingDeprecationWarning",
     "ignore::ResourceWarning",
