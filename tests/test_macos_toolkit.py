@@ -7,6 +7,7 @@ scutil, and sw_vers using comprehensive mocking.
 from __future__ import annotations
 
 import socket
+import sys
 from typing import TYPE_CHECKING, Any
 from unittest.mock import MagicMock
 
@@ -18,6 +19,10 @@ from network_triage.macos.network_toolkit import NetworkTriageToolkit
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
+
+
+# Skip all tests in this module if not running on macOS
+pytestmark = pytest.mark.skipif(sys.platform != "darwin", reason="macOS-specific tests")
 
 
 @pytest.fixture

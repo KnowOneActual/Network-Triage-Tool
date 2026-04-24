@@ -238,6 +238,7 @@ class TestFormatErrorMessage:
         assert "nmap" in msg
 
 
+@pytest.mark.skipif(sys.platform != "darwin", reason="macOS-specific tests")
 class TestMacOSToolkit:
     """Test macOS-specific toolkit error handling."""
 
