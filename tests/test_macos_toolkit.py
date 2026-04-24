@@ -10,6 +10,7 @@ import socket
 from typing import TYPE_CHECKING, Any
 from unittest.mock import MagicMock
 
+import psutil
 import pytest
 
 from network_triage.exceptions import CommandNotFoundError
@@ -30,6 +31,9 @@ def mock_psutil(mocker: MockerFixture) -> dict[str, Any]:
     """Mock psutil network functions."""
     mock_addrs = mocker.patch("psutil.net_if_addrs")
     mock_stats = mocker.patch("psutil.net_if_stats")
+    # Ensure AF_LINK is consistent for tests on all platforms
+    if hasattr(psutil, "AF_LINK"):
+        mocker.patch("psutil.AF_LINK", 18)
     return {"addrs": mock_addrs, "stats": mock_stats}
 
 

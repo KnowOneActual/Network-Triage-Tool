@@ -224,6 +224,10 @@ module = [
 ]
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+module = "tests.*"
+ignore_errors = true
+
 [tool.mypy-warn-unused-ignores]
 warn_unused_ignores = true
 
