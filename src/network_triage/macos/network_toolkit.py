@@ -276,9 +276,9 @@ class NetworkTriageToolkit(NetworkTriageToolkitBase):
                         info["IP Address"] = addr.address
                         info["Netmask"] = addr.netmask or "N/A"
                     # Check for MAC address using various platform constants
-                    elif (hasattr(psutil, "AF_LINK") and addr.family == psutil.AF_LINK) or (
-                        hasattr(socket, "AF_LINK") and addr.family == socket.AF_LINK
-                    ):
+                    # 18 is the typical value for AF_LINK on macOS
+                    af_link = getattr(psutil, "AF_LINK", getattr(socket, "AF_LINK", 18))
+                    if addr.family == af_link:
                         info["MAC Address"] = addr.address
 
                 stats = psutil.net_if_stats().get(interface_name)
