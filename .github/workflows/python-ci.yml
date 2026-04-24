@@ -135,8 +135,10 @@ jobs:
 
       - name: Combine coverage
         run: |
+          ls -R coverage-reports
           # Move all .coverage.* files to current directory for combining
-          find coverage-reports -name ".coverage.*" -exec mv {} . \;
+          find coverage-reports -type f -name ".coverage.*" -exec mv -v {} . \;
+          ls -a .
           uv run coverage combine
           uv run coverage xml -o coverage.xml
           uv run coverage html -d htmlcov
