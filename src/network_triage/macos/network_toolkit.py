@@ -82,7 +82,7 @@ class NetworkTriageToolkit(NetworkTriageToolkitBase):
                 else:
                     os_string = f"{product_name} ({platform.system()} {platform.release()})"
 
-            except (CommandNotFoundError, ParseError) as e:
+            except (CommandNotFoundError, NetworkCommandError, ParseError) as e:
                 logger.debug(f"Could not resolve macOS marketing name: {e}. Using fallback.")
                 # Fallback to generic Darwin version
                 os_string = f"macOS ({platform.system()} {platform.release()})"
@@ -275,7 +275,10 @@ class NetworkTriageToolkit(NetworkTriageToolkitBase):
                     if addr.family == socket.AF_INET:
                         info["IP Address"] = addr.address
                         info["Netmask"] = addr.netmask or "N/A"
-                    elif hasattr(psutil, "AF_LINK") and addr.family == psutil.AF_LINK:
+                    # Check for MAC address using various platform constants
+                    elif (hasattr(psutil, "AF_LINK") and addr.family == psutil.AF_LINK) or (
+                        hasattr(socket, "AF_LINK") and addr.family == socket.AF_LINK
+                    ):
                         info["MAC Address"] = addr.address
 
                 stats = psutil.net_if_stats().get(interface_name)
