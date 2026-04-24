@@ -35,10 +35,12 @@ src/tui/widgets/lan_bandwidth_widget.py
 src/tui/widgets/latency_analyzer_widget.py
 src/tui/widgets/port_scanner_widget.py
 tests/test_app.py
+tests/test_app_real.py
 tests/test_dns_widget_functional.py
 tests/test_error_handling.py
 tests/test_latency_widget_functional.py
 tests/test_linux_toolkit.py
+tests/test_macos_toolkit.py
 tests/test_phase3_diagnostics.py
 tests/test_phase4_connection_monitor.py
 tests/test_phase4_dns_widget.py
