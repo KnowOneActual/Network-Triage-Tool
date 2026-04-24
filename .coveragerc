@@ -1,5 +1,9 @@
 [run]
-source = src
+source =
+    src
+    network_triage
+    shared
+    tui
 omit =
     src/network_triage/__init__.py
     src/network_triage/linux/*
