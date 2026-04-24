@@ -13,6 +13,7 @@ import psutil
 from textual import work
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
+from textual.timer import Timer
 from textual.widgets import Button, DataTable, Input, Label, Select, Static
 
 from .base import BaseWidget
@@ -246,6 +247,8 @@ class ConnectionMonitorWidget(BaseWidget):
     # Refresh interval in seconds
     AUTO_REFRESH_INTERVAL: float = 10.0
 
+    _search_timer: Timer | None = None
+
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.widget_name = "ConnectionMonitorWidget"
@@ -325,7 +328,7 @@ class ConnectionMonitorWidget(BaseWidget):
     def on_input_changed(self, event: Input.Changed) -> None:
         """Re-apply filter as the search term changes, using a debounce timer."""
         if event.input.id == "search-input":
-            if getattr(self, "_search_timer", None) is not None:
+            if self._search_timer is not None:
                 self._search_timer.stop()
             self._search_timer = self.set_timer(0.3, self._apply_current_filter)
 

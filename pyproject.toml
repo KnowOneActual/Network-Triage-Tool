@@ -219,9 +219,7 @@ strict = true
 [[tool.mypy.overrides]]
 module = [
     "scapy.*",
-    "netmiko.*",
     "psutil.*",
-    "nmap.*",
     "speedtest.*",
 ]
 ignore_missing_imports = true
