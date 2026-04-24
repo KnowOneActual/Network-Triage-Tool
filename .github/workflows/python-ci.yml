@@ -9,6 +9,10 @@ on:
 permissions:
   contents: read
 
+env:
+  UV_VERSION: "0.4.4"
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   lint-and-security:
     name: Lint and Security Scan
@@ -16,79 +20,72 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
       - name: Set up uv
         uses: astral-sh/setup-uv@v1
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+          python-version: "3.12"
 
       - name: Install dependencies
-        run: python -m uv pip install --frozen-lockfile --with dev,lint,test,type
+        run: uv sync --all-groups --frozen
 
       - name: Lint with ruff
-        run: python -m uv run ruff check .
+        run: uv run ruff check .
 
       - name: Check formatting with ruff
-        run: python -m uv run ruff format --check .
+        run: uv run ruff format --check .
 
       - name: Spell check with codespell
-        run: python -m uv run codespell
+        run: uv run codespell
 
       - name: Type check with mypy
-        run: python -m uv run mypy src/ # Assuming mypy is installed as a dev dependency
+        run: uv run mypy src/
 
       - name: Security scan with bandit
-        run: python -m uv run bandit -c pyproject.toml -r src/
+        run: uv run bandit -c pyproject.toml -r src/
 
       - name: Secret scan with gitleaks
         uses: gitleaks/gitleaks-action@v2
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB.TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Dependency vulnerability scan
-        run: python -m uv run pip-audit
+        run: uv run pip-audit
 
   test:
     name: Test on ${{ matrix.os }} - Python ${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}
-    needs: [lint-and-security] # Ensure linting/security passes before running tests
-
+    needs: [lint-and-security]
     strategy:
       fail-fast: false
       matrix:
-        os:
-          - ubuntu-latest
-          - macos-latest
-          - windows-latest
-        python-version:
-          - '3.12'
-          - '3.13'
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.12", "3.13"]
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
+      - uses: actions/checkout@v4
 
       - name: Set up uv
         uses: astral-sh/setup-uv@v1
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+          python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
-        run: python -m uv pip install --frozen-lockfile --with dev,lint,test,type
+        run: uv sync --all-groups --frozen
 
       - name: Run tests with coverage
+        shell: bash
         run: |
-          python -m uv run pytest \
-            --cov=. \
-            --cov-report=xml \
-            --cov-report=html \
+          uv run pytest \
+            --cov=src \
+            --cov-report=xml:coverage-${{ matrix.os }}-${{ matrix.python-version }}.xml \
             --cov-report=term \
             --junit-xml=test-results-${{ matrix.os }}-${{ matrix.python-version }}.xml
+          # Rename .coverage to be unique for combining
+          mv .coverage .coverage.${{ matrix.os }}-${{ matrix.python-version }}
 
       - name: Upload test results
         if: always()
@@ -102,49 +99,49 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: coverage-data-${{ matrix.os }}-${{ matrix.python-version }}
-          path: ./*.xml # Upload coverage.xml for combining later
+          path: |
+            coverage-*.xml
+            .coverage.*
 
-  code-coverage-report:
-    name: Code Coverage Report
+  coverage-summary:
+    name: Coverage Summary
     runs-on: ubuntu-latest
-    needs: [test] # Depends on all test jobs completing
-
+    needs: [test]
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.13' # Use a consistent Python version for coverage reporting
+      - uses: actions/checkout@v4
 
       - name: Set up uv
         uses: astral-sh/setup-uv@v1
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+          python-version: "3.12"
 
       - name: Install dependencies
-        run: python -m uv pip install --frozen-lockfile --with dev,lint,test,type
+        run: uv sync --all-groups --frozen
 
       - name: Download all coverage data
         uses: actions/download-artifact@v4
         with:
           pattern: coverage-data-*
-          path: coverage-artifacts
+          path: coverage-reports
+          merge-multiple: true
 
-      - name: Combine coverage reports
+      - name: Combine coverage
         run: |
-          # Install coverage tool if not already in dev deps
-          python -m uv pip install coverage
-          # Merge xml coverage reports
-          python -m uv run coverage combine --keep --data-file=coverage-artifacts/.coverage.*
-          python -m uv run coverage xml -o coverage.xml
-          python -m uv run coverage html -d htmlcov
+          # Move all .coverage.* files to current directory for combining
+          find coverage-reports -name ".coverage.*" -exec mv {} . \;
+          uv run coverage combine
+          uv run coverage xml -o coverage.xml
+          uv run coverage html -d htmlcov
+          uv run coverage report
 
-      - name: Upload combined coverage to Codecov
+      - name: Upload to Codecov
         uses: codecov/codecov-action@v4
         with:
-          files: ./coverage.xml
-          flags: combined
-          name: combined-coverage
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage.xml
+          fail_ci_if_error: false
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
