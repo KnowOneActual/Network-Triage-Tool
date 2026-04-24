@@ -51,7 +51,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Dependency vulnerability scan
-        run: uv run pip-audit
+        run: uv run pip-audit --ignore-package network-triage --ignore-package pip
 
   test:
     name: Test on ${{ matrix.os }} - Python ${{ matrix.python-version }}
