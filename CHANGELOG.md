@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Python Migration** — Fully updated to Python 3.14.
 
 ### Fixed
+- **CI/CD Coverage** — Fixed GitHub Actions `coverage combine` step failing due to hidden `.coverage.*` files being ignored by the `upload-artifact@v4` action, and added cross-platform path mapping to `.coveragerc` to successfully merge macOS, Linux, and Windows coverage data.
 - **UI Responsiveness** — Added debounce timer to Connection Monitor search to prevent UI lag during rapid typing.
 - **Test Robustness** — Improved socket and subprocess mocking in `tests/conftest.py`.
 
