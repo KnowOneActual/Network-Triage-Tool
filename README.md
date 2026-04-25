@@ -8,7 +8,7 @@
 [![UI Framework](https://img.shields.io/badge/UI-Textual-orange)](https://textual.textualize.io/)
 [![Tests](https://img.shields.io/badge/tests-384%2F417%20passing-success)](./tests/)
 [![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-blue)](https://github.com/knowoneactual/Network-Triage-Tool/actions)
-[![Security Scan](https://github.com/knowoneactual/Network-Triage-Tool/actions/workflows/python-app.yml/badge.svg)](https://github.com/knowoneactual/Network-Triage-Tool/actions)
+[![Security Scan](https://github.com/knowoneactual/Network-Triage-Tool/actions/workflows/python-ci.yml/badge.svg)](https://github.com/knowoneactual/Network-Triage-Tool/actions)
 
 > [!NOTE]
 > **This is an active, ongoing project. It is still in the "pre-production" phase. For now, it should be used for testing rather than in critical production environments.
