@@ -14,6 +14,12 @@ omit =
 branch = true
 parallel = true
 
+[paths]
+source =
+    src
+    */src
+    *\src
+
 [report]
 fail_under = 45
 show_missing = true
