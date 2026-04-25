@@ -88,6 +88,9 @@ __pycache__/
 # /my-secret-folder/
 
 .coverage
+.coverage.*
+coverage-*.xml
+coverage.xml
 conductor/
 
 # SQLite databases
