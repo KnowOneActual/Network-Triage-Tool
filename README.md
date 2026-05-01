@@ -3,7 +3,7 @@
 </p>
 
 [![Status](https://img.shields.io/badge/status-Active-green)](https://github.com/knowoneactual/Network-Triage-Tool)
-[![Version](https://img.shields.io/badge/version-0.5.8-blue)](https://github.com/knowoneactual/Network-Triage-Tool/releases)
+[![Version](https://img.shields.io/badge/version-0.5.9-blue)](https://github.com/knowoneactual/Network-Triage-Tool/releases)
 [![Python Version](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![UI Framework](https://img.shields.io/badge/UI-Textual-orange)](https://textual.textualize.io/)
 [![Tests](https://img.shields.io/badge/tests-384%2F417%20passing-success)](./tests/)
