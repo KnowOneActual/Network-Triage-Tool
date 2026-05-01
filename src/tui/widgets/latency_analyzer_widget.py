@@ -22,7 +22,8 @@ from shared.latency_utils import (
     ping_statistics,
 )
 
-from .base import BaseWidget
+from .base import BaseWidget, TaskCompleted
+from .components import HistoryInput
 
 if TYPE_CHECKING:
     from textual.app import ComposeResult
@@ -52,7 +53,7 @@ class LatencyAnalyzerWidget(BaseWidget):
         # Input section
         with Vertical(id="input-section"):
             yield Label("Target Host:")
-            yield Input(
+            yield HistoryInput(
                 id="host-input",
                 placeholder="e.g. 8.8.8.8 or google.com",
                 tooltip="Enter a hostname or IP address to trace",
@@ -86,7 +87,7 @@ class LatencyAnalyzerWidget(BaseWidget):
             case "clear-btn":
                 self.clear_results()
 
-    def on_input_submitted(self, event: Input.Submitted) -> None:
+    def on_input_submitted(self, event: HistoryInput.Submitted) -> None:
         """Run analysis when Enter is pressed in the host field."""
         self.run_analysis()
 
@@ -100,7 +101,7 @@ class LatencyAnalyzerWidget(BaseWidget):
             self.display_error("Analysis already in progress")
             return
 
-        host_input = self.query_one("#host-input", Input)
+        host_input = self.query_one("#host-input", HistoryInput)
         host = host_input.value.strip()
 
         valid, msg = self.validate_host(host)
@@ -108,6 +109,9 @@ class LatencyAnalyzerWidget(BaseWidget):
             self.display_error(msg)
             self.set_status(f"Error: {msg}")
             return
+
+        # Push to history
+        host_input.push_history(host)
 
         # Clear previous results
         self.query_one("#hops-table", DataTable).clear()
@@ -255,6 +259,9 @@ class LatencyAnalyzerWidget(BaseWidget):
         self.query_one("#ping-summary-label", Label).update(summary)
         self.display_success(f"Analysis complete: trace to {ping_stats.host} finished")
         self.set_status("✓ Trace complete")
+
+        # Notify app that task is complete (for tab badges)
+        self.post_message(TaskCompleted(self.id))
 
     def _on_trace_error(self, error_msg: str) -> None:
         """Handle worker errors on the UI thread."""

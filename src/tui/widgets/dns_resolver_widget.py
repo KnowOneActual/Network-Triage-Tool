@@ -11,8 +11,8 @@ from textual.widgets import Button, Input, Label, Select, Static
 from shared.dns_utils import DNSStatus
 from shared.dns_utils import resolve_hostname as resolve_dns_hostname
 
-from .base import BaseWidget
-from .components import ResultColumn, ResultsWidget
+from .base import BaseWidget, TaskCompleted
+from .components import HistoryInput, ResultColumn, ResultsWidget
 
 if TYPE_CHECKING:
     from textual.app import ComposeResult
@@ -37,7 +37,7 @@ class DNSResolverWidget(BaseWidget):
         with Vertical(id="input-section"):
             # Hostname input
             yield Label("Hostname:")
-            yield Input(id="hostname-input", placeholder="example.com", tooltip="Enter hostname to resolve")
+            yield HistoryInput(id="hostname-input", placeholder="example.com", tooltip="Enter hostname to resolve")
 
             # Query type select
             yield Label("Query Type:")
@@ -93,7 +93,7 @@ class DNSResolverWidget(BaseWidget):
         """Resolve the hostname using Phase 3 DNS utilities."""
         try:
             # Get hostname from input
-            hostname_input = self.query_one("#hostname-input", Input)
+            hostname_input = self.query_one("#hostname-input", HistoryInput)
             hostname = hostname_input.value.strip()
 
             # Validate input
@@ -101,6 +101,9 @@ class DNSResolverWidget(BaseWidget):
                 self.display_error("Please enter a hostname")
                 self.set_status("Error: No hostname entered")
                 return
+
+            # Push to history
+            hostname_input.push_history(hostname)
 
             # Get query type from select
             query_type_select = self.query_one("#query-type-select", Select)
@@ -178,6 +181,9 @@ class DNSResolverWidget(BaseWidget):
             else:
                 self.display_error(f"No records found for {hostname}")
                 self.set_status(f"No records found for {hostname}")
+
+            # Notify app that task is complete (for tab badges)
+            self.post_message(TaskCompleted(self.id))
 
         except Exception as e:
             self.display_error(f"Error: {e!s}")

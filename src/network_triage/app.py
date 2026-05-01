@@ -40,6 +40,8 @@ try:
         LatencyAnalyzerWidget,
         PortScannerWidget,
     )
+    from tui.widgets.base import TaskCompleted
+    from tui.widgets.components import HistoryInput
 except ImportError:
     # Fallback for local development if tui is not in path correctly
     sys.path.append(str(sys.path[0] + "/.."))
@@ -50,6 +52,8 @@ except ImportError:
         LatencyAnalyzerWidget,
         PortScannerWidget,
     )
+    from tui.widgets.base import TaskCompleted
+    from tui.widgets.components import HistoryInput
 
 # ----------------------------------------------------------------------------
 # OS-Agnostic Import (Selects the correct toolkit based on your OS)
@@ -192,7 +196,7 @@ class ConnectionTool(Container):
 class PingTool(Container):
     def compose(self) -> ComposeResult:
         with Horizontal(id="ping_controls"):
-            yield Input(placeholder="Enter IP (e.g. 8.8.8.8)", id="ping_input")
+            yield HistoryInput(placeholder="Enter IP (e.g. 8.8.8.8)", id="ping_input")
             yield Button("▶ Start", id="start_ping_btn", variant="success")
             yield Button("⏹ Stop", id="stop_ping_btn", variant="error", disabled=True)
         yield Log(id="ping_log", highlight=True)
@@ -205,13 +209,15 @@ class PingTool(Container):
                 self.action_stop_ping()
 
     def action_start_ping(self) -> None:
-        host = self.query_one("#ping_input", Input).value
+        host_input = self.query_one("#ping_input", HistoryInput)
+        host = host_input.value
         if not host:
             self.notify("Please enter a valid IP", severity="error")
             return
+        host_input.push_history(host)
         self.query_one("#start_ping_btn", Button).disabled = True
         self.query_one("#stop_ping_btn", Button).disabled = False
-        self.query_one("#ping_input", Input).disabled = True
+        self.query_one("#ping_input", HistoryInput).disabled = True
         self.query_one("#ping_log", Log).clear()
         self.query_one("#ping_log", Log).write(f"--- Pinging {host} ---\n")
         self.start_ping_worker(host)
@@ -222,7 +228,10 @@ class PingTool(Container):
         self.query_one("#ping_log", Log).write("\n--- Stopped ---\n")
         self.query_one("#start_ping_btn", Button).disabled = False
         self.query_one("#stop_ping_btn", Button).disabled = True
-        self.query_one("#ping_input", Input).disabled = False
+        self.query_one("#ping_input", HistoryInput).disabled = False
+
+        # Ping is manually stopped, but we can still count it as a "completed" task session
+        self.post_message(TaskCompleted("ping"))
 
     @work(thread=True, group="ping_job")
     def start_ping_worker(self, host: str) -> None:
@@ -367,7 +376,7 @@ class NmapTool(Container):
 
     def compose(self) -> ComposeResult:
         with Horizontal(classes="tool_header"):
-            yield Input(placeholder="Target IP/Subnet", id="nmap_input", classes="input_field")
+            yield HistoryInput(placeholder="Target IP/Subnet", id="nmap_input", classes="input_field")
 
             yield Select(
                 options=[
@@ -438,10 +447,11 @@ class NmapTool(Container):
                 pass
 
     def update_target_field(self, subnet: str) -> None:
-        self.query_one("#nmap_input", Input).value = subnet
+        self.query_one("#nmap_input", HistoryInput).value = subnet
 
     def action_start_scan(self) -> None:
-        target = self.query_one("#nmap_input", Input).value
+        target_input = self.query_one("#nmap_input", HistoryInput)
+        target = target_input.value
         preset = self.query_one("#nmap_select", Select).value
         args = self.query_one("#nmap_custom_args", Input).value if preset == "custom" else preset
 
@@ -449,6 +459,7 @@ class NmapTool(Container):
             self.notify("Please enter a target.", severity="error")
             return
 
+        target_input.push_history(target)
         self.query_one("#btn_nmap_start", Button).disabled = True
         self.query_one(DataTable).clear()
         self.scan_data = []
@@ -492,6 +503,7 @@ class NmapTool(Container):
                 host.get("vendor", ""),
             )
         self.notify("Scan Complete.")
+        self.post_message(TaskCompleted("nmap"))
 
 
 # ----------------------------------------------------------------------------
@@ -592,6 +604,36 @@ class UtilityTool(Container):
                     btn.remove_class("-active")
                 self.query_one(f"#{btn_id}", Button).add_class("-active")
 
+                # Clear notification dot when switching to this sub-tab
+                btn = event.button
+                btn.label = str(btn.label).replace(" •", "")
+
+    def on_task_completed(self, event: TaskCompleted) -> None:
+        """Update sub-navigation badges when a utility task finishes in background."""
+        current_sub = self.query_one("#util_content", ContentSwitcher).current
+        sub_map = {
+            "tool_trace": "sub_trace",
+            "tool_dns": "sub_dns",
+            "tool_port": "sub_port",
+            "tool_latency": "sub_latency",
+            "tool_connmon": "sub_connmon",
+            "tool_bandwidth": "sub_bandwidth",
+        }
+
+        widget_id = event.widget_id or ""
+        target_sub_btn = None
+        # Handle exact match or ends-with for ID with prefix
+        for wid, bid in sub_map.items():
+            if widget_id == wid or (widget_id and widget_id.endswith(wid)):
+                target_sub_btn = bid
+                break
+
+        if target_sub_btn and current_sub and sub_map.get(str(current_sub)) != target_sub_btn:
+            btn = self.query_one(f"#{target_sub_btn}", Button)
+            label_str = str(btn.label)
+            if "•" not in label_str:
+                btn.label = f"{label_str} •"
+
 
 class NetworkTriageApp(App[None]):
     """A Textual TUI with Manual Button Navigation."""
@@ -649,7 +691,55 @@ class NetworkTriageApp(App[None]):
         self.query_one("#content_box", ContentSwitcher).current = tab_id
         for btn in self.query(".nav_btn"):
             btn.remove_class("-active")
-        self.query_one(f"#tab_{tab_id}", Button).add_class("-active")
+        btn = self.query_one(f"#tab_{tab_id}", Button)
+        btn.add_class("-active")
+
+        # Clear notification dot when switching to this tab
+        btn.label = str(btn.label).replace(" •", "")
+
+    def on_task_completed(self, event: TaskCompleted) -> None:
+        """Handle background task completion and update badges."""
+        current_tab = self.query_one("#content_box", ContentSwitcher).current
+
+        # Mapping from widget ID to tab ID
+        tab_map = {
+            "dashboard": "dashboard",
+            "connection": "connection",
+            "speed": "speed",
+            "ping": "ping",
+            "lldp": "lldp",
+            "nmap": "nmap",
+            "notes": "notes",
+            "tool_trace": "utils",
+            "tool_dns": "utils",
+            "tool_port": "utils",
+            "tool_latency": "utils",
+            "tool_connmon": "utils",
+            "tool_bandwidth": "utils",
+        }
+
+        # Determine which tab the widget belongs to
+        widget_id = event.widget_id or ""
+        target_tab = None
+        for wid, tid in tab_map.items():
+            if widget_id == wid or (widget_id and widget_id.endswith(wid)):
+                target_tab = tid
+                break
+
+        if target_tab and target_tab != current_tab:
+            # Update navigation button with a dot
+            btn = self.query_one(f"#tab_{target_tab}", Button)
+            label_str = str(btn.label)
+            if "•" not in label_str:
+                btn.label = f"{label_str} •"
+
+        # Also bubble down to UtilityTool if relevant
+        if target_tab == "utils":
+            try:
+                util_tool = self.query_one(UtilityTool)
+                util_tool.on_task_completed(event)
+            except Exception:
+                pass
 
     def action_save_report(self) -> None:
         """Gathers data from all widgets and saves to a file."""

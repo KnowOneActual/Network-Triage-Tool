@@ -18,8 +18,8 @@ from shared.port_utils import (
     summarize_port_scan,
 )
 
-from .base import BaseWidget
-from .components import ResultColumn, ResultsWidget
+from .base import BaseWidget, TaskCompleted
+from .components import HistoryInput, ResultColumn, ResultsWidget
 
 if TYPE_CHECKING:
     from textual.app import ComposeResult
@@ -48,7 +48,7 @@ class PortScannerWidget(BaseWidget):
         with Vertical(id="input-section"):
             # Host input
             yield Label("Target Host:")
-            yield Input(id="host-input", placeholder="localhost or 192.168.1.1", tooltip="Enter hostname or IP address")
+            yield HistoryInput(id="host-input", placeholder="localhost or 192.168.1.1", tooltip="Enter hostname or IP address")
 
             # Scan mode select
             yield Label("Scan Mode:")
@@ -199,7 +199,7 @@ class PortScannerWidget(BaseWidget):
 
         try:
             # Get inputs
-            host_input = self.query_one("#host-input", Input)
+            host_input = self.query_one("#host-input", HistoryInput)
             host = host_input.value.strip()
 
             # Validate host
@@ -207,6 +207,9 @@ class PortScannerWidget(BaseWidget):
                 self.display_error("Please enter a target host")
                 self.set_status("Error: No host specified")
                 return
+
+            # Push to history
+            host_input.push_history(host)
 
             # Get scan mode
             scan_mode_select = self.query_one("#scan-mode-select", Select)
@@ -339,6 +342,9 @@ class PortScannerWidget(BaseWidget):
             f"{summary['closed_count']} closed, "
             f"{summary['filtered_count']} filtered",
         )
+
+        # Notify app that task is complete (for tab badges)
+        self.post_message(TaskCompleted(self.id))
 
     def clear_results(self) -> None:
         """Clear all results and inputs."""

@@ -17,6 +17,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
 from textual.containers import Container, Vertical
+from textual.message import Message
 from textual.reactive import reactive
 from textual.widgets import Label, Static
 
@@ -24,6 +25,14 @@ if TYPE_CHECKING:
     from textual.app import ComposeResult
 
 logger = logging.getLogger(__name__)
+
+
+class TaskCompleted(Message):
+    """Posted when a background task completes."""
+
+    def __init__(self, widget_id: str | None = None) -> None:
+        super().__init__()
+        self.widget_id = widget_id
 
 
 @dataclass(slots=True)
@@ -165,10 +174,13 @@ class BaseWidget(Container, AsyncOperationMixin):
         )
 
     def display_error(self, message: str) -> None:
-        """Display error message to user."""
+        """Display error message to user via Toast and static label."""
         self.error_message = message
         self.is_loading = False
         self.current_status = "Error"
+
+        # Show app-wide Toast
+        self.notify(message, title=f"{self.widget_name} Error", severity="error")
 
         error_display = self.query_one("#error-display", expect_type=Static)
         error_display.update(f"❌ Error: {message}")
@@ -177,10 +189,13 @@ class BaseWidget(Container, AsyncOperationMixin):
         logger.error(f"[{self.widget_name}] {message}")
 
     def display_success(self, message: str) -> None:
-        """Display success message to user."""
+        """Display success message to user via Toast."""
         self.error_message = ""
         self.is_loading = False
         self.current_status = "Ready"
+
+        # Show app-wide Toast
+        self.notify(message, title=f"{self.widget_name}", severity="information")
 
         error_display = self.query_one("#error-display", expect_type=Static)
         error_display.update("")

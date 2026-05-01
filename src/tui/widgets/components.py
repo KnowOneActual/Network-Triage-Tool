@@ -8,11 +8,13 @@ Provides common UI elements that all Phase 4 widgets use:
 """
 
 from dataclasses import dataclass
+from typing import Any
 
+from textual import events
 from textual.app import ComposeResult
 from textual.containers import Container, Vertical
 from textual.reactive import reactive
-from textual.widgets import DataTable, Label, ProgressBar, Static
+from textual.widgets import DataTable, Input, Label, ProgressBar, Static
 from textual.widgets.data_table import RowKey
 
 
@@ -26,7 +28,76 @@ class ResultColumn:
     cell_width: int | None = None
 
 
-from typing import Any
+class HistoryInput(Input):
+    """Input widget with history support via Up/Down arrow keys.
+
+    Usage:
+        input = HistoryInput(id="host-input")
+        # When scan starts:
+        input.push_history(input.value)
+    """
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self._history: list[str] = []
+        self._history_index: int = -1
+        self._current_input: str = ""
+
+    def push_history(self, value: str) -> None:
+        """Add a value to history if not empty."""
+        if not value or not value.strip():
+            return
+
+        value = value.strip()
+        # Remove if exists to move to end (most recent)
+        if value in self._history:
+            self._history.remove(value)
+
+        self._history.append(value)
+        self._history_index = -1
+        self._current_input = ""
+
+    def on_key(self, event: events.Key) -> None:
+        """Handle Up/Down keys for history navigation."""
+        if not self._history:
+            return
+
+        if event.key == "up":
+            # Start navigating history
+            if self._history_index == -1:
+                self._current_input = self.value
+
+            if self._history_index < len(self._history) - 1:
+                self._history_index += 1
+                # Show most recent first (from end of list)
+                idx = len(self._history) - 1 - self._history_index
+                self.value = self._history[idx]
+                self.cursor_position = len(self.value)
+
+            event.stop()
+            event.prevent_default()
+
+        elif event.key == "down":
+            # Navigate towards newer history or original input
+            if self._history_index > 0:
+                self._history_index -= 1
+                idx = len(self._history) - 1 - self._history_index
+                self.value = self._history[idx]
+                self.cursor_position = len(self.value)
+            elif self._history_index == 0:
+                self._history_index = -1
+                self.value = self._current_input
+                self.cursor_position = len(self.value)
+
+            event.stop()
+            event.prevent_default()
+
+    """Definition for a results table column."""
+
+    name: str
+    key: str
+    width: int | None = None
+    cell_width: int | None = None
 
 
 class ResultsWidget(DataTable[Any]):
