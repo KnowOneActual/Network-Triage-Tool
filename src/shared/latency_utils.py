@@ -7,13 +7,18 @@ Author: Network-Triage-Tool Contributors
 License: MIT
 """
 
+import asyncio
+import logging
 import platform
 import re
 import statistics
 import subprocess
+from collections.abc import AsyncGenerator
 from dataclasses import asdict, dataclass
 from enum import Enum
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 
 class LatencyStatus(Enum):
@@ -230,6 +235,49 @@ def _parse_ping_output(output: str, system: str) -> list[float]:
     rtt_values = [float(m) for m in matches]
 
     return rtt_values
+
+
+async def mtr_style_trace_stream(host: str, max_hops: int = 30, timeout_secs: int = 5) -> AsyncGenerator[TracerouteHop]:
+    """Perform MTR-style tracing and yield hops as they are discovered.
+
+    Currently uses traceroute fallback since mtr --report doesn't easily stream.
+    """
+    system = platform.system()
+
+    # Determine traceroute command
+    match system:
+        case "Windows":
+            cmd = ["tracert", "-h", str(max_hops), "-w", str(timeout_secs * 1000), host]
+        case "Darwin":
+            cmd = ["traceroute", "-m", str(max_hops), "-w", str(timeout_secs), "-n", host]
+        case _:  # Linux
+            cmd = ["traceroute", "-m", str(max_hops), "-w", str(timeout_secs), "-n", host]
+
+    try:
+        process = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.STDOUT,
+        )
+
+        if process.stdout is not None:
+            while True:
+                line_bytes = await process.stdout.readline()
+                if not line_bytes:
+                    break
+                line = line_bytes.decode("utf-8", errors="replace")
+
+                if not line.strip() or "traceroute" in line.lower() or "to " in line.lower():
+                    continue
+
+                hops = _parse_traceroute_output(line, system)
+                for hop in hops:
+                    yield hop
+
+        await process.wait()
+
+    except Exception as e:
+        logger.error(f"Streaming trace error: {e}")
 
 
 def mtr_style_trace(host: str, max_hops: int = 30, timeout: int = 5, min_hops: int = 1) -> tuple[list[TracerouteHop], str]:

@@ -18,7 +18,7 @@ from textual.widgets import Button, DataTable, Input, Label, Static
 from shared.latency_utils import (
     PingStatistics,
     TracerouteHop,
-    mtr_style_trace,
+    mtr_style_trace_stream,
     ping_statistics,
 )
 
@@ -204,42 +204,38 @@ class LatencyAnalyzerWidget(BaseWidget):
 
     @work(group="trace_job")
     async def _run_trace_worker(self, host: str) -> None:
-        """Run mtr_style_trace + ping_statistics concurrently using TaskGroup."""
+        """Run mtr_style_trace_stream + ping_statistics concurrently."""
         try:
-            async with asyncio.TaskGroup() as tg:
-                trace_task = tg.create_task(asyncio.to_thread(mtr_style_trace, host, max_hops=30, timeout=3))
-                ping_task = tg.create_task(asyncio.to_thread(ping_statistics, host, count=5, timeout=3))
+            # Start ping stats for final host in background
+            ping_task = asyncio.create_task(asyncio.to_thread(ping_statistics, host, count=5, timeout=3))
 
-            hops, trace_msg = trace_task.result()
-            ping_stats = ping_task.result()
+            # Stream hops
+            async for hop in mtr_style_trace_stream(host, max_hops=30, timeout_secs=3):
+                self._add_hop_result(hop)
 
-            logger.debug(f"Trace complete for {host}: {len(hops)} hops — {trace_msg}")
-            self._display_results(hops, ping_stats)
-        except* Exception as e:
-            # TaskGroup errors are wrapped in ExceptionGroup
+            ping_stats = await ping_task
+            self._finalize_trace(ping_stats)
+        except Exception as e:
             logger.error(f"Trace worker error for {host}: {e}", exc_info=True)
-            self._on_trace_error(str(e))
+            self.display_error(str(e))
 
-    def _display_results(self, hops: list[TracerouteHop], ping_stats: PingStatistics) -> None:
-        """Populate the DataTable and summary label with trace results (UI thread)."""
-        self.trace_in_progress = False
+    def _add_hop_result(self, hop: TracerouteHop) -> None:
+        """Add a single hop result to the table."""
         table = self.query_one("#hops-table", DataTable)
-        table.clear()
+        avg_rtt = hop.avg_rtt_ms()
+        table.add_row(
+            str(hop.hop_number),
+            hop.ip_address or "N/A",
+            hop.hostname or "",
+            self.color_rtt(avg_rtt),
+            "[dim]—[/dim]" if hop.status == "timeout" else "0%",
+        )
+        # Keep status updated
+        self.set_status(f"Tracing... hop {hop.hop_number} found")
 
-        if not hops:
-            self.display_error("No hops returned — host may be unreachable or traceroute unavailable")
-            self.set_status("No results")
-            return
-
-        for hop in hops:
-            avg_rtt = hop.avg_rtt_ms()
-            table.add_row(
-                str(hop.hop_number),
-                hop.ip_address or "N/A",
-                hop.hostname or "",
-                self.color_rtt(avg_rtt),
-                "[dim]—[/dim]" if hop.status == "timeout" else "0%",
-            )
+    def _finalize_trace(self, ping_stats: PingStatistics) -> None:
+        """Display final ping statistics summary."""
+        self.trace_in_progress = False
 
         # Ping summary
         if ping_stats.status.value == "success" or ping_stats.packets_received > 0:
@@ -257,8 +253,8 @@ class LatencyAnalyzerWidget(BaseWidget):
             summary = "[red]Ping failed — host may be blocking ICMP[/red]"
 
         self.query_one("#ping-summary-label", Label).update(summary)
-        self.display_success(f"Analysis complete: {len(hops)} hops traced to {ping_stats.host}")
-        self.set_status(f"✓ {len(hops)} hops traced")
+        self.display_success(f"Analysis complete: trace to {ping_stats.host} finished")
+        self.set_status("✓ Trace complete")
 
     def _on_trace_error(self, error_msg: str) -> None:
         """Handle worker errors on the UI thread."""

@@ -1,5 +1,6 @@
 """Functional tests for LatencyAnalyzerWidget using Textual's test framework."""
 
+from typing import Any
 from unittest.mock import patch
 
 import pytest
@@ -55,8 +56,12 @@ async def test_latency_analysis_success():
         rtt_values=[10.0, 12.0, 15.0, 18.0, 20.0],
     )
 
+    async def mock_stream(*args, **kwargs: Any):
+        for h in mock_hops:
+            yield h
+
     with (
-        patch("tui.widgets.latency_analyzer_widget.mtr_style_trace", return_value=(mock_hops, "success")),
+        patch("tui.widgets.latency_analyzer_widget.mtr_style_trace_stream", side_effect=mock_stream),
         patch("tui.widgets.latency_analyzer_widget.ping_statistics", return_value=mock_ping),
     ):
         async with app.run_test() as pilot:
@@ -65,8 +70,10 @@ async def test_latency_analysis_success():
             # Set host
             widget.query_one("#host-input").value = "8.8.8.8"
 
-            # Call display directly to simulate background thread completion in a sync way for test
-            widget._display_results(mock_hops, mock_ping)
+            # Call internal display methods directly to simulate worker completion
+            for hop in mock_hops:
+                widget._add_hop_result(hop)
+            widget._finalize_trace(mock_ping)
 
             table = widget.query_one("#hops-table", DataTable)
             assert table.row_count == 2

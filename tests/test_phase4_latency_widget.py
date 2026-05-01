@@ -318,7 +318,7 @@ class TestPhase3Integration:
         """Test that the widget module exposes the latency utility imports."""
         import tui.widgets.latency_analyzer_widget as mod
 
-        assert hasattr(mod, "mtr_style_trace")
+        assert hasattr(mod, "mtr_style_trace_stream")
         assert hasattr(mod, "ping_statistics")
         assert hasattr(mod, "TracerouteHop")
         assert hasattr(mod, "PingStatistics")

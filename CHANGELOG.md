@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.9] - 2026-04-30
+
+### Added
+- **Streaming Port Scanning** — Refactored Port Scanner to use async generators, enabling real-time UI updates as each port is checked.
+- **Progressive Path Analysis** — Implemented streaming MTR-style path analysis that displays hops as they are discovered.
+- **Async Subprocess Streaming** — Leveraged `asyncio.create_subprocess_exec` for non-blocking command execution in network utilities.
+
+### Changed
+- **Test Suite Updates** — Modernized functional tests for Port and Latency widgets to support streaming patterns.
+- **Performance Optimization** — Optimized network operation concurrency with task-based streaming.
+
 ## [0.5.8] - 2026-04-23
 
 ### Added

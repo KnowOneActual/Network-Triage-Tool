@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import logging
 import re
 from typing import TYPE_CHECKING, Any
@@ -15,7 +14,7 @@ from shared.port_utils import (
     COMMON_SERVICE_PORTS,
     PortCheckResult,
     PortStatus,
-    check_multiple_ports,
+    check_multiple_ports_stream,
     summarize_port_scan,
 )
 
@@ -35,6 +34,7 @@ class PortScannerWidget(BaseWidget):
         super().__init__(*args, **kwargs)
         self.widget_name = "PortScannerWidget"
         self.scan_in_progress = False
+        self._current_results: list[PortCheckResult] = []
 
     def compose(self) -> ComposeResult:
         """Compose the widget UI."""
@@ -273,70 +273,72 @@ class PortScannerWidget(BaseWidget):
 
     @work(group="scan_job")
     async def _run_scan_worker(self, host: str, ports: list[int], timeout_secs: int) -> None:
-        """Run the port scan in the background."""
+        """Run the port scan in the background with streaming updates."""
         try:
-            async with asyncio.timeout(timeout_secs * 2 + 10):  # Safety timeout
-                results = await check_multiple_ports(host, ports, timeout_secs=timeout_secs, max_workers=10)
-                self._display_results(results, host)
-        except TimeoutError:
-            self.display_error(f"Scan timed out for {host}")
+            self._current_results = []
+            async for result in check_multiple_ports_stream(host, ports, timeout_secs=timeout_secs, max_workers=20):
+                self._current_results.append(result)
+                self._add_single_result(result)
+
+            self._finalize_scan(host)
         except Exception as e:
             logger.error(f"Port scan worker error: {e}", exc_info=True)
             self.display_error(f"Scan failed: {e}")
         finally:
             self.scan_in_progress = False
 
-    def _display_results(self, results: list[PortCheckResult], host: str) -> None:
-        """Display scan results (UI thread)."""
+    def _add_single_result(self, result: PortCheckResult) -> None:
+        """Add a single result row to the UI (UI thread)."""
+        # Determine status color
+        status_str = result.status.value.upper()
+        match result.status:
+            case PortStatus.OPEN:
+                status_str = f"[green]{status_str}[/green]"
+            case PortStatus.CLOSED:
+                status_str = f"[red]{status_str}[/red]"
+            case PortStatus.FILTERED:
+                status_str = f"[yellow]{status_str}[/yellow]"
+            case _:
+                status_str = f"[dim]{status_str}[/dim]"
+
+        self.results_widget.add_result_row(
+            port=str(result.port),
+            service=result.service_name or "Unknown",
+            status=status_str,
+            time=f"{result.response_time_ms:.1f}",
+        )
+
+        # Update status with current progress
+        count = len(self._current_results)
+        self.set_status(f"Scanning... {count} ports checked")
+
+    def _finalize_scan(self, host: str) -> None:
+        """Finalize the scan and display summary (UI thread)."""
         summary_label = self.query_one("#summary-label", Label)
+        results = self._current_results
 
-        # Display results
-        if results:
-            for result in results:
-                # Determine status color
-                status_str = result.status.value.upper()
-                match result.status:
-                    case PortStatus.OPEN:
-                        status_str = f"[green]{status_str}[/green]"
-                    case PortStatus.CLOSED:
-                        status_str = f"[red]{status_str}[/red]"
-                    case PortStatus.FILTERED:
-                        status_str = f"[yellow]{status_str}[/yellow]"
-                    case _:
-                        status_str = f"[dim]{status_str}[/dim]"
+        # Generate and display summary
+        summary = summarize_port_scan(results)
+        summary_text = (
+            f"Total: {summary['total_scanned']} | "
+            f"[green]Open: {summary['open_count']}[/green] | "
+            f"[red]Closed: {summary['closed_count']}[/red] | "
+            f"[yellow]Filtered: {summary['filtered_count']}[/yellow] | "
+            f"Avg Time: {summary['avg_response_time_ms']:.1f}ms"
+        )
+        summary_label.update(summary_text)
 
-                self.results_widget.add_result_row(
-                    port=str(result.port),
-                    service=result.service_name or "Unknown",
-                    status=status_str,
-                    time=f"{result.response_time_ms:.1f}",
-                )
-
-            # Generate and display summary
-            summary = summarize_port_scan(results)
-            summary_text = (
-                f"Total: {summary['total_scanned']} | "
-                f"[green]Open: {summary['open_count']}[/green] | "
-                f"[red]Closed: {summary['closed_count']}[/red] | "
-                f"[yellow]Filtered: {summary['filtered_count']}[/yellow] | "
-                f"Avg Time: {summary['avg_response_time_ms']:.1f}ms"
-            )
-            summary_label.update(summary_text)
-
-            # Show success message
-            if summary["open_count"] > 0:
-                self.display_success(f"Scan complete! Found {summary['open_count']} open port(s) on {host}")
-            else:
-                self.display_success(f"Scan complete on {host}. No open ports found.")
-
-            self.set_status(
-                f"✓ Scanned {host} - {summary['open_count']} open, "
-                f"{summary['closed_count']} closed, "
-                f"{summary['filtered_count']} filtered",
-            )
+        # Show success message
+        if summary["open_count"] > 0:
+            self.display_success(f"Scan complete! Found {summary['open_count']} open port(s) on {host}")
         else:
-            self.display_error("No results from scan")
-            self.set_status("Scan failed")
+            self.display_success(f"Scan complete on {host}. No open ports found.")
+
+        self.set_status(
+            f"✓ Scanned {host} - {summary['open_count']} open, "
+            f"{summary['closed_count']} closed, "
+            f"{summary['filtered_count']} filtered",
+        )
 
     def clear_results(self) -> None:
         """Clear all results and inputs."""

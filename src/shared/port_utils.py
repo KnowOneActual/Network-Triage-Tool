@@ -12,6 +12,7 @@ import functools
 import logging
 import socket
 import time
+from collections.abc import AsyncGenerator
 from dataclasses import asdict, dataclass
 from enum import Enum
 from typing import Any
@@ -172,6 +173,44 @@ def check_port_open(host: str, port: int, timeout: int = 3, grab_banner: bool = 
     return result
 
 
+async def check_multiple_ports_stream(
+    host: str,
+    ports: list[int],
+    timeout_secs: int = 3,
+    max_workers: int = 10,
+) -> AsyncGenerator[PortCheckResult]:
+    """Check connectivity to multiple ports and yield results as they complete.
+
+    Args:
+        host: Hostname or IP address
+        ports: List of port numbers to check
+        timeout_secs: Connection timeout per port in seconds
+        max_workers: Concurrent workers
+
+    Yields:
+        PortCheckResult objects as they complete
+
+    """
+
+    def check_port_wrapper(port: int) -> PortCheckResult:
+        return check_port_open(host, port, timeout_secs)
+
+    semaphore = asyncio.Semaphore(max_workers)
+
+    async def sem_check_port(port: int) -> PortCheckResult:
+        async with semaphore:
+            return await asyncio.to_thread(check_port_wrapper, port)
+
+    # Use as_completed to yield results as they finish
+    tasks = [asyncio.create_task(sem_check_port(port)) for port in ports]
+
+    for future in asyncio.as_completed(tasks):
+        try:
+            yield await future
+        except Exception as e:
+            logger.error(f"Error in port scan stream: {e}")
+
+
 async def check_multiple_ports(
     host: str,
     ports: list[int],
@@ -196,33 +235,8 @@ async def check_multiple_ports(
     """
     results: list[PortCheckResult] = []
 
-    def check_port_wrapper(port: int) -> PortCheckResult:
-        return check_port_open(host, port, timeout_secs)
-
-    semaphore = asyncio.Semaphore(max_workers)
-
-    async def sem_check_port(port: int) -> PortCheckResult:
-        async with semaphore:
-            return await asyncio.to_thread(check_port_wrapper, port)
-
-    # Use TaskGroup for concurrent checks (Python 3.11+)
-    try:
-        async with asyncio.timeout(timeout_secs + 5):
-            try:
-                async with asyncio.TaskGroup() as tg:
-                    tasks = {}
-                    for port in ports:
-                        task = tg.create_task(sem_check_port(port))
-                        tasks[task] = port
-
-                for task in tasks:
-                    results.append(task.result())
-            except* Exception as e:
-                # TaskGroup errors are wrapped in ExceptionGroup
-                for exc in e.exceptions:
-                    logger.error(f"Port scan error: {exc}")
-    except TimeoutError:
-        logger.error(f"Port scan timed out for {host}")
+    async for result in check_multiple_ports_stream(host, ports, timeout_secs, max_workers):
+        results.append(result)
 
     # Sort by port number
     results.sort(key=lambda r: r.port)

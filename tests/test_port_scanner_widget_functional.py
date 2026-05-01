@@ -1,5 +1,6 @@
 """Functional tests for PortScannerWidget using Textual's test framework."""
 
+from typing import Any
 from unittest.mock import patch
 
 import pytest
@@ -27,7 +28,11 @@ async def test_port_scan_success():
         PortCheckResult(host="localhost", port=443, status=PortStatus.CLOSED, service_name="https", response_time_ms=2.0),
     ]
 
-    with patch("tui.widgets.port_scanner_widget.check_multiple_ports", return_value=mock_results):
+    async def mock_stream(*args, **kwargs: Any):
+        for r in mock_results:
+            yield r
+
+    with patch("tui.widgets.port_scanner_widget.check_multiple_ports_stream", side_effect=mock_stream):
         async with app.run_test() as pilot:
             widget = app.query_one(PortScannerWidget)
 
