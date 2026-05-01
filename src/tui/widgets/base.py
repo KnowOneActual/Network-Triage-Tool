@@ -21,6 +21,15 @@ from textual.message import Message
 from textual.reactive import reactive
 from textual.widgets import Label, Static
 
+# Import NoActiveAppError for safe notifications during tests
+try:
+    from textual._context import NoActiveAppError
+except ImportError:
+    # Fallback if internal API changes
+    class NoActiveAppError(RuntimeError):  # type: ignore
+        pass
+
+
 if TYPE_CHECKING:
     from textual.app import ComposeResult
 
@@ -179,8 +188,12 @@ class BaseWidget(Container, AsyncOperationMixin):
         self.is_loading = False
         self.current_status = "Error"
 
-        # Show app-wide Toast
-        self.notify(message, title=f"{self.widget_name} Error", severity="error")
+        # Show app-wide Toast if app is available
+        try:
+            self.notify(message, title=f"{self.widget_name} Error", severity="error")
+        except NoActiveAppError:
+            # Silently fail if no app is active (common in unit tests)
+            pass
 
         error_display = self.query_one("#error-display", expect_type=Static)
         error_display.update(f"❌ Error: {message}")
@@ -194,8 +207,12 @@ class BaseWidget(Container, AsyncOperationMixin):
         self.is_loading = False
         self.current_status = "Ready"
 
-        # Show app-wide Toast
-        self.notify(message, title=f"{self.widget_name}", severity="information")
+        # Show app-wide Toast if app is available
+        try:
+            self.notify(message, title=f"{self.widget_name}", severity="information")
+        except NoActiveAppError:
+            # Silently fail if no app is active (common in unit tests)
+            pass
 
         error_display = self.query_one("#error-display", expect_type=Static)
         error_display.update("")
