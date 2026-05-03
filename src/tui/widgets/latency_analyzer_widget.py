@@ -7,12 +7,13 @@ plus aggregate ping statistics for the target host.
 from __future__ import annotations
 
 import asyncio
-import logging
 from typing import TYPE_CHECKING, Any
 
 from textual import work
 from textual.containers import Horizontal, Vertical
 from textual.widgets import Button, DataTable, Input, Label, Static
+
+from network_triage.logging import get_logger
 
 # Import latency utilities - Phase 3
 from shared.latency_utils import (
@@ -25,10 +26,10 @@ from shared.latency_utils import (
 from .base import BaseWidget, TaskCompleted
 from .components import HistoryInput
 
+logger = get_logger(__name__)
+
 if TYPE_CHECKING:
     from textual.app import ComposeResult
-
-logger = logging.getLogger(__name__)
 
 
 class LatencyAnalyzerWidget(BaseWidget):

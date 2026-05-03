@@ -5,7 +5,6 @@ Uses psutil for cross-platform socket enumeration, running entirely on a
 background thread so the UI never blocks.
 """
 
-import logging
 from dataclasses import dataclass
 from typing import Any
 
@@ -16,9 +15,11 @@ from textual.containers import Horizontal, Vertical
 from textual.timer import Timer
 from textual.widgets import Button, DataTable, Input, Label, Select, Static
 
+from network_triage.logging import get_logger
+
 from .base import BaseWidget
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 # ---------------------------------------------------------------------------

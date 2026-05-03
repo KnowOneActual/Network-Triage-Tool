@@ -13,7 +13,6 @@ Uses Linux commands:
 - curl/wget: HTTP requests
 """
 
-import logging
 import re
 from typing import Any
 
@@ -22,12 +21,14 @@ from ..exceptions import (
     NetworkCommandError,
     NetworkTimeoutError,
 )
+from ..logging import get_logger
+from ..shared.shared_toolkit import NetworkTriageToolkitBase
 from ..utils import safe_http_request, safe_subprocess_run
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
-class NetworkTriageToolkit:
+class NetworkTriageToolkit(NetworkTriageToolkitBase):
     """Linux-specific network diagnostic toolkit.
 
     Implements the same methods as macOS toolkit but uses Linux
@@ -39,7 +40,34 @@ class NetworkTriageToolkit:
 
     def __init__(self) -> None:
         """Initialize the Linux network toolkit."""
-        self.logger = logging.getLogger(__name__)
+        super().__init__()
+        self.logger = get_logger(__name__)
+
+    def health_check(self) -> dict[str, Any]:
+        """Performs a Linux-specific health check.
+
+        Returns:
+            dict: Health status and component details.
+
+        """
+        import shutil
+
+        # Start with base checks
+        base_health = super().health_check()
+        components = base_health["components"]
+
+        # Add Linux specific tools
+        linux_tools = ["ip", "ethtool", "iwconfig", "lsb_release", "uname"]
+        for tool in linux_tools:
+            components[tool] = shutil.which(tool) is not None
+
+        # Check for nmap
+        components["nmap"] = self._get_nmap_path() is not None
+
+        return {
+            "status": "healthy" if all(components.values()) else "degraded",
+            "components": components,
+        }
 
     def get_system_info(self) -> dict[str, str]:
         """Get system information (OS, hostname, etc).

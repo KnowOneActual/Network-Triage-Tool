@@ -9,7 +9,6 @@ License: MIT
 
 import asyncio
 import functools
-import logging
 import socket
 import time
 from collections.abc import AsyncGenerator
@@ -17,7 +16,9 @@ from dataclasses import asdict, dataclass
 from enum import Enum
 from typing import Any
 
-logger = logging.getLogger(__name__)
+from network_triage.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 class PortStatus(Enum):

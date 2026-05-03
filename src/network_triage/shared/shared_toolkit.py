@@ -74,6 +74,10 @@ class NetworkToolkit(Protocol):
         """Performs a simple traceroute."""
         ...
 
+    def health_check(self) -> dict[str, Any]:
+        """Performs a health check of the toolkit and its dependencies."""
+        ...
+
 
 class NetworkTriageToolkitBase:
     """A collection of OS-agnostic network troubleshooting functions."""
@@ -115,6 +119,41 @@ class NetworkTriageToolkitBase:
     def stop_ping(self) -> None:
         """Signals the continuous ping to stop."""
         self.stop_ping_event.set()
+
+    def health_check(self) -> dict[str, Any]:
+        """Performs a health check of common dependencies.
+
+        Returns:
+            Dictionary with component health status.
+
+        """
+        components = {
+            "ping": shutil.which("ping") is not None,
+            "python": True,
+            "network": False,
+        }
+
+        # Check basic network connectivity
+        try:
+            # Check if we have a default gateway or just any non-loopback IP
+            import psutil
+
+            gateways = psutil.net_if_addrs()
+            for interface, addrs in gateways.items():
+                if interface not in {"lo", "lo0"}:
+                    for addr in addrs:
+                        if addr.family == socket.AF_INET:
+                            components["network"] = True
+                            break
+                if components["network"]:
+                    break
+        except Exception:
+            pass
+
+        return {
+            "status": "healthy" if all(components.values()) else "degraded",
+            "components": components,
+        }
 
     def dns_resolution_test(self, domain: str) -> str:
         """Tests DNS resolution for a specific domain."""

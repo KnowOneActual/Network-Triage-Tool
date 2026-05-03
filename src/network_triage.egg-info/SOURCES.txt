@@ -4,7 +4,9 @@ pyproject.toml
 src/network_triage/__init__.py
 src/network_triage/__main__.py
 src/network_triage/app.py
+src/network_triage/config.py
 src/network_triage/exceptions.py
+src/network_triage/logging.py
 src/network_triage/triage.tcss
 src/network_triage/utils.py
 src/network_triage.egg-info/PKG-INFO
@@ -38,6 +40,7 @@ tests/test_app.py
 tests/test_app_real.py
 tests/test_dns_widget_functional.py
 tests/test_error_handling.py
+tests/test_health_checks.py
 tests/test_latency_widget_functional.py
 tests/test_linux_toolkit.py
 tests/test_macos_toolkit.py

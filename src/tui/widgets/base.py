@@ -11,7 +11,6 @@ All widgets should inherit from BaseWidget to ensure consistency in:
 
 from __future__ import annotations
 
-import logging
 from dataclasses import dataclass
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
@@ -20,6 +19,8 @@ from textual.containers import Container, Vertical
 from textual.message import Message
 from textual.reactive import reactive
 from textual.widgets import Label, Static
+
+from network_triage.logging import get_logger
 
 # Import NoActiveAppError for safe notifications during tests
 try:
@@ -33,7 +34,8 @@ except ImportError:
 if TYPE_CHECKING:
     from textual.app import ComposeResult
 
-logger = logging.getLogger(__name__)
+# Configure logging
+logger = get_logger(__name__)
 
 
 class TaskCompleted(Message):

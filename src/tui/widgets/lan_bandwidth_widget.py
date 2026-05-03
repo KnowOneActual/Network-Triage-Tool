@@ -14,7 +14,6 @@ Features:
 - Auto-stop on completion with a clean summary
 """
 
-import logging
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -26,9 +25,11 @@ from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
 from textual.widgets import Button, DataTable, Label, Select, Static
 
+from network_triage.logging import get_logger
+
 from .base import BaseWidget
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # ---------------------------------------------------------------------------
 # Constants

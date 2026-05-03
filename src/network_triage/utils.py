@@ -4,7 +4,6 @@ Provides retry logic, timeout management, and common error handling patterns.
 """
 
 import functools
-import logging
 import shutil
 import subprocess
 import time
@@ -16,9 +15,10 @@ from .exceptions import (
     NetworkCommandError,
     NetworkTimeoutError,
 )
+from .logging import get_logger
 
 # Configure logging
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def retry[T](

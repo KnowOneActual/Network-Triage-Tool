@@ -4,11 +4,11 @@ Provides network diagnostics optimized for macOS systems using native tools
 like system_profiler, networksetup, and scutil for reliable data gathering.
 """
 
-import logging
 import os
 import platform
 import re
 import socket
+from typing import Any
 
 import psutil
 
@@ -18,6 +18,7 @@ from ..exceptions import (
     NetworkConnectivityError,
     ParseError,
 )
+from ..logging import get_logger
 from ..shared.shared_toolkit import NetworkTriageToolkitBase
 from ..utils import (
     format_error_message,
@@ -27,7 +28,7 @@ from ..utils import (
     safe_subprocess_run,
 )
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class NetworkTriageToolkit(NetworkTriageToolkitBase):
@@ -37,6 +38,32 @@ class NetworkTriageToolkit(NetworkTriageToolkitBase):
     and scutil for reliable network diagnostics. It includes comprehensive error
     handling for common failure modes.
     """
+
+    def health_check(self) -> dict[str, Any]:
+        """Performs a macOS-specific health check.
+
+        Returns:
+            dict: Health status and component details.
+
+        """
+        import shutil
+
+        # Start with base checks
+        base_health = super().health_check()
+        components = base_health["components"]
+
+        # Add macOS specific tools
+        macos_tools = ["system_profiler", "networksetup", "scutil"]
+        for tool in macos_tools:
+            components[tool] = shutil.which(tool) is not None
+
+        # Check for nmap
+        components["nmap"] = self._get_nmap_path() is not None
+
+        return {
+            "status": "healthy" if all(components.values()) else "degraded",
+            "components": components,
+        }
 
     def get_system_info(self) -> dict[str, str]:
         """Gather basic system information with macOS-specific name resolution.

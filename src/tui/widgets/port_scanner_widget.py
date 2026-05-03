@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 import re
 from typing import TYPE_CHECKING, Any
 
@@ -10,6 +9,7 @@ from textual import work
 from textual.containers import Horizontal, Vertical
 from textual.widgets import Button, Input, Label, Select, Static
 
+from network_triage.logging import get_logger
 from shared.port_utils import (
     COMMON_SERVICE_PORTS,
     PortCheckResult,
@@ -24,7 +24,7 @@ from .components import HistoryInput, ResultColumn, ResultsWidget
 if TYPE_CHECKING:
     from textual.app import ComposeResult
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class PortScannerWidget(BaseWidget):

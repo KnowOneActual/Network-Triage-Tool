@@ -881,6 +881,15 @@ class NetworkTriageApp(App[None]):
 
 def run() -> None:
     """Entry point for the console script."""
+    import logging
+
+    from .config import settings
+    from .logging import configure_logging
+
+    # Map string log level to logging constant
+    level = getattr(logging, settings.log_level.upper(), logging.INFO)
+    configure_logging(level=level, json_format=settings.log_json)
+
     if len(sys.argv) > 1 and sys.argv[1] in ("--version", "-V"):
         try:
             version = importlib.metadata.version("network-triage")
