@@ -201,7 +201,9 @@ class BaseWidget(Container, AsyncOperationMixin):
         error_display.update(f"❌ Error: {message}")
         error_display.styles.display = "block"
 
-        logger.error(f"[{self.widget_name}] {message}")
+        # Sanitize for logging
+        safe_message = message.encode("ascii", "replace").decode("ascii")
+        logger.error(f"[{self.widget_name}] {safe_message}")
 
     def display_success(self, message: str) -> None:
         """Display success message to user via Toast."""
@@ -220,19 +222,27 @@ class BaseWidget(Container, AsyncOperationMixin):
         error_display.update("")
         error_display.styles.display = "none"
 
-        logger.info(f"[{self.widget_name}] {message}")
+        # Sanitize for logging
+        safe_message = message.encode("ascii", "replace").decode("ascii")
+        logger.info(f"[{self.widget_name}] {safe_message}")
 
     def show_loading(self, message: str = "Processing...") -> None:
         """Show loading state."""
         self.is_loading = True
         self.current_status = message
         self.error_message = ""
-        logger.debug(f"[{self.widget_name}] {message}")
+
+        # Sanitize for logging
+        safe_message = message.encode("ascii", "replace").decode("ascii")
+        logger.debug(f"[{self.widget_name}] {safe_message}")
 
     def set_status(self, status: str) -> None:
         """Update current status."""
         self.current_status = status
-        logger.debug(f"[{self.widget_name}] Status: {status}")
+
+        # Sanitize for logging
+        safe_status = status.encode("ascii", "replace").decode("ascii")
+        logger.debug(f"[{self.widget_name}] Status: {safe_status}")
 
     def watch_is_loading(self, is_loading: bool) -> None:
         """React to loading state changes."""
