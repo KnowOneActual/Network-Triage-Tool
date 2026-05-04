@@ -304,3 +304,50 @@ def ttl_cache(ttl_seconds: int = 60) -> Callable[[Callable[..., Any]], Callable[
         return wrapper
 
     return decorator
+
+
+def track_performance(func: Callable[..., Any]) -> Callable[..., Any]:
+    """Decorator to track basic performance metrics (execution time)."""
+
+    @functools.wraps(func)
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
+        start_time = time.perf_counter()
+        try:
+            result = func(*args, **kwargs)
+            duration = time.perf_counter() - start_time
+            logger.info(f"Performance: '{func.__name__}' completed in {duration:.4f}s")
+            return result
+        except Exception as e:
+            duration = time.perf_counter() - start_time
+            logger.error(f"Performance: '{func.__name__}' failed after {duration:.4f}s with {type(e).__name__}")
+            raise
+
+    return wrapper
+
+
+def monitor_long_running(threshold_seconds: float = 5.0) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+    """Decorator to monitor long-running tasks and log if they exceed a threshold."""
+
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+        @functools.wraps(func)
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            start_time = time.perf_counter()
+            try:
+                result = func(*args, **kwargs)
+                duration = time.perf_counter() - start_time
+                if duration > threshold_seconds:
+                    logger.warning(
+                        f"Long-running task: '{func.__name__}' took {duration:.2f}s (threshold: {threshold_seconds}s)"
+                    )
+                return result
+            except Exception as e:
+                duration = time.perf_counter() - start_time
+                if duration > threshold_seconds:
+                    logger.warning(
+                        f"Long-running task: '{func.__name__}' failed after {duration:.2f}s (threshold: {threshold_seconds}s) with {type(e).__name__}"
+                    )
+                raise
+
+        return wrapper
+
+    return decorator

@@ -24,6 +24,7 @@ mock_toolkit.get_ip_info.return_value = {
     "Public IP": "1.1.1.1",
 }
 mock_toolkit.get_connection_details.return_value = {"Interface": "lo0", "Status": "Up"}
+mock_toolkit.health_check.return_value = {"status": "healthy", "components": {"ping": True}}
 
 # Apply the mock to the module-level variable
 network_triage.app.net_tool = mock_toolkit
@@ -31,7 +32,7 @@ network_triage.app.net_tool = mock_toolkit
 from network_triage.app import NetworkTriageApp
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio  # type: ignore[untyped-decorator]
 async def test_app_startup() -> None:
     """Test that the app starts up and displays core components."""
     from textual.widgets import ContentSwitcher, Footer, Header
@@ -51,7 +52,7 @@ async def test_app_startup() -> None:
         assert hostname_box.value_text == "Test-Host"
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio  # type: ignore[untyped-decorator]
 async def test_tab_switching() -> None:
     """Test switching between different diagnostic tabs."""
     from textual.widgets import ContentSwitcher
@@ -78,7 +79,7 @@ async def test_tab_switching() -> None:
         assert switcher.current == "utils"
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio  # type: ignore[untyped-decorator]
 async def test_info_box_click_clipboard(mocker: MockerFixture) -> None:
     """Test that clicking an InfoBox copies to clipboard."""
     app = NetworkTriageApp()

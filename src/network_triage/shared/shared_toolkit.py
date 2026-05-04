@@ -15,6 +15,8 @@ from scapy.all import inet_ntoa, sniff
 from scapy.contrib.cdp import CDPAddrRecord, CDPMsg
 from scapy.contrib.lldp import LLDPDU
 
+from ..utils import monitor_long_running, track_performance
+
 
 @runtime_checkable
 class NetworkToolkit(Protocol):
@@ -287,6 +289,8 @@ class NetworkTriageToolkitBase:
             if not packet_found[0] and not self.stop_discovery:
                 callback(f"\nScan complete. No LLDP or CDP packets found in {timeout} seconds.")
 
+    @track_performance
+    @monitor_long_running(threshold_seconds=10.0)
     def run_speed_test(self) -> dict[str, str]:
         """Performs a network speed test and returns the results."""
         try:
@@ -322,6 +326,8 @@ class NetworkTriageToolkitBase:
                 nmap_path = "/opt/homebrew/bin/nmap"
         return nmap_path
 
+    @track_performance
+    @monitor_long_running(threshold_seconds=5.0)
     def run_network_scan(
         self, target: str, arguments: str = "-F", callback: Callable[[str], None] | None = None
     ) -> list[dict[str, Any]]:

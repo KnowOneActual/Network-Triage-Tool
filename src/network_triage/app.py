@@ -115,6 +115,7 @@ class Dashboard(Container):
         yield InfoBox("Internal IP", id="info_internal_ip")
         yield InfoBox("Gateway", id="info_gateway")
         yield InfoBox("Public IP", id="info_public_ip")
+        yield InfoBox("Toolkit Health", id="info_health")
 
     def on_mount(self) -> None:
         self.refresh_data()
@@ -124,14 +125,16 @@ class Dashboard(Container):
     def refresh_data(self) -> None:
         sys_info = net_tool.get_system_info()
         ip_info = net_tool.get_ip_info()
-        self.app.call_from_thread(self._update_ui, sys_info, ip_info)
+        health = net_tool.health_check()
+        self.app.call_from_thread(self._update_ui, sys_info, ip_info, health)
 
-    def _update_ui(self, sys_info: dict[str, str], ip_info: dict[str, str]) -> None:
+    def _update_ui(self, sys_info: dict[str, str], ip_info: dict[str, str], health: dict[str, Any]) -> None:
         self.query_one("#info_hostname", InfoBox).value_text = sys_info.get("Hostname", "N/A")
         self.query_one("#info_os", InfoBox).value_text = sys_info.get("OS", "N/A")
         self.query_one("#info_internal_ip", InfoBox).value_text = ip_info.get("Internal IP", "N/A")
         self.query_one("#info_gateway", InfoBox).value_text = ip_info.get("Gateway", "N/A")
         self.query_one("#info_public_ip", InfoBox).value_text = ip_info.get("Public IP", "N/A")
+        self.query_one("#info_health", InfoBox).value_text = health.get("status", "N/A")
 
 
 class ConnectionTool(Container):

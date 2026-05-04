@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from textual.containers import Horizontal, Vertical
 from textual.widgets import Button, Input, Label, Select, Static
+
+from network_triage.exports import export_to_csv, export_to_json
 
 # Import DNS utilities
 from shared.dns_utils import DNSStatus
@@ -24,6 +27,7 @@ class DNSResolverWidget(BaseWidget):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.widget_name = "DNSResolverWidget"
+        self._last_results: list[dict[str, Any]] = []
 
     def compose(self) -> ComposeResult:
         """Compose the widget UI."""
@@ -64,6 +68,7 @@ class DNSResolverWidget(BaseWidget):
             # Action buttons
             with Horizontal(id="button-section"):
                 yield Button("Resolve", id="resolve-btn", variant="primary")
+                yield Button("Export", id="export-btn", variant="success")
                 yield Button("Clear", id="clear-btn", variant="default")
 
         # Results section
@@ -86,6 +91,8 @@ class DNSResolverWidget(BaseWidget):
         match event.button.id:
             case "resolve-btn":
                 self.resolve_hostname()
+            case "export-btn":
+                self.export_results()
             case "clear-btn":
                 self.clear_results()
 
@@ -119,6 +126,7 @@ class DNSResolverWidget(BaseWidget):
             # Perform DNS resolution using Phase 3 utility
             # This is synchronous, so it works in the main thread
             result = resolve_dns_hostname(hostname, timeout=5, include_reverse_dns=True)
+            self._last_results = []
 
             # Check if resolution was successful
             match result.status:
@@ -189,10 +197,37 @@ class DNSResolverWidget(BaseWidget):
             self.display_error(f"Error: {e!s}")
             self.set_status(f"Error: {e!s}")
 
+    def export_results(self) -> None:
+        """Export current results to CSV and JSON in the user's home directory."""
+        if not self._last_results:
+            self.display_error("No results to export")
+            return
+
+        try:
+            import datetime
+
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            export_dir = Path.home() / "NetworkTriageExports"
+
+            json_path = export_dir / f"dns_results_{timestamp}.json"
+            csv_path = export_dir / f"dns_results_{timestamp}.csv"
+
+            success_json = export_to_json(self._last_results, json_path)
+            success_csv = export_to_csv(self._last_results, csv_path)
+
+            if success_json and success_csv:
+                self.display_success(f"Exported to {export_dir}")
+                self.notify(f"Results exported to {export_dir}", severity="information")
+            else:
+                self.display_error("Failed to export some formats")
+        except Exception as e:
+            self.display_error(f"Export error: {e!s}")
+
     def clear_results(self) -> None:
         """Clear all results and inputs."""
         try:
             # Clear inputs
+            self._last_results = []
             hostname_input = self.query_one("#hostname-input", Input)
             hostname_input.value = ""
 

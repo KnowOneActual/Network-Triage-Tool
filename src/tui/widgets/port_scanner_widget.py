@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import re
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from textual import work
 from textual.containers import Horizontal, Vertical
 from textual.widgets import Button, Input, Label, Select, Static
 
+from network_triage.exports import export_to_csv, export_to_json
 from network_triage.logging import get_logger
 from shared.port_utils import (
     COMMON_SERVICE_PORTS,
@@ -78,6 +80,7 @@ class PortScannerWidget(BaseWidget):
             # Action buttons
             with Horizontal(id="button-section"):
                 yield Button("Scan", id="scan-btn", variant="primary")
+                yield Button("Export", id="export-btn", variant="success")
                 yield Button("Clear", id="clear-btn", variant="default")
 
         # Results section
@@ -103,6 +106,8 @@ class PortScannerWidget(BaseWidget):
         """Handle button presses."""
         if event.button.id == "scan-btn":
             self.scan_ports()
+        elif event.button.id == "export-btn":
+            self.export_results()
         elif event.button.id == "clear-btn":
             self.clear_results()
 
@@ -346,10 +351,40 @@ class PortScannerWidget(BaseWidget):
         # Notify app that task is complete (for tab badges)
         self.post_message(TaskCompleted(self.id))
 
+    def export_results(self) -> None:
+        """Export current results to CSV and JSON in the user's home directory."""
+        if not self._current_results:
+            self.display_error("No results to export")
+            return
+
+        try:
+            import datetime
+
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            export_dir = Path.home() / "NetworkTriageExports"
+
+            json_path = export_dir / f"port_results_{timestamp}.json"
+            csv_path = export_dir / f"port_results_{timestamp}.csv"
+
+            # Convert results to dicts for export
+            data = [r.to_dict() for r in self._current_results]
+
+            success_json = export_to_json(data, json_path)
+            success_csv = export_to_csv(data, csv_path)
+
+            if success_json and success_csv:
+                self.display_success(f"Exported to {export_dir}")
+                self.notify(f"Results exported to {export_dir}", severity="information")
+            else:
+                self.display_error("Failed to export some formats")
+        except Exception as e:
+            self.display_error(f"Export error: {e!s}")
+
     def clear_results(self) -> None:
         """Clear all results and inputs."""
         try:
             # Clear inputs
+            self._current_results = []
             host_input = self.query_one("#host-input", Input)
             host_input.value = ""
 
