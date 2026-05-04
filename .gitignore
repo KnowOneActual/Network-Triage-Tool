@@ -111,3 +111,5 @@ start-work.sh
 temp/
 AGENTS.md
 GEMINI.md
+windows_log.txt
+*.txt
