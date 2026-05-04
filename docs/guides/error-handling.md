@@ -705,6 +705,22 @@ def risky_operation(host: str) -> Result:
         )
 ```
 
+### 7. Unicode and Encoding Robustness
+
+When using Unicode symbols (like ✓, ❌, or emojis) in the UI, ensure they don't cause crashes when logged to restricted terminal environments (e.g., Windows consoles using `cp1252`).
+
+- **Sanitize for Logging**: Always sanitize strings containing non-ASCII characters before passing them to the logger.
+- **UTF-8 Environment**: Enable `PYTHONUTF8: 1` in CI/CD environments to ensure standard streams handle Unicode correctly.
+
+```python
+# ✅ GOOD - Automatic sanitization in BaseWidget
+def set_status(self, status: str) -> None:
+    self.current_status = status
+    # Strips or replaces non-ASCII chars for the log file
+    safe_status = status.encode("ascii", "replace").decode("ascii")
+    logger.debug(f"[{self.widget_name}] Status: {safe_status}")
+```
+
 ## Testing Error Handling
 
 ### Unit Test Patterns
@@ -891,4 +907,4 @@ See these files for comprehensive error handling examples:
 
 **Questions or suggestions?** Open an issue or discussion on [GitHub](https://github.com/knowoneactual/Network-Triage-Tool)!
 
-**Last Updated:** March 10, 2026 (v0.5.2)
+**Last Updated:** May 4, 2026 (v0.6.0)

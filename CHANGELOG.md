@@ -7,10 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-05-04
+
 ### Added
 - **Toolkit Health Checks** — Integrated health checks for network toolkits into the Dashboard UI.
 - **Performance Monitoring** — Added `track_performance` and `monitor_long_running` decorators in `utils.py` and applied them to `run_network_scan` and `run_speed_test`.
 - **Export Functionality** — Added JSON and CSV export capabilities to DNS and Port Scanner widgets.
+
+### Fixed
+- **Windows CI Unicode Support** — Resolved `UnicodeEncodeError` on Windows CI runners by enabling `PYTHONUTF8: 1` and implementing automatic ASCII sanitization in `BaseWidget` logging.
+- **Worker Stability** — Prevented background workers from crashing when attempting to log strings containing non-ASCII symbols (e.g., ✓, 🔄) in restricted terminal environments.
 
 ## [0.5.9] - 2026-05-01
 
