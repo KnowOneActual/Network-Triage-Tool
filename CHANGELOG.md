@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Phase 5.4: Plugin Architecture** — Implemented standard Python entry point-based plugin architecture allowing external packages to register UI components and logic dynamically.
+- **Phase 5.4: Scheduled Scans & Monitoring** — Added a `SchedulerWidget` for adding recurring ping monitoring tasks that execute periodically without blocking the UI.
+
 ## [0.6.0] - 2026-05-04
 
 ### Added

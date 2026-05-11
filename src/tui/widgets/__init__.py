@@ -22,6 +22,7 @@ from .dns_resolver_widget import DNSResolverWidget
 from .lan_bandwidth_widget import LanBandwidthWidget
 from .latency_analyzer_widget import LatencyAnalyzerWidget
 from .port_scanner_widget import PortScannerWidget
+from .scheduler_widget import SchedulerWidget
 
 __all__ = [
     "AsyncOperationMixin",
@@ -33,5 +34,6 @@ __all__ = [
     "PortScannerWidget",
     "ProgressWidget",
     "ResultsWidget",
+    "SchedulerWidget",
     "StatusIndicator",
 ]

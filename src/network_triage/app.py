@@ -31,6 +31,8 @@ from textual.widgets import (
     TextArea,
 )
 
+from .plugins import TUIPlugin, load_plugins
+
 # Phase 4 Widgets
 try:
     from tui.widgets import (
@@ -39,6 +41,7 @@ try:
         LanBandwidthWidget,
         LatencyAnalyzerWidget,
         PortScannerWidget,
+        SchedulerWidget,
     )
     from tui.widgets.base import TaskCompleted
     from tui.widgets.components import HistoryInput
@@ -51,6 +54,7 @@ except ImportError:
         LanBandwidthWidget,
         LatencyAnalyzerWidget,
         PortScannerWidget,
+        SchedulerWidget,
     )
     from tui.widgets.base import TaskCompleted
     from tui.widgets.components import HistoryInput
@@ -575,6 +579,7 @@ class UtilityTool(Container):
             yield Button("Latency Analyzer", id="sub_latency", classes="util_btn")
             yield Button("Connection Monitor", id="sub_connmon", classes="util_btn")
             yield Button("LAN Bandwidth", id="sub_bandwidth", classes="util_btn")
+            yield Button("Scheduler", id="sub_scheduler", classes="util_btn")
 
         # Content Switcher for Sub-Tools
         with ContentSwitcher(initial="tool_trace", id="util_content"):
@@ -584,6 +589,7 @@ class UtilityTool(Container):
             yield LatencyAnalyzerWidget(id="tool_latency")
             yield ConnectionMonitorWidget(id="tool_connmon")
             yield LanBandwidthWidget(id="tool_bandwidth")
+            yield SchedulerWidget(id="tool_scheduler")
 
     def on_mount(self) -> None:
         self.query_one("#sub_trace").add_class("-active")
@@ -598,6 +604,7 @@ class UtilityTool(Container):
                 "sub_latency": "tool_latency",
                 "sub_connmon": "tool_connmon",
                 "sub_bandwidth": "tool_bandwidth",
+                "sub_scheduler": "tool_scheduler",
             }
             if btn_id in target_map:
                 # Switch Content
@@ -621,6 +628,7 @@ class UtilityTool(Container):
             "tool_latency": "sub_latency",
             "tool_connmon": "sub_connmon",
             "tool_bandwidth": "sub_bandwidth",
+            "tool_scheduler": "sub_scheduler",
         }
 
         widget_id = event.widget_id or ""
@@ -656,6 +664,10 @@ class NetworkTriageApp(App[None]):
         Binding("u", "switch_tab('utils')", "Utilities"),
     ]
 
+    def __init__(self, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+        self.plugins: list[TUIPlugin] = load_plugins()
+
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
 
@@ -668,6 +680,8 @@ class NetworkTriageApp(App[None]):
             yield Button("🌐 Nmap", id="tab_nmap", classes="nav_btn")
             yield Button("📝 Notes", id="tab_notes", classes="nav_btn")
             yield Button("🛠️ Utils", id="tab_utils", classes="nav_btn")
+            for plugin in self.plugins:
+                yield Button(f"{plugin.icon} {plugin.name}", id=f"tab_plugin_{plugin.id}", classes="nav_btn")
 
         with ContentSwitcher(initial="dashboard", id="content_box"):
             yield Dashboard(id="dashboard")
@@ -678,6 +692,10 @@ class NetworkTriageApp(App[None]):
             yield NmapTool(id="nmap")
             yield NotesTool(id="notes")
             yield UtilityTool(id="utils")
+            for plugin in self.plugins:
+                widget = plugin.get_widget()
+                widget.id = f"plugin_{plugin.id}"
+                yield widget
 
         yield Footer()
 
@@ -719,6 +737,7 @@ class NetworkTriageApp(App[None]):
             "tool_latency": "utils",
             "tool_connmon": "utils",
             "tool_bandwidth": "utils",
+            "tool_scheduler": "utils",
         }
 
         # Determine which tab the widget belongs to
@@ -758,8 +777,19 @@ class NetworkTriageApp(App[None]):
         nmap_data = self._gather_nmap_data()
         notes = self._gather_notes()
 
+        plugin_data = {}
+        for plugin in self.plugins:
+            try:
+                data = plugin.get_report_data()
+                if data:
+                    plugin_data[plugin.name] = data
+            except Exception as e:
+                import logging
+
+                logging.getLogger(__name__).error(f"Plugin {plugin.name} report error: {e}")
+
         # Build the report
-        report = self._build_report(timestamp, dashboard_data, connection_data, speed_data, nmap_data, notes)
+        report = self._build_report(timestamp, dashboard_data, connection_data, speed_data, nmap_data, notes, plugin_data)
 
         # Write to file
         self._write_report(filename, report)
@@ -818,6 +848,7 @@ class NetworkTriageApp(App[None]):
         speed_data: dict[str, str],
         nmap_data: list[dict[str, str]],
         notes: str,
+        plugin_data: dict[str, str],
     ) -> list[str]:
         """Build the report string from gathered data."""
         report = []
@@ -861,6 +892,17 @@ class NetworkTriageApp(App[None]):
                 status = host.get("status", "")
                 vendor = host.get("vendor", "")
                 report.append(f"{ip:<16} {name:<25} {status:<10} {vendor}")
+            report.append("")
+
+        # Plugin Data
+        if plugin_data:
+            report.append("PLUGIN DATA")
+            report.append("-" * 50)
+            for plugin_name, data in plugin_data.items():
+                report.append(f"--- {plugin_name} ---")
+                report.append(data)
+                report.append("")
+            report.append("-" * 50)
             report.append("")
 
         # User notes
