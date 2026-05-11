@@ -747,7 +747,7 @@ wheels = [
 
 [[package]]
 name = "network-triage"
-version = "0.5.9"
+version = "0.7.0"
 source = { editable = "." }
 dependencies = [
     { name = "netmiko" },
