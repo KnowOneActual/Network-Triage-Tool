@@ -9,20 +9,22 @@ This project is currently a **Work in Progress**, so there are plenty of opportu
 To start contributing, you'll need to get the project running locally.
 
 1.  **Fork and Clone** the repository to your local machine.
-2.  **Set up your environment:**
+2.  **Set up your environment (using uv):**
     ```bash
-    # Create a virtual environment
-    python3 -m venv .venv
-    source .venv/bin/activate
+    # Install uv if needed
+    curl -LsSf https://astral.sh/uv/install.sh | sh
 
-    # Install the package in editable mode (installs dependencies automatically)
-    pip install -e .
+    # Setup environment and install dependencies
+    uv sync --all-extras
+
+    # Install pre-commit hooks
+    uv run pre-commit install
     ```
 
 3.  **Run the app:**
     ```bash
-    network-triage
-    ```    ```
+    uv run network-triage
+    ```
 
 ## 🐛 Reporting Bugs & Feature Requests
 

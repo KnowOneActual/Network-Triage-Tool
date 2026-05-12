@@ -328,6 +328,52 @@ async def concurrent_operations(items: List[str]) -> List[str]:
     return [r for r in results if not isinstance(r, Exception)]
 ```
 
+## Plugin Architecture
+
+The Network Triage Tool supports an extensible plugin architecture using Python entry points.
+
+### Creating a Plugin
+
+To create a plugin, implement the `TUIPlugin` protocol found in `network_triage.plugins`:
+
+```python
+from typing import Optional
+from textual.containers import Container
+from textual.widgets import Label
+
+class MyCustomPlugin:
+    @property
+    def id(self) -> str:
+        return "my_plugin"
+
+    @property
+    def name(self) -> str:
+        return "My Custom Tool"
+
+    @property
+    def icon(self) -> str:
+        return "🛠️"
+
+    def get_widget(self) -> Container:
+        container = Container()
+        container.mount(Label("Hello from my plugin!"))
+        return container
+
+    def get_report_data(self) -> Optional[str]:
+        return "Custom tool result data for report"
+```
+
+### Registering a Plugin
+
+Plugins are registered using the `network_triage.widgets` entry point group in your `pyproject.toml`:
+
+```toml
+[project.entry-points."network_triage.widgets"]
+my_plugin = "my_package.module:MyCustomPlugin"
+```
+
+The tool will automatically discover and load any installed packages that register themselves in this group.
+
 ## Troubleshooting
 
 ### Common Issues
@@ -418,5 +464,5 @@ jobs:
 
 ---
 
-*Last Updated: $(date)*
+*Last Updated: May 11, 2026*
 *For questions, open an issue or check the [AGENTS.md](AGENTS.md) file.*
