@@ -6,7 +6,9 @@ src/network_triage/__main__.py
 src/network_triage/app.py
 src/network_triage/config.py
 src/network_triage/exceptions.py
+src/network_triage/exports.py
 src/network_triage/logging.py
+src/network_triage/plugins.py
 src/network_triage/triage.tcss
 src/network_triage/utils.py
 src/network_triage.egg-info/PKG-INFO
@@ -36,6 +38,7 @@ src/tui/widgets/dns_resolver_widget.py
 src/tui/widgets/lan_bandwidth_widget.py
 src/tui/widgets/latency_analyzer_widget.py
 src/tui/widgets/port_scanner_widget.py
+src/tui/widgets/scheduler_widget.py
 tests/test_app.py
 tests/test_app_real.py
 tests/test_dns_widget_functional.py
@@ -51,4 +54,6 @@ tests/test_phase4_foundation.py
 tests/test_phase4_lan_bandwidth.py
 tests/test_phase4_latency_widget.py
 tests/test_phase4_port_scanner_widget.py
+tests/test_plugins.py
 tests/test_port_scanner_widget_functional.py
+tests/test_scheduler_widget.py
