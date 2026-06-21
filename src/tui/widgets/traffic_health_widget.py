@@ -218,7 +218,7 @@ class TrafficHealthWidget(BaseWidget):
                     f"{multi:.1f}%",
                     f"{broad:.1f}%",
                 )
-            except KeyError, ValueError:
+            except (KeyError, ValueError):
                 continue
 
     def update_comparison(self) -> None:

@@ -74,7 +74,7 @@ type = [
 
 [tool.ruff]
 line-length = 127
-target-version = "py314"
+target-version = "py312"
 
 [tool.ruff.lint]
 select = [
@@ -304,7 +304,7 @@ prerelease = "allow"
 
 # Modern Python tooling
 [tool.pyright]
-pythonVersion = "3.14"
+pythonVersion = "3.12"
 typeCheckingMode = "strict"
 reportMissingTypeStubs = "warning"
 reportUnusedImport = "warning"
@@ -316,6 +316,6 @@ reportPrivateUsage = "warning"
 
 [tool.black]
 line-length = 127
-target-version = ["py314"]
+target-version = ["py312"]
 skip-string-normalization = true
 preview = true
