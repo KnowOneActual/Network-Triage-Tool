@@ -1,15 +1,15 @@
 """Traffic Health monitoring and history comparison for Phase 5."""
+
 from __future__ import annotations
 
 import json
-import os
 import random
-import socket
 import threading
 import time
+from collections.abc import Callable
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, cast
 
 from scapy.all import sniff
 from scapy.packet import Packet
@@ -27,6 +27,7 @@ class TrafficHealthMonitor:
         self._stop_event = threading.Event()
         self.is_running = False
         self.is_simulated = False
+        self._rng = random.SystemRandom()
         self.reset()
 
     def reset(self) -> None:
@@ -102,9 +103,7 @@ class TrafficHealthMonitor:
             "is_simulated": self.is_simulated,
         }
 
-    def _run_sniffing(
-        self, callback: Callable[[TrafficHealthMonitor], None] | None, interface: str | None
-    ) -> None:
+    def _run_sniffing(self, callback: Callable[[TrafficHealthMonitor], None] | None, interface: str | None) -> None:
         """Runs the sniffing loop, falling back to simulation if permissions are lacking."""
 
         def _packet_callback(packet: Packet) -> None:
@@ -154,9 +153,7 @@ class TrafficHealthMonitor:
                 self.tcp_packets += 1
             elif packet.haslayer("UDP"):
                 self.udp_packets += 1
-                if packet.haslayer("DNS") or (
-                    getattr(packet, "sport", 0) == 53 or getattr(packet, "dport", 0) == 53
-                ):
+                if packet.haslayer("DNS") or (getattr(packet, "sport", 0) == 53 or getattr(packet, "dport", 0) == 53):
                     self.dns_packets += 1
             elif packet.haslayer("ICMP") or packet.haslayer("ICMPv6"):
                 self.icmp_packets += 1
@@ -183,33 +180,33 @@ class TrafficHealthMonitor:
             while not self._stop_event.is_set():
                 sniff(**sniff_kwargs)
 
-        except (PermissionError, OSError, socket.error):
+        except OSError:
             # Fall back to simulation mode
             self.is_simulated = True
             while not self._stop_event.is_set():
-                time.sleep(random.uniform(0.1, 0.4))
+                time.sleep(self._rng.uniform(0.1, 0.4))
                 self.total_packets += 1
 
                 # Pick packet type distribution
-                r = random.random()
+                r = self._rng.random()
                 if r < 0.65:
                     self.unicast_packets += 1
                     # Protocols for unicast
-                    r2 = random.random()
+                    r2 = self._rng.random()
                     if r2 < 0.6:
                         self.tcp_packets += 1
                         self.ipv4_packets += 1
                     elif r2 < 0.9:
                         self.udp_packets += 1
                         self.ipv4_packets += 1
-                        if random.random() < 0.15:
+                        if self._rng.random() < 0.15:
                             self.dns_packets += 1
                     else:
                         self.ipv6_packets += 1
                         self.tcp_packets += 1
                 elif r < 0.88:
                     self.multicast_packets += 1
-                    r2 = random.random()
+                    r2 = self._rng.random()
                     if r2 < 0.35:
                         self.stp_packets += 1
                     elif r2 < 0.6:
@@ -220,7 +217,7 @@ class TrafficHealthMonitor:
                         self.ipv6_packets += 1
                 else:
                     self.broadcast_packets += 1
-                    r2 = random.random()
+                    r2 = self._rng.random()
                     if r2 < 0.7:
                         self.arp_packets += 1
                     else:
@@ -260,7 +257,10 @@ class TrafficHealthMonitor:
             return []
         try:
             with open(HISTORY_FILE, encoding="utf-8") as f:
-                return json.load(f)
+                data = json.load(f)
+                if isinstance(data, list):
+                    return cast("list[dict[str, Any]]", data)
+                return []
         except Exception:
             return []
 
@@ -280,7 +280,7 @@ class TrafficHealthMonitor:
                 entry_time = datetime.fromisoformat(entry["timestamp"])
                 if yesterday_min <= entry_time <= yesterday_max:
                     return entry
-            except Exception:
+            except KeyError, ValueError:
                 continue
 
         # Fallback: return the most recent record that is at least 1 hour old
@@ -290,7 +290,7 @@ class TrafficHealthMonitor:
                 entry_time = datetime.fromisoformat(entry["timestamp"])
                 if entry_time <= fallback_limit:
                     return entry
-            except Exception:
+            except KeyError, ValueError:
                 continue
 
         return None

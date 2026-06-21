@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2026-06-21
+
+### Added
+- **Production Readiness** — Stable release of Network Triage Tool with complete 5-phase features implemented.
+
+### Fixed
+- **Traffic Health Sniffer Stability** — Fixed undefined variable `datetime` crash, unused imports, and incorrect cast issues.
+- **Strict Type Checking** — Resolved return-type discrepancy warnings under mypy strict configuration.
+- **Python 3.14 Compatibility** — Code cleanup, standard import sorting, and robust exception handler refinements.
+
 ## [0.8.0] - 2026-06-21
 
 ### Added

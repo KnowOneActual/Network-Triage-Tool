@@ -797,7 +797,9 @@ class NetworkTriageApp(App[None]):
                 logging.getLogger(__name__).error(f"Plugin {plugin.name} report error: {e}")
 
         # Build the report
-        report = self._build_report(timestamp, dashboard_data, connection_data, speed_data, nmap_data, notes, plugin_data, traffic_data)
+        report = self._build_report(
+            timestamp, dashboard_data, connection_data, speed_data, nmap_data, notes, plugin_data, traffic_data
+        )
 
         # Write to file
         self._write_report(filename, report)

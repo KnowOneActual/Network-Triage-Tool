@@ -1,16 +1,15 @@
 """Tests for Phase 5 Traffic Health monitor and widget."""
+
 from __future__ import annotations
 
 import json
-from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 from textual.app import App, ComposeResult
 from textual.widgets import Static
 
 from network_triage.shared.traffic_health import (
-    HISTORY_FILE,
     TrafficHealthMonitor,
 )
 from tui.widgets.traffic_health_widget import TrafficHealthWidget
@@ -30,12 +29,8 @@ def clean_history(tmp_path, monkeypatch):
     mock_history_file = mock_history_dir / "traffic_history.json"
 
     # Patch the global history path constants in the traffic_health module
-    monkeypatch.setattr(
-        "network_triage.shared.traffic_health.HISTORY_DIR", mock_history_dir
-    )
-    monkeypatch.setattr(
-        "network_triage.shared.traffic_health.HISTORY_FILE", mock_history_file
-    )
+    monkeypatch.setattr("network_triage.shared.traffic_health.HISTORY_DIR", mock_history_dir)
+    monkeypatch.setattr("network_triage.shared.traffic_health.HISTORY_FILE", mock_history_file)
 
     return mock_history_file
 
@@ -172,9 +167,7 @@ async def test_widget_sniff_cycle(clean_history):
         widget = app.query_one(TrafficHealthWidget)
 
         # Mock start/stop sniffing to run instantly
-        with patch.object(
-            widget.monitor, "start"
-        ) as mock_start, patch.object(widget.monitor, "stop") as mock_stop:
+        with patch.object(widget.monitor, "start") as mock_start, patch.object(widget.monitor, "stop") as mock_stop:
             await pilot.click("#traffic-start-btn")
             assert mock_start.called
 
@@ -251,7 +244,4 @@ async def test_widget_clear(clean_history):
 
         assert widget._last_stats == {}
         assert widget.query_one("#traffic-save-btn").disabled is True
-        assert (
-            "Start monitoring"
-            in str(widget.query_one("#dist-details", Static).render())
-        )
+        assert "Start monitoring" in str(widget.query_one("#dist-details", Static).render())

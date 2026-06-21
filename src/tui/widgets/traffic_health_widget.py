@@ -3,10 +3,10 @@
 Provides passive packet monitoring statistics, traffic type distribution,
 and historical comparison.
 """
+
 from __future__ import annotations
 
-import csv
-import json
+from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -150,7 +150,7 @@ class TrafficHealthWidget(BaseWidget):
         broad_pct = (stats["broadcast_packets"] / total * 100) if total > 0 else 0.0
 
         def _make_meter(pct: float) -> str:
-            filled = int(round(pct / 5))
+            filled = round(pct / 5)
             return f"[{'█' * filled}{'░' * (20 - filled)}] {pct:.1f}%"
 
         dist_text = (
@@ -218,7 +218,7 @@ class TrafficHealthWidget(BaseWidget):
                     f"{multi:.1f}%",
                     f"{broad:.1f}%",
                 )
-            except Exception:
+            except KeyError, ValueError:
                 continue
 
     def update_comparison(self) -> None:
@@ -240,16 +240,13 @@ class TrafficHealthWidget(BaseWidget):
             dt_str = datetime.fromisoformat(yesterday["timestamp"]).strftime("%Y-%m-%d %H:%M")
 
             comparison_text = (
-                f"Comparing with baseline capture from [cyan]{dt_str}[/cyan]:\n"
-                f"• Packet Rate: [bold]{prev_pps} pps[/bold] vs. "
+                f"Comparing with baseline capture from [cyan]{dt_str}[/cyan]:\n• Packet Rate: [bold]{prev_pps} pps[/bold] vs. "
             )
 
             if self._last_stats:
                 curr_pps = self._last_stats["packets_per_second"]
                 curr_tot = self._last_stats["total_packets"]
-                curr_broad = (
-                    (self._last_stats["broadcast_packets"] / curr_tot * 100) if curr_tot > 0 else 0.0
-                )
+                curr_broad = (self._last_stats["broadcast_packets"] / curr_tot * 100) if curr_tot > 0 else 0.0
 
                 pps_delta = curr_pps - prev_pps
                 broad_delta = curr_broad - prev_broad

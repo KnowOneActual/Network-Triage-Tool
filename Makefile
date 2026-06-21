@@ -89,7 +89,7 @@ clean:
 # Build package
 build:
 	@echo "Building package..."
-	uv run python -m build
+	uv build
 
 # Run the application
 run:

@@ -1,4 +1,5 @@
 """Verification script to test TrafficHealthMonitor live on Linux."""
+
 from __future__ import annotations
 
 import sys
