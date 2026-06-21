@@ -25,6 +25,7 @@ Built with [Textual](https://github.com/Textualize/textual), the interface uses 
   * **Connection Monitor**: Live TCP/UDP socket tracking with process IDs.
   * **LAN Bandwidth Tester**: Local throughput measurement.
   * **Scheduled Scans**: Interval-based background checks.
+  * **Traffic Health**: Passive monitoring of broadcast protocols (ARP, DHCP, STP, LLDP, CDP) and packet type distribution.
 * **Nmap Integration**: Scanner with preset modes, custom arguments, and subnet auto-detection.
 * **LLDP/CDP Capture**: Identify connected switch ports.
 * **Reports**: Notes tab with `Ctrl+S` report generation, plus JSON/CSV data exporting.

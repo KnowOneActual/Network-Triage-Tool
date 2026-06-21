@@ -13,7 +13,7 @@ class Settings(BaseSettings):
 
     # App Info
     app_name: str = "Network Triage Tool"
-    version: str = "0.5.9"
+    version: str = "0.8.0"
     debug: bool = False
 
     # Logging

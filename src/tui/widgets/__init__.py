@@ -23,6 +23,7 @@ from .lan_bandwidth_widget import LanBandwidthWidget
 from .latency_analyzer_widget import LatencyAnalyzerWidget
 from .port_scanner_widget import PortScannerWidget
 from .scheduler_widget import SchedulerWidget
+from .traffic_health_widget import TrafficHealthWidget
 
 __all__ = [
     "AsyncOperationMixin",
@@ -36,4 +37,5 @@ __all__ = [
     "ResultsWidget",
     "SchedulerWidget",
     "StatusIndicator",
+    "TrafficHealthWidget",
 ]

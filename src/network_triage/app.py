@@ -42,6 +42,7 @@ try:
         LatencyAnalyzerWidget,
         PortScannerWidget,
         SchedulerWidget,
+        TrafficHealthWidget,
     )
     from tui.widgets.base import TaskCompleted
     from tui.widgets.components import HistoryInput
@@ -55,6 +56,7 @@ except ImportError:
         LatencyAnalyzerWidget,
         PortScannerWidget,
         SchedulerWidget,
+        TrafficHealthWidget,
     )
     from tui.widgets.base import TaskCompleted
     from tui.widgets.components import HistoryInput
@@ -580,6 +582,7 @@ class UtilityTool(Container):
             yield Button("Connection Monitor", id="sub_connmon", classes="util_btn")
             yield Button("LAN Bandwidth", id="sub_bandwidth", classes="util_btn")
             yield Button("Scheduler", id="sub_scheduler", classes="util_btn")
+            yield Button("Traffic Health", id="sub_traffic", classes="util_btn")
 
         # Content Switcher for Sub-Tools
         with ContentSwitcher(initial="tool_trace", id="util_content"):
@@ -590,6 +593,7 @@ class UtilityTool(Container):
             yield ConnectionMonitorWidget(id="tool_connmon")
             yield LanBandwidthWidget(id="tool_bandwidth")
             yield SchedulerWidget(id="tool_scheduler")
+            yield TrafficHealthWidget(id="tool_traffic")
 
     def on_mount(self) -> None:
         self.query_one("#sub_trace").add_class("-active")
@@ -605,6 +609,7 @@ class UtilityTool(Container):
                 "sub_connmon": "tool_connmon",
                 "sub_bandwidth": "tool_bandwidth",
                 "sub_scheduler": "tool_scheduler",
+                "sub_traffic": "tool_traffic",
             }
             if btn_id in target_map:
                 # Switch Content
@@ -629,6 +634,7 @@ class UtilityTool(Container):
             "tool_connmon": "sub_connmon",
             "tool_bandwidth": "sub_bandwidth",
             "tool_scheduler": "sub_scheduler",
+            "tool_traffic": "sub_traffic",
         }
 
         widget_id = event.widget_id or ""
@@ -738,6 +744,7 @@ class NetworkTriageApp(App[None]):
             "tool_connmon": "utils",
             "tool_bandwidth": "utils",
             "tool_scheduler": "utils",
+            "tool_traffic": "utils",
         }
 
         # Determine which tab the widget belongs to
@@ -776,6 +783,7 @@ class NetworkTriageApp(App[None]):
         speed_data = self._gather_speed_data()
         nmap_data = self._gather_nmap_data()
         notes = self._gather_notes()
+        traffic_data = self._gather_traffic_data()
 
         plugin_data = {}
         for plugin in self.plugins:
@@ -789,7 +797,7 @@ class NetworkTriageApp(App[None]):
                 logging.getLogger(__name__).error(f"Plugin {plugin.name} report error: {e}")
 
         # Build the report
-        report = self._build_report(timestamp, dashboard_data, connection_data, speed_data, nmap_data, notes, plugin_data)
+        report = self._build_report(timestamp, dashboard_data, connection_data, speed_data, nmap_data, notes, plugin_data, traffic_data)
 
         # Write to file
         self._write_report(filename, report)
@@ -840,6 +848,14 @@ class NetworkTriageApp(App[None]):
         """Gather user notes."""
         return self.query_one("#notes_area", TextArea).text
 
+    def _gather_traffic_data(self) -> dict[str, Any] | None:
+        """Gather traffic health data."""
+        try:
+            traffic = self.query_one(TrafficHealthWidget)
+            return traffic._last_stats
+        except Exception:
+            return None
+
     def _build_report(
         self,
         timestamp: str,
@@ -849,6 +865,7 @@ class NetworkTriageApp(App[None]):
         nmap_data: list[dict[str, str]],
         notes: str,
         plugin_data: dict[str, str],
+        traffic_data: dict[str, Any] | None = None,
     ) -> list[str]:
         """Build the report string from gathered data."""
         report = []
@@ -902,6 +919,23 @@ class NetworkTriageApp(App[None]):
                 report.append(f"--- {plugin_name} ---")
                 report.append(data)
                 report.append("")
+            report.append("-" * 50)
+            report.append("")
+
+        # Traffic Health
+        if traffic_data:
+            report.append("TRAFFIC HEALTH")
+            report.append("-" * 50)
+            report.append(f"Total Packets: {traffic_data.get('total_packets', 0)}")
+            report.append(f"Packet Rate:   {traffic_data.get('packets_per_second', 0.0)} pps")
+            report.append(f"Unicast:       {traffic_data.get('unicast_packets', 0)}")
+            report.append(f"Multicast:     {traffic_data.get('multicast_packets', 0)}")
+            report.append(f"Broadcast:     {traffic_data.get('broadcast_packets', 0)}")
+            report.append(f"ARP:           {traffic_data.get('arp_packets', 0)}")
+            report.append(f"DHCP:          {traffic_data.get('dhcp_packets', 0)}")
+            report.append(f"STP:           {traffic_data.get('stp_packets', 0)}")
+            report.append(f"LLDP:          {traffic_data.get('lldp_packets', 0)}")
+            report.append(f"CDP:           {traffic_data.get('cdp_packets', 0)}")
             report.append("-" * 50)
             report.append("")
 
