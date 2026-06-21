@@ -8,7 +8,6 @@
 [![UI Framework](https://img.shields.io/badge/UI-Textual-orange)](https://textual.textualize.io/)
 [![Tests](https://img.shields.io/badge/tests-passing-success)](./tests/)
 [![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-blue)](https://github.com/knowoneactual/Network-Triage-Tool/actions)
-[![slop: not found](https://img.shields.io/badge/slop-not%20found-brightgreen)](https://no-slop.club)
 
 A terminal user interface (TUI) to diagnose and troubleshoot network connectivity. It runs entirely in the terminal, making it lightweight and SSH-compatible. Use it to check DNS, ports, latency, and system routing.
 
