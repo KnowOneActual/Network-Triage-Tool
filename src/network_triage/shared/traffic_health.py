@@ -280,7 +280,7 @@ class TrafficHealthMonitor:
                 entry_time = datetime.fromisoformat(entry["timestamp"])
                 if yesterday_min <= entry_time <= yesterday_max:
                     return entry
-            except KeyError, ValueError:
+            except (KeyError, ValueError):
                 continue
 
         # Fallback: return the most recent record that is at least 1 hour old
@@ -290,7 +290,7 @@ class TrafficHealthMonitor:
                 entry_time = datetime.fromisoformat(entry["timestamp"])
                 if entry_time <= fallback_limit:
                     return entry
-            except KeyError, ValueError:
+            except (KeyError, ValueError):
                 continue
 
         return None
