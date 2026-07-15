@@ -125,10 +125,10 @@ async def test_traceroute_tool_display_result() -> None:
             "Destination": "8.8.8.8",
             "Hops": [
                 {"Hop": 1, "IP": "192.168.1.1", "Hostname": "router", "Avg Latency": 1.25},
-                {"Hop": 2, "Status": "No response"}
+                {"Hop": 2, "Status": "No response"},
             ],
             "Success": True,
-            "Message": "Completed"
+            "Message": "Completed",
         }
         trace_tool.display_result(dict_input)
 
