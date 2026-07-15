@@ -31,6 +31,7 @@ Footer {
     background: #000000;
     align: center middle;
     border-bottom: solid #007acc;
+    overflow-x: auto;
 }
 
 /* 4. The Content Area */
@@ -43,16 +44,15 @@ ContentSwitcher {
 
 /* --- BUTTON STYLING --- */
 .nav_btn {
-    /* THE FIX: Let padding define the height */
-    height: auto;
-    padding: 1 2; /* 1 line top/bottom, 2 cols left/right */
+    height: 100%;
+    padding: 0 2; /* No vertical padding, 2 cols left/right */
 
     background: #333333;
     color: #aaaaaa;
     border: none;
-    min-width: 15;
+    min-width: 11;
 
-    /* Ensure text is centered horizontally */
+    /* Ensure text is centered horizontally and vertically */
     content-align: center middle;
 }
 
@@ -317,15 +317,17 @@ NotesTool {
     background: #1e1e1e;
     border-bottom: solid #007acc;
     align: center middle;
+    overflow-x: auto;
 }
 
 .util_btn {
-    height: 1;
+    height: 100%;
     background: #333333;
     color: #888888;
     border: none;
-    margin: 1 1;
-    min-width: 12;
+    margin: 0 1;
+    min-width: 8;
+    content-align: center middle;
 }
 
 .util_btn.-active {

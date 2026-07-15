@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2026-07-15
+
+### Fixed
+- **TUI Navigation Tab Clipping** — Added horizontal scroll support (`overflow-x: auto;`) and reduced minimum width of navigation buttons to prevent the "Utilities" tab and other rightmost tabs from being clipped and hidden on standard 80-column terminals.
+- **Button Text Squeezing** — Switched buttons to fill height (`height: 100%;`) and removed vertical padding/margins to ensure text labels remain centered and visible even when horizontal scrollbars are displayed.
+
 ## [1.0.0] - 2026-06-21
 
 ### Added
