@@ -563,9 +563,32 @@ class TracerouteTool(Container):
         result = net_tool.traceroute_test(host)
         self.app.call_from_thread(self.display_result, result)
 
-    def display_result(self, result: str) -> None:
+    def display_result(self, result: str | dict[str, Any]) -> None:
         self.query_one("#btn_trace", Button).disabled = False
-        self.query_one("#trace_log", Log).write(result)
+        
+        if isinstance(result, dict):
+            formatted_lines = [f"--- Traceroute to {result.get('Destination', 'Unknown')} ---"]
+            if not result.get("Success", False):
+                formatted_lines.append(f"Error: {result.get('Message', 'Unknown error')}")
+            else:
+                for hop in result.get("Hops", []):
+                    hop_num = hop.get("Hop", "?")
+                    ip = hop.get("IP", "*")
+                    hostname = hop.get("Hostname", "")
+                    avg_lat = hop.get("Avg Latency")
+                    
+                    if hop.get("Status") == "No response":
+                        formatted_lines.append(f" {hop_num}  * * *")
+                    else:
+                        host_str = f"{hostname} ({ip})" if hostname else ip
+                        lat_str = f"{avg_lat:.2f} ms" if avg_lat is not None else ""
+                        formatted_lines.append(f" {hop_num}  {host_str}  {lat_str}")
+            
+            result_str = "\n".join(formatted_lines)
+        else:
+            result_str = str(result)
+            
+        self.query_one("#trace_log", Log).write(result_str)
         self.query_one("#trace_log", Log).write("\n--- Finished ---")
 
 

@@ -97,3 +97,42 @@ async def test_info_box_click_clipboard(mocker: MockerFixture) -> None:
 
         mock_copy.assert_called_with("192.168.1.1")
         mock_notify.assert_called()
+
+
+@pytest.mark.asyncio
+async def test_traceroute_tool_display_result() -> None:
+    """Test that TracerouteTool.display_result handles both dict and str inputs without crashing."""
+    from network_triage.app import TracerouteTool
+    from textual.widgets import Log
+
+    app = NetworkTriageApp()
+    async with app.run_test() as pilot:
+        await pilot.pause(0.1)
+        # Switch to utilities to ensure the widget is composed
+        await pilot.press("u")
+        await pilot.pause(0.1)
+
+        trace_tool = app.query_one(TracerouteTool)
+        log = trace_tool.query_one("#trace_log", Log)
+
+        # 1. Test string input (macOS / Windows format)
+        trace_tool.display_result("Test traceroute output string")
+        assert any("Test traceroute output string" in line for line in log.lines)
+
+        # 2. Test dict input (Linux format)
+        dict_input = {
+            "Destination": "8.8.8.8",
+            "Hops": [
+                {"Hop": 1, "IP": "192.168.1.1", "Hostname": "router", "Avg Latency": 1.25},
+                {"Hop": 2, "Status": "No response"}
+            ],
+            "Success": True,
+            "Message": "Completed"
+        }
+        trace_tool.display_result(dict_input)
+        
+        # Verify formatting
+        log_text = "\n".join(log.lines)
+        assert "--- Traceroute to 8.8.8.8 ---" in log_text
+        assert " 1  router (192.168.1.1)  1.25 ms" in log_text
+        assert " 2  * * *" in log_text

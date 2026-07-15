@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.1] - 2026-07-15
 
 ### Fixed
+- **Traceroute Tool Linux Crash** — Resolved a TypeError crash in `TracerouteTool` by adding dict-formatting support in the UI for the dictionary-based hop output returned specifically by the Linux toolkit.
 - **TUI Navigation Tab Clipping** — Added horizontal scroll support (`overflow-x: auto;`) and reduced minimum width of navigation buttons to prevent the "Utilities" tab and other rightmost tabs from being clipped and hidden on standard 80-column terminals.
 - **Button Text Squeezing** — Switched buttons to fill height (`height: 100%;`) and removed vertical padding/margins to ensure text labels remain centered and visible even when horizontal scrollbars are displayed.
 
