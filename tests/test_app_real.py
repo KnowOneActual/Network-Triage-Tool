@@ -102,8 +102,9 @@ async def test_info_box_click_clipboard(mocker: MockerFixture) -> None:
 @pytest.mark.asyncio
 async def test_traceroute_tool_display_result() -> None:
     """Test that TracerouteTool.display_result handles both dict and str inputs without crashing."""
-    from network_triage.app import TracerouteTool
     from textual.widgets import Log
+
+    from network_triage.app import TracerouteTool
 
     app = NetworkTriageApp()
     async with app.run_test() as pilot:
@@ -130,7 +131,7 @@ async def test_traceroute_tool_display_result() -> None:
             "Message": "Completed"
         }
         trace_tool.display_result(dict_input)
-        
+
         # Verify formatting
         log_text = "\n".join(log.lines)
         assert "--- Traceroute to 8.8.8.8 ---" in log_text

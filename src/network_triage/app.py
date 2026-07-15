@@ -565,7 +565,7 @@ class TracerouteTool(Container):
 
     def display_result(self, result: str | dict[str, Any]) -> None:
         self.query_one("#btn_trace", Button).disabled = False
-        
+
         if isinstance(result, dict):
             formatted_lines = [f"--- Traceroute to {result.get('Destination', 'Unknown')} ---"]
             if not result.get("Success", False):
@@ -576,18 +576,18 @@ class TracerouteTool(Container):
                     ip = hop.get("IP", "*")
                     hostname = hop.get("Hostname", "")
                     avg_lat = hop.get("Avg Latency")
-                    
+
                     if hop.get("Status") == "No response":
                         formatted_lines.append(f" {hop_num}  * * *")
                     else:
                         host_str = f"{hostname} ({ip})" if hostname else ip
                         lat_str = f"{avg_lat:.2f} ms" if avg_lat is not None else ""
                         formatted_lines.append(f" {hop_num}  {host_str}  {lat_str}")
-            
+
             result_str = "\n".join(formatted_lines)
         else:
             result_str = str(result)
-            
+
         self.query_one("#trace_log", Log).write(result_str)
         self.query_one("#trace_log", Log).write("\n--- Finished ---")
 

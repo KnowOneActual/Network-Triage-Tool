@@ -164,6 +164,8 @@ ignore = [
     "F841",    # Unused variable
     "PT018",   # Assertion broken down
     "RUF059",  # Unused unpacked
+    "D203",    # Incompatible docstring rules
+    "D213",    # Incompatible docstring rules
 ]
 
 [tool.ruff.lint.per-file-ignores]
